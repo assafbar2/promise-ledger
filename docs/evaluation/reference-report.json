@@ -1,0 +1,119 @@
+{
+  "generatedAt": "2026-09-14T06:06:39.804Z",
+  "evaluation": "deterministic-reconciliation-fixtures",
+  "liveInferenceTested": false,
+  "limitation": "This measures rule correctness on synthetic fixtures, not model extraction quality.",
+  "passed": 18,
+  "total": 18,
+  "providers": [],
+  "cases": [
+    {
+      "id": "blocked/PL-101",
+      "passed": true,
+      "expected": "blocked",
+      "actual": "blocked"
+    },
+    {
+      "id": "blocked/PL-102",
+      "passed": true,
+      "expected": "on-track",
+      "actual": "on-track"
+    },
+    {
+      "id": "blocked/PL-103",
+      "passed": true,
+      "expected": "verified",
+      "actual": "verified"
+    },
+    {
+      "id": "blocked/PL-104",
+      "passed": true,
+      "expected": "overdue",
+      "actual": "overdue"
+    },
+    {
+      "id": "blocked/PL-105",
+      "passed": true,
+      "expected": "verify",
+      "actual": "verify"
+    },
+    {
+      "id": "blocked/PL-106",
+      "passed": true,
+      "expected": "discussed",
+      "actual": "discussed"
+    },
+    {
+      "id": "enabled/PL-101",
+      "passed": true,
+      "expected": "verified",
+      "actual": "verified"
+    },
+    {
+      "id": "enabled/PL-102",
+      "passed": true,
+      "expected": "on-track",
+      "actual": "on-track"
+    },
+    {
+      "id": "enabled/PL-103",
+      "passed": true,
+      "expected": "verified",
+      "actual": "verified"
+    },
+    {
+      "id": "enabled/PL-104",
+      "passed": true,
+      "expected": "overdue",
+      "actual": "overdue"
+    },
+    {
+      "id": "enabled/PL-105",
+      "passed": true,
+      "expected": "verify",
+      "actual": "verify"
+    },
+    {
+      "id": "enabled/PL-106",
+      "passed": true,
+      "expected": "discussed",
+      "actual": "discussed"
+    },
+    {
+      "id": "stale/PL-101",
+      "passed": true,
+      "expected": "unknown",
+      "actual": "unknown"
+    },
+    {
+      "id": "stale/PL-102",
+      "passed": true,
+      "expected": "on-track",
+      "actual": "on-track"
+    },
+    {
+      "id": "stale/PL-103",
+      "passed": true,
+      "expected": "verified",
+      "actual": "verified"
+    },
+    {
+      "id": "stale/PL-104",
+      "passed": true,
+      "expected": "overdue",
+      "actual": "overdue"
+    },
+    {
+      "id": "stale/PL-105",
+      "passed": true,
+      "expected": "verify",
+      "actual": "verify"
+    },
+    {
+      "id": "stale/PL-106",
+      "passed": true,
+      "expected": "discussed",
+      "actual": "discussed"
+    }
+  ]
+}
