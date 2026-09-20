@@ -4,7 +4,7 @@
 
 **The workbench, Vercel build, and recording script are ready. The hackathon entry is not yet submission-ready.**
 
-The owner authorized cleanup, consolidation, private-source push, and Vercel deployment under **Promise Ledger**. The Vercel project is `promise-ledger`, on the verified Hobby account. First publication verification is in progress; see [deployment and access](DEPLOYMENT.md) for the URL and current state. No paid upgrade, add-on, or other-project billing change is authorized.
+The owner authorized cleanup, consolidation, private-source push, and Vercel deployment under **Promise Ledger**. The consolidated release is pushed to private `main` and deployed as `promise-ledger` on the verified Hobby account. **https://promise-ledger-chi.vercel.app** passed anonymous HTTP checks: homepage, six assets, all three reference scenarios, and API safety checks. See [deployment and access](DEPLOYMENT.md) and the [saved smoke report](DEPLOYMENT-SMOKE-2026-09-20.json). No paid upgrade, add-on, or other-project billing change was made.
 
 The hosted release is reference-only: no provider credentials are configured. It must not be described as live AI. The exposed Nebius key remains local and ignored; never upload it.
 
@@ -28,6 +28,7 @@ The hosted release is reference-only: no provider credentials are configured. It
 | Deterministic rule cases | 18/18 passed |
 | Worker and Vercel builds | Pass |
 | Full npm audit after cleanup | Zero advisories |
+| Anonymous production smoke checks | 13 passed; zero provider calls |
 
 These tests do not establish model accuracy, complete browser accessibility, or full live UI success. Prior browser verification covered local loading and the reference evidence-check action; broader keyboard, mobile, and contrast QA remains incomplete.
 

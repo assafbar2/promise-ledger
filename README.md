@@ -33,7 +33,7 @@ Open the exact local URL printed by the server. No credentials are needed for th
 
 ## Working features
 
-The Vercel project is **promise-ledger**, on the owner's verified Hobby account. See [deployment and access](docs/DEPLOYMENT.md) for its production URL and last verified state. The repository remains private. Live extraction stays disabled on Vercel until a rotated server-side key, separate access token, and verified free-credit protection are in place.
+Try the hosted reference demo: **https://promise-ledger-chi.vercel.app**. The Vercel project is **promise-ledger**, on the owner's verified Hobby account; the homepage and all three reference scenarios passed anonymous HTTP checks on September 20. See [deployment and access](docs/DEPLOYMENT.md). The repository remains private. Live extraction stays disabled on Vercel until a rotated server-side key, separate access token, and verified free-credit protection are in place.
 
 - Searchable, filterable commitment ledger with owners, dates and seven conservative verdicts.
 - Exact source quotations and separate customer-specific built, enabled and verified checks.
@@ -76,7 +76,7 @@ npm run check
 | Model evidence | Actual latency, model/run/request IDs and usage saved; synthetic results are not independent real-world validation |
 | Cost | First run's estimated trial-credit consumption: $0.025144; paid rollover was verified disabled September 19; recheck before further inference |
 | Dependencies | September 20 cleanup removes unused database/auth starter code and patches the affected image parser; full npm audit reports zero advisories, not a blanket security guarantee. See the [dependency review](docs/DEPENDENCY-REVIEW-2026-09-20.md) |
-| Registration and release | Devpost account shows registered; private source is being consolidated for the Vercel release; the recording script is ready, but video capture and final submission remain pending |
+| Registration and release | Registered on Devpost; consolidated source pushed to private `main`; Vercel reference demo deployed and anonymously checked; recording script ready, but video capture and final submission remain pending |
 
 **Ready:** workbench, tested Vercel build, first measured NVIDIA-on-Nebius evaluation, and recording script. **Not ready:** hosted live inference, captured video, the complete submission package, and free live testing access through judging.
 
@@ -108,7 +108,7 @@ React, TypeScript, Zod and Lucide sit on the Sites/Vinext structure. Local and W
 
 Repository: `assafbar2/promise-ledger`, private and linked to this working directory. On September 20 the owner authorized consolidating the work, pushing it, and deploying Promise Ledger to Vercel. Private status does not meet the hackathon's public-code requirement; ask before changing visibility.
 
-A URL to a working demo, hosted application or runnable test build, plus a public YouTube video, is still required. The [official rules](https://nebiusglobalaihackathon.devpost.com/rules) allow any of those testing formats; they do not require Vercel or even a hosted web deployment specifically. Judges may choose not to test, but we must still provide working access. Actual NVIDIA-on-Nebius execution is documented in the live evaluation report. Do not submit the reference-only workflow as live AI.
+The hosted reference preview is available, but the final submission still needs qualifying live testing access, public licensed source and a public YouTube video. The [official rules](https://nebiusglobalaihackathon.devpost.com/rules) allow a working demo, hosted app or runnable test-build URL; they do not require Vercel. Judges may choose not to test, but working access remains required. Actual NVIDIA-on-Nebius execution is documented in the live evaluation report. Do not submit the reference-only workflow as live AI.
 
 ## License
 

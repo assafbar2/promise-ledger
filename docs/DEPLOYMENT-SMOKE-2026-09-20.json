@@ -1,0 +1,97 @@
+{
+  "checkedAt": "2026-09-20T22:59:59.486Z",
+  "url": "https://promise-ledger-chi.vercel.app",
+  "sourceCommit": "0cf8bea2c6868890ce07bdf750b5087334f42f7a",
+  "deploymentId": "dpl_EK4dPXnTzSa5YKw9kEoARAF9Sh17",
+  "cookiesUsed": false,
+  "providerCalls": 0,
+  "checks": [
+    {
+      "check": "anonymous homepage",
+      "status": 200,
+      "productVisible": true,
+      "referenceModeVisible": true,
+      "securityHeaders": true,
+      "htmlSha256": "1bbc9d0e191ede42d5e89a4db888159f5214b734410b71e39e9e2a204350dad2"
+    },
+    {
+      "check": "static asset",
+      "path": "/assets/index-Cu_terHT.css",
+      "status": 200,
+      "contentType": "text/css; charset=utf-8"
+    },
+    {
+      "check": "static asset",
+      "path": "/assets/layout-segment-context-BF29jg_W.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8"
+    },
+    {
+      "check": "static asset",
+      "path": "/assets/rolldown-runtime-hePW80VL.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8"
+    },
+    {
+      "check": "static asset",
+      "path": "/assets/framework-C9X4cw4R.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8"
+    },
+    {
+      "check": "static asset",
+      "path": "/assets/index-Cufqgdhy.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8"
+    },
+    {
+      "check": "static asset",
+      "path": "/assets/page-B8H5rwvV.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8"
+    },
+    {
+      "check": "status",
+      "status": 200,
+      "liveConfigured": false,
+      "model": null,
+      "syntheticOnly": true
+    },
+    {
+      "check": "reference scenario",
+      "scenario": "blocked",
+      "status": 200,
+      "verdict": "blocked",
+      "commitments": 6,
+      "model": null,
+      "elapsedMs": 5
+    },
+    {
+      "check": "reference scenario",
+      "scenario": "enabled",
+      "status": 200,
+      "verdict": "verified",
+      "commitments": 6,
+      "model": null,
+      "elapsedMs": 0
+    },
+    {
+      "check": "reference scenario",
+      "scenario": "stale",
+      "status": 200,
+      "verdict": "unknown",
+      "commitments": 6,
+      "model": null,
+      "elapsedMs": 1
+    },
+    {
+      "check": "live inference disabled",
+      "status": 503,
+      "error": "Live inference is not configured. The reference demo remains available."
+    },
+    {
+      "check": "cross-origin rejected",
+      "status": 403
+    }
+  ]
+}

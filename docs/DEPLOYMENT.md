@@ -5,8 +5,10 @@
 - Project: **promise-ledger**, in the owner's existing **Hobby** workspace, verified September 20, 2026.
 - Assigned production domain: **https://promise-ledger-chi.vercel.app**. Vercel assigned the suffix; the project and product names remain Promise Ledger.
 - Repository: `assafbar2/promise-ledger`, **private**; its `main` branch is connected to this project.
-- Publication state: build and function tests pass locally; first production deployment and anonymous access verification are in progress. An assigned domain alone is not proof of a successful deployment.
+- Publication state: **production deployment succeeded September 20, 2026**. Anonymous HTTP verification passed at 22:59 UTC (3:59 p.m. Pacific): homepage, six static assets, status, all three reference scenarios, live-disabled failure, and cross-origin rejection. See the [saved smoke report](DEPLOYMENT-SMOKE-2026-09-20.json).
 - No plan upgrade, paid add-on, database, storage service, custom-domain purchase, or change to other projects is part of this release.
+
+Share **https://promise-ledger-chi.vercel.app**, which was tested without cookies and does not require a Vercel login. The generated team/branch deployment aliases redirect to Vercel authentication; do not use those as the demo link. Existing preview protection was preserved.
 
 ## Hosted functionality
 
