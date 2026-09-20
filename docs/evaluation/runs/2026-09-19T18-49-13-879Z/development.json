@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "evaluation": "nebius-development",
+  "status": "blocked",
+  "liveInferenceAttempted": false,
+  "startedAt": "2026-09-19T18:49:13.879Z",
+  "updatedAt": "2026-09-19T18:49:13.886Z",
+  "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+  "promptVersion": "commitment-extraction-v2",
+  "promptSha256": "23f36efaff180ed0eb41d726e2f5c6be0f7004afb3c777f4354b132db560192d",
+  "datasetSha256": "54bef1bb833f420c94e083839a81e8d62378e0fa8ada569518aaa6e2f0cb92b8",
+  "limitation": "Development examples, not held-out evidence. Accepted-output feature metrics exclude provider/validation errors; overall exact match includes errors.",
+  "metrics": {
+    "plannedCases": 8,
+    "executedCases": 0,
+    "passed": 0,
+    "failed": 0,
+    "errors": 0,
+    "notRun": 8,
+    "exactMatchRate": null,
+    "acceptedOutputMetrics": {
+      "cases": 0,
+      "featurePrecision": null,
+      "featureRecall": null,
+      "extraFeatures": 0,
+      "missedFeatures": 0,
+      "matchedFeatureFieldAccuracy": null
+    },
+    "groundingRejections": 0,
+    "latencyMs": {
+      "samples": 0,
+      "p50": null,
+      "p95": null,
+      "maximum": null
+    },
+    "recordedUsage": {
+      "callsWithUsage": 0,
+      "promptTokens": 0,
+      "completionTokens": 0
+    }
+  },
+  "cases": [
+    {
+      "id": "dev-explicit",
+      "category": "explicit",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Maya Chen",
+          "dueDate": "2026-09-14"
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "dev-tentative",
+      "category": "tentative",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "dev-conditional",
+      "category": "conditional",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "dev-no-date",
+      "category": "no-date",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Maya Chen",
+          "dueDate": null
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "dev-unknown-owner",
+      "category": "unknown-owner",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": null,
+          "dueDate": "2026-09-14"
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "dev-injection",
+      "category": "injection",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Maya Chen",
+          "dueDate": "2026-09-14"
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "dev-ticket-is-not-promise",
+      "category": "ticket-is-not-promise",
+      "status": "not_run",
+      "expected": [],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "dev-relative-date",
+      "category": "relative-date",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Maya Chen",
+          "dueDate": null
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    }
+  ]
+}

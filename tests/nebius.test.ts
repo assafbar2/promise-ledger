@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createScenario, referenceCommitments } from "../lib/fixtures.ts";
-import { extractWithNebius } from "../lib/nebius.ts";
+import { extractWithNebius, InferenceError } from "../lib/nebius.ts";
 
 const sources = createScenario("blocked").sources;
 const validResponse = { id: "stub-run-1", model: "nvidia/test-Nemotron", choices: [{ finish_reason: "stop", message: { content: JSON.stringify({ commitments: referenceCommitments }) } }], usage: { prompt_tokens: 100, completion_tokens: 50 } };
@@ -32,6 +32,21 @@ test("Nebius adapter contracts are tested with mocked HTTP, not a real model run
     const result = await extractWithNebius(sources, fetcher);
     assert.equal(result.commitments.length, 6);
     assert.deepEqual(result.usage, { promptTokens: 100, completionTokens: 50 });
+    assert.equal(result.trace.httpStatus, 200);
+    assert.equal(result.trace.runId, "stub-run-1");
+    assert.ok(result.trace.elapsedMs >= 0);
+  });
+
+  await context.test("retains provider trace and usage when a response fails grounding", async () => {
+    const invalid = { ...validResponse, choices: [{ finish_reason: "stop", message: { content: JSON.stringify({ commitments: [{ ...referenceCommitments[0], owner: "Invented Person" }] }) } }] };
+    await assert.rejects(() => extractWithNebius(sources, async () => Response.json(invalid, { headers: { "x-request-id": "provider-request-123" } })), (error: unknown) => {
+      assert.ok(error instanceof InferenceError);
+      assert.equal(error.code, "grounding");
+      assert.equal(error.trace?.requestId, "provider-request-123");
+      assert.equal(error.trace?.runId, "stub-run-1");
+      assert.deepEqual(error.trace?.usage, { promptTokens: 100, completionTokens: 50 });
+      return true;
+    });
   });
 
   await context.test("provider error body and secrets are never surfaced", async () => {

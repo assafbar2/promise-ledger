@@ -1,0 +1,625 @@
+{
+  "schemaVersion": 1,
+  "evaluation": "nebius-held-out",
+  "status": "blocked",
+  "liveInferenceAttempted": false,
+  "startedAt": "2026-09-19T18:49:13.879Z",
+  "updatedAt": "2026-09-19T18:49:13.893Z",
+  "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+  "promptVersion": "commitment-extraction-v2",
+  "promptSha256": "23f36efaff180ed0eb41d726e2f5c6be0f7004afb3c777f4354b132db560192d",
+  "datasetSha256": "041ae0b492484492d391ab9d5b8261cec2743dca57eda4253d6176254721b265",
+  "limitation": "Frozen before the first live run; assistant-authored synthetic cases, not an independent external benchmark. Do not tune against this set.",
+  "metrics": {
+    "plannedCases": 32,
+    "executedCases": 0,
+    "passed": 0,
+    "failed": 0,
+    "errors": 0,
+    "notRun": 32,
+    "exactMatchRate": null,
+    "acceptedOutputMetrics": {
+      "cases": 0,
+      "featurePrecision": null,
+      "featureRecall": null,
+      "extraFeatures": 0,
+      "missedFeatures": 0,
+      "matchedFeatureFieldAccuracy": null
+    },
+    "groundingRejections": 0,
+    "latencyMs": {
+      "samples": 0,
+      "p50": null,
+      "p95": null,
+      "maximum": null
+    },
+    "recordedUsage": {
+      "callsWithUsage": 0,
+      "promptTokens": 0,
+      "completionTokens": 0
+    }
+  },
+  "cases": [
+    {
+      "id": "hold-01",
+      "category": "explicit",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-02",
+      "category": "explicit",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-03",
+      "category": "missing-owner",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": null,
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-04",
+      "category": "missing-date",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "eu-residency",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": null
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-05",
+      "category": "discussion",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "dashboard",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-06",
+      "category": "conditional",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "scim",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-07",
+      "category": "customer-demand",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "saml",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-08",
+      "category": "ticket-only",
+      "status": "not_run",
+      "expected": [],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-09",
+      "category": "acceptance-only",
+      "status": "not_run",
+      "expected": [],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-10",
+      "category": "irrelevant",
+      "status": "not_run",
+      "expected": [],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-11",
+      "category": "negation",
+      "status": "not_run",
+      "expected": [],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-12",
+      "category": "cancelled",
+      "status": "not_run",
+      "expected": [],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-13",
+      "category": "declined",
+      "status": "not_run",
+      "expected": [],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-14",
+      "category": "relative-date",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": null
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-15",
+      "category": "ambiguous-date",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "eu-residency",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": null
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-16",
+      "category": "ownership-question",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "usage-report",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-17",
+      "category": "misleading-fields",
+      "status": "not_run",
+      "expected": [],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-18",
+      "category": "multiple-features",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "saml",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        },
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-19",
+      "category": "superseded-date",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-06"
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-20",
+      "category": "superseded-owner",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-21",
+      "category": "disputed-quotation",
+      "status": "not_run",
+      "expected": [],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-22",
+      "category": "prompt-injection",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-23",
+      "category": "role-spoofing",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-24",
+      "category": "cross-account-source",
+      "status": "not_run",
+      "expected": [],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-25",
+      "category": "mixed-accounts",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-26",
+      "category": "unknown-feature",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-27",
+      "category": "duplicate-mention",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-28",
+      "category": "hearsay",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "eu-residency",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-29",
+      "category": "hypothetical",
+      "status": "not_run",
+      "expected": [],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-30",
+      "category": "field-labels",
+      "status": "not_run",
+      "expected": [],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-31",
+      "category": "mixed-intents",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        },
+        {
+          "featureId": "dashboard",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        },
+        {
+          "featureId": "saml",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    },
+    {
+      "id": "hold-32",
+      "category": "quoted-markup",
+      "status": "not_run",
+      "expected": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "actual": null,
+      "trace": null,
+      "error": {
+        "code": "not_run",
+        "message": "NEBIUS_API_KEY is missing. No provider inference request was made.",
+        "status": null
+      }
+    }
+  ]
+}

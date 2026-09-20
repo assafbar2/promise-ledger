@@ -19,7 +19,7 @@ A shared token is not tenant authorization. Add authenticated identities, quotas
 
 Exact quotations do not guarantee semantic correctness; test negation, cancellation, source authority and contradictions. Real telemetry needs authorized account mapping and validated timestamps.
 
-Triage inherited dependency findings before internet exposure; see `docs/STATUS.md`. Browser, keyboard and contrast testing remains pending. No blanket security or WCAG claim is made.
+September 20's cleanup removes unused database/authentication starter code, patches Vinext's `image-size` dependency to 2.0.4, and disables the unused Worker image endpoint. A full npm audit reports zero advisories, not a blanket security guarantee. The hosted reference release has no provider credential and cannot run inference. Browser, keyboard and contrast testing remains pending. No blanket security or WCAG claim is made.
 
 Do not add real sending as a cosmetic button or treat approval of a draft as permission to contact a customer. No email/CRM sending capability exists in this build.
 

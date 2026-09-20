@@ -1,0 +1,32 @@
+{
+  "verifiedAt": "2026-09-19T22:07:58.949Z",
+  "method": "Authenticated Nebius console, refreshed and inspected immediately before this run; model availability checked through authenticated GET /v1/models.",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "endpoint": "https://api.tokenfactory.nebius.com/v1/chat/completions",
+  "availableTrialCreditUsd": 1,
+  "paidBalanceUsd": 0,
+  "trialDaysRemaining": 29,
+  "savedTrialEndPreference": "Stop usage after trial",
+  "budgetUsd": 0.5,
+  "prices": {
+    "inputUsdPerMillion": 0.3,
+    "outputUsdPerMillion": 0.9,
+    "kind": "Standard public endpoint, not Batch",
+    "regionListed": "eu-north1",
+    "validFrom": "2026-03-01",
+    "source": "https://tokenfactory.nebius.com/organization/prices"
+  },
+  "context": {
+    "providerDisplay": "256K",
+    "exactProviderIntegerVerified": false,
+    "reservationUpperBoundTokens": 1048576,
+    "reservationBasis": "Deliberately conservative 1 Mi-token upper bound, covering NVIDIA's advertised 1M context and Nebius's smaller displayed 256K endpoint. This is not a claim of 1,048,576-token endpoint support.",
+    "providerSource": "https://tokenfactory.nebius.com/models/catalog/text2text/nvidia%2Fnemotron-3-super-120b-a12b",
+    "modelCardSource": "https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16"
+  },
+  "maxOutputTokens": 6000,
+  "conservativeMaximumPerRequestUsd": 0.319973,
+  "keyStoredLocally": true,
+  "secretValuesRecorded": false,
+  "note": "Manual timestamped verification, not an automatic balance query. Fresh verification is required for later invocations; this does not authorize paid usage."
+}

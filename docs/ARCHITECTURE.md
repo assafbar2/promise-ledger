@@ -1,5 +1,7 @@
 # Architecture and trust boundaries
 
+The application has two build targets: the retained Sites/Cloudflare Worker flow for local development and a Vercel Node function packaged by the Nitro adapter. The Vercel reference release has no provider credentials. Hosting the web app on Vercel does not move NVIDIA inference away from Nebius or turn fixture results into model results. See [deployment and access](DEPLOYMENT.md).
+
 ```text
 React workbench -> POST /api/analyze {mode, scenario}
   -> strict request and same-origin checks

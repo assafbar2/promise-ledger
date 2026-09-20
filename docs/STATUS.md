@@ -1,54 +1,54 @@
 # Promise Ledger — handoff
 
-## Bottom line
+## Bottom line — September 20, 2026
 
-**The initial local build is complete. The hackathon entry is not yet submission-ready.**
+**The workbench, Vercel build, and recording script are ready. The hackathon entry is not yet submission-ready.**
 
-The local project is in `outputs/promise-ledger` in this Codex task. The development preview is running at `http://localhost:3000/`. The repository `assafbar2/promise-ledger` is private. The owner authorized the initial source commit and push to `main`; this does not authorize public release or hackathon submission. Source code is also included in the adjacent `promise-ledger-source.zip` deliverable.
+The owner authorized cleanup, consolidation, private-source push, and Vercel deployment under **Promise Ledger**. The Vercel project is `promise-ledger`, on the verified Hobby account. First publication verification is in progress; see [deployment and access](DEPLOYMENT.md) for the URL and current state. No paid upgrade, add-on, or other-project billing change is authorized.
 
-## Completed
+The hosted release is reference-only: no provider credentials are configured. It must not be described as live AI. The exposed Nebius key remains local and ignored; never upload it.
 
-- Product scope and winning strategy focused on customer-specific delivery evidence.
-- Responsive visual design and functional ledger, evidence brief, source library, review queue and session log.
-- Exact source validation, conservative availability rules and three synthetic scenarios.
-- Editable customer updates, explicit local review and exports; no sending capability.
-- Server-side NVIDIA Nemotron-on-Nebius integration, prepared but not run without credentials.
-- README, architecture, design system, scope, security boundaries, integration guide, submission checklist and demo script.
-- MIT license, ignored secret files and private GitHub remote setup.
+## Implemented and checked
 
-## Verified checks
+- One fictional customer, six synthetic documents, five commitments and one tentative discussion.
+- Ledger, evidence trail, source library, review queue, session activity, and exports.
+- Separate built/enabled/customer-verified rules and three replayable scenarios.
+- Editable template drafts; local approval clears on edits or new analysis; no automatic sending.
+- Server-side NVIDIA Nemotron extraction on Nebius, exact-source validation, and explicit failures.
+- Vercel Nitro adapter without replacing the working local/Worker flow.
+- Unused database/auth starter code removed; patched image parser; full npm audit reports zero advisories, not a general security guarantee.
+- Recording script locked at 300 spoken words, with a 2:45 target, shot list, voice direction, and capture gates. No footage, audio, or video upload exists yet.
 
-| Check | Result |
+| September 20 check | Result |
 | --- | --- |
-| TypeScript | Pass |
-| Lint | Pass |
-| Unit, service and mocked-provider tests | 56 passed, 0 failed |
-| Production-render and compiled API tests | 2 passed, 0 failed |
-| Deterministic rule evaluation | 18/18 cases passed |
-| Production build | Pass |
-| Local preview | HTTP 200 |
-| Client bundle secret-name/test-key scan | No matching server credential identifiers or test keys |
+| TypeScript and lint | Pass |
+| Unit/service/provider/evaluation/budget tests | 73 passed |
+| Compiled Worker tests | 3 passed |
+| Compiled Vercel tests | 4 passed |
+| Deterministic rule cases | 18/18 passed |
+| Worker and Vercel builds | Pass |
+| Full npm audit after cleanup | Zero advisories |
 
-The provider tests use mocked HTTP. The 18 evaluation cases measure deterministic rule behavior, **not model extraction accuracy**. No live evaluation report is claimed.
+These tests do not establish model accuracy, complete browser accessibility, or full live UI success. Prior browser verification covered local loading and the reference evidence-check action; broader keyboard, mobile, and contrast QA remains incomplete.
 
-Browser interaction, screenshot, keyboard and contrast checks were not performed. Implemented responsive/focus semantics do not substitute for those checks.
+## Real model evidence already saved
 
-## Security status
+September 19: all **40 actual requests** completed using `nvidia/nemotron-3-super-120b-a12b`. Development: **7/8 exact matches, one mismatch, no errors**. Frozen held-out: **32/32 exact matches, no errors**. Actual latency, usage, request/run/model IDs, and status are saved in [the report](evaluation/LIVE-RESULTS-2026-09-19.md).
 
-Starter dependencies initially reported 24 advisories, including one critical. Compatible framework, React and tooling updates reduced the final audit to **six advisories: four moderate and two high; zero critical**.
+Combined median latency was 3.614 seconds; estimated credit consumption was $0.025144, not a finalized invoice. These are small assistant-authored synthetic examples, not independent production-quality evidence. Preserve the tentative-item mismatch and do not tune against the observed held-out set.
 
-Remaining findings are the inherited `drizzle-kit` / `@esbuild-kit` / `esbuild` chain and `image-size` / `vinext` chain. Package audit counts include dependency-level duplicates. Fixing the remaining findings involves the starter's migration/tooling or framework upgrade path and was not forced. **Keep this local until they are triaged and remediated.** The database examples are unused; the project is not certified safe for internet exposure.
+## Next, in order
 
-## Remaining actions
+1. **Safe live access:** obtain approval to rotate the exposed credential. Reverify free credit, rates, and **Stop usage after trial** before any inference. Existing credit verification is stale; the console had not reconciled the first run. The CLI's $0.50 invocation guard does not protect the app endpoint or establish an account-wide cap.
+2. **Recording rehearsal:** verify both complete six-document live scenarios and approval/export interactions on the build being filmed. Save genuine UI-run provenance. Never substitute reference footage for live AI.
+3. **Produce the video:** record actual app footage and narration, synchronize to the [final script](DEMO-SCRIPT.md), caption it, and keep the exported video under three minutes. Get authorization before the public upload.
+4. **Complete judge access:** establish no-cost live testing through December 15, 2026, at noon Pacific. Vercel is not required by the event, and a video alone is insufficient. Current Nebius trial credit does not cover the judging period.
+5. **Finish submission:** obtain public-repository authorization, publish licensed source and setup instructions, add honest technology feedback, submit on Devpost, and verify confirmation before October 30, 2026, at 10 a.m. Pacific.
 
-1. **Registration:** the Devpost form is open under the signed-in `assafbar` account. Fill the personal prior-use answers and eligibility/rules declarations, then submit. Registration is not confirmed.
-2. **Real NVIDIA/Nebius run:** configure a Nebius key, an available NVIDIA Nemotron model ID and a separate demo-access token as described in `NEBIUS.md`. Do not paste the provider key into chat or the browser.
-3. **Validate the model:** run the development extraction examples and a separate held-out set. Save actual latency, usage, run IDs and errors. No model quality claim yet.
-4. **Hosting and judge access:** private Sites publishing tools were unavailable, so no deployment completed. Before public judging, resolve security findings, perform browser QA and publish a working accessible demo.
-5. **Submission:** create the public video, write feedback from real usage, explicitly approve public repository visibility, submit on Devpost and verify confirmation. The deadline is October 30, 2026, at 10 a.m. PDT.
+Devpost registration is confirmed. Separate Builder Program enrollment and extra $25 credit are not confirmed; their forms still need owner-supplied company/job details and submission approval. Do not invent those details.
 
-No registration, live inference, hosted release or contest submission was silently represented as complete. No background task or reminder was scheduled.
+Customer interviews and additional independent evaluation are optional impact-strengthening work, not entry requirements. Do not expand into a CRM platform or claim adoption, ROI, time savings, or production accuracy. No background reminder is scheduled.
 
-## Repository authorization
+## Authorization and privacy
 
-The owner approved committing and pushing this initial version to the private repository. Keep the repository private. Public visibility, paid cloud resources and personal registration declarations require separate authorization.
+The repository remains private. The September 20 request authorizes consolidating and pushing the current work and publishing the app to Vercel; it does not authorize making the repository public, spending money, or submitting personal registration declarations. Local credentials remain ignored with permissions 0600. The current source archive is regenerated from committed files only.

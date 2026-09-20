@@ -1,0 +1,12 @@
+.env*
+.git
+.wrangler
+.next
+.vinext
+.nitro
+.output
+dist
+node_modules
+*.tsbuildinfo
+work
+outputs

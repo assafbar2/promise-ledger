@@ -33,3 +33,8 @@ test("production status and analysis routes work without external credentials", 
   assert.equal(analysis.commitments[0].verdict, "verified");
   assert.equal(analysis.model, null);
 });
+
+test("unused Worker image optimizer is unavailable", async () => {
+  const response = await request("/_vinext/image?url=/unexpected.icns&w=640&q=75");
+  assert.equal(response.status, 404);
+});

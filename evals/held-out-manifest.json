@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "frozenAt": "2026-09-19T18:46:30.726Z",
+  "cases": 32,
+  "sha256": "041ae0b492484492d391ab9d5b8261cec2743dca57eda4253d6176254721b265",
+  "independentExternalBenchmark": false,
+  "liveRunOccurredAtFreeze": false,
+  "policy": "Do not change this dataset after seeing its model results. Any revision becomes a new development set and requires a fresh holdout."
+}

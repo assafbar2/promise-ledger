@@ -1,0 +1,1031 @@
+{
+  "schemaVersion": 2,
+  "evaluation": "nebius-held-out",
+  "status": "complete",
+  "liveInferenceAttempted": true,
+  "startedAt": "2026-09-19T22:07:59.629Z",
+  "updatedAt": "2026-09-19T22:10:13.248Z",
+  "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+  "promptVersion": "commitment-extraction-v2",
+  "promptSha256": "23f36efaff180ed0eb41d726e2f5c6be0f7004afb3c777f4354b132db560192d",
+  "datasetSha256": "041ae0b492484492d391ab9d5b8261cec2743dca57eda4253d6176254721b265",
+  "limitation": "Frozen before the first live run; assistant-authored synthetic cases, not an independent external benchmark. Do not tune against this set.",
+  "budget": {
+    "policy": "verified-free-credit-only",
+    "scope": "This invocation, shared across development and held-out suites; not an account-wide spending limit.",
+    "verifiedAt": "2026-09-19T22:07:58.949Z",
+    "verifiedFreeCreditUsd": 1,
+    "budgetUsd": 0.5,
+    "accountedUsd": 0.025144,
+    "maximumNextRequestUsd": 0.319973,
+    "costBasis": "Provider token usage at verified rates, rounded up; retain the full reservation when usage is uncertain. Not a provider invoice.",
+    "inputUsdPerMillion": 0.3,
+    "outputUsdPerMillion": 0.9,
+    "contextTokens": 1048576,
+    "maxOutputTokens": 6000,
+    "calls": 40,
+    "uncertainCalls": 0,
+    "blockedReason": null
+  },
+  "metrics": {
+    "plannedCases": 32,
+    "executedCases": 32,
+    "passed": 32,
+    "failed": 0,
+    "errors": 0,
+    "notRun": 0,
+    "exactMatchRate": 1,
+    "acceptedOutputMetrics": {
+      "cases": 32,
+      "featurePrecision": 1,
+      "featureRecall": 1,
+      "extraFeatures": 0,
+      "missedFeatures": 0,
+      "matchedFeatureFieldAccuracy": 1
+    },
+    "groundingRejections": 0,
+    "latencyMs": {
+      "samples": 32,
+      "p50": 3557,
+      "p95": 7454,
+      "maximum": 8584
+    },
+    "recordedUsage": {
+      "callsWithUsage": 32,
+      "promptTokens": 14584,
+      "completionTokens": 17581
+    }
+  },
+  "cases": [
+    {
+      "id": "hold-01",
+      "category": "explicit",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-9d437b3b198d586c",
+        "requestId": "8842f1fdb9472667a879760f1ae5cfec",
+        "httpStatus": 200,
+        "elapsedMs": 3660,
+        "usage": {
+          "promptTokens": 445,
+          "completionTokens": 652
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-02",
+      "category": "explicit",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-b912027a76f7ab2e",
+        "requestId": "8f3bd56c2fe3235137f90ca61f83ca4e",
+        "httpStatus": 200,
+        "elapsedMs": 5048,
+        "usage": {
+          "promptTokens": 444,
+          "completionTokens": 887
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-03",
+      "category": "missing-owner",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": null,
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": null,
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-ac7bc167ad7ecce4",
+        "requestId": "033c2a5bb7c9c3e088bf220836b6e737",
+        "httpStatus": 200,
+        "elapsedMs": 4116,
+        "usage": {
+          "promptTokens": 449,
+          "completionTokens": 748
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-04",
+      "category": "missing-date",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "eu-residency",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": null
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "eu-residency",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": null
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-aa0b1710195a651e",
+        "requestId": "d14fb80ef6c2eda6df863cf7fcac8d0a",
+        "httpStatus": 200,
+        "elapsedMs": 4498,
+        "usage": {
+          "promptTokens": 439,
+          "completionTokens": 705
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-05",
+      "category": "discussion",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "dashboard",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "dashboard",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-9d1eaacfb0c4bfd0",
+        "requestId": "38f39d65158a559ed70af6a36349f1e3",
+        "httpStatus": 200,
+        "elapsedMs": 3346,
+        "usage": {
+          "promptTokens": 441,
+          "completionTokens": 580
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-06",
+      "category": "conditional",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "scim",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "scim",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-984ab2fc4e0cb7ba",
+        "requestId": "31aa5ad146bd8a173de0b4dc283670fb",
+        "httpStatus": 200,
+        "elapsedMs": 3614,
+        "usage": {
+          "promptTokens": 458,
+          "completionTokens": 612
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-07",
+      "category": "customer-demand",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "saml",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "saml",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-9d2031709f8c93d2",
+        "requestId": "205d9a30b06ef722c6cff2634edf5712",
+        "httpStatus": 200,
+        "elapsedMs": 4165,
+        "usage": {
+          "promptTokens": 459,
+          "completionTokens": 778
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-08",
+      "category": "ticket-only",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-ad67bb30a5f1f260",
+        "requestId": "38677f67d1ff1b388d0667e4b302c3ae",
+        "httpStatus": 200,
+        "elapsedMs": 1089,
+        "usage": {
+          "promptTokens": 439,
+          "completionTokens": 63
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-09",
+      "category": "acceptance-only",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-a2e35d0c87cfcde5",
+        "requestId": "cc21fcffa55f15de082a07cf1925af4c",
+        "httpStatus": 200,
+        "elapsedMs": 1324,
+        "usage": {
+          "promptTokens": 441,
+          "completionTokens": 102
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-10",
+      "category": "irrelevant",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-8d79315e2c72b0f5",
+        "requestId": "fc79a15241c6c4340c1fa7fcc2d8147b",
+        "httpStatus": 200,
+        "elapsedMs": 1100,
+        "usage": {
+          "promptTokens": 443,
+          "completionTokens": 64
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-11",
+      "category": "negation",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-81df01ff0fef425a",
+        "requestId": "512001218f70e376b6f1baa8131220e1",
+        "httpStatus": 200,
+        "elapsedMs": 1328,
+        "usage": {
+          "promptTokens": 437,
+          "completionTokens": 104
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-12",
+      "category": "cancelled",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-b7a05cd460fe6129",
+        "requestId": "55b191b54280d6c0d1d862cb1823c44e",
+        "httpStatus": 200,
+        "elapsedMs": 1712,
+        "usage": {
+          "promptTokens": 441,
+          "completionTokens": 164
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-13",
+      "category": "declined",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-86c4ae5467f71cce",
+        "requestId": "d08e65425f9e192b19e654d09f8cc4f8",
+        "httpStatus": 200,
+        "elapsedMs": 1056,
+        "usage": {
+          "promptTokens": 437,
+          "completionTokens": 55
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-14",
+      "category": "relative-date",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": null
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": null
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-b022d690093e8f7b",
+        "requestId": "028d577986b87df72d835b4643e021a2",
+        "httpStatus": 200,
+        "elapsedMs": 4707,
+        "usage": {
+          "promptTokens": 441,
+          "completionTokens": 806
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-15",
+      "category": "ambiguous-date",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "eu-residency",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": null
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "eu-residency",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": null
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-87ab3e3ade3fb5cc",
+        "requestId": "ff2dbafa9e7ed8ffe4f528f6f6bd95b0",
+        "httpStatus": 200,
+        "elapsedMs": 4945,
+        "usage": {
+          "promptTokens": 450,
+          "completionTokens": 840
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-16",
+      "category": "ownership-question",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "usage-report",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "usage-report",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-a13e28d23f59b9c6",
+        "requestId": "bdbda3330f2adf1ceb9fd332ecde668e",
+        "httpStatus": 200,
+        "elapsedMs": 7454,
+        "usage": {
+          "promptTokens": 446,
+          "completionTokens": 1478
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-17",
+      "category": "misleading-fields",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-981a5b9ab5d81b8f",
+        "requestId": "123d29ef9ad8cf352b18fbd3b12c501a",
+        "httpStatus": 200,
+        "elapsedMs": 1308,
+        "usage": {
+          "promptTokens": 459,
+          "completionTokens": 97
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-18",
+      "category": "multiple-features",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "saml",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        },
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "saml",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        },
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-a5b18f80c55a2b20",
+        "requestId": "2358faaa9e1b479e3faec9e6a16ac43e",
+        "httpStatus": 200,
+        "elapsedMs": 4058,
+        "usage": {
+          "promptTokens": 470,
+          "completionTokens": 688
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-19",
+      "category": "superseded-date",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-06"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-06"
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-b2c5e0e3b9235d9e",
+        "requestId": "d84fb7c4f8c9f383e353f7a0705c4710",
+        "httpStatus": 200,
+        "elapsedMs": 3557,
+        "usage": {
+          "promptTokens": 480,
+          "completionTokens": 652
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-20",
+      "category": "superseded-owner",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-80781c05f405bf29",
+        "requestId": "20c820b3ed068c9280d7f0a820003426",
+        "httpStatus": 200,
+        "elapsedMs": 4200,
+        "usage": {
+          "promptTokens": 471,
+          "completionTokens": 753
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-21",
+      "category": "disputed-quotation",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-80e620de43ae1eeb",
+        "requestId": "bec2c17218e623a2122ddfbb8b964533",
+        "httpStatus": 200,
+        "elapsedMs": 2649,
+        "usage": {
+          "promptTokens": 460,
+          "completionTokens": 378
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-22",
+      "category": "prompt-injection",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-b35230ab0c4228e5",
+        "requestId": "0da5f5bf3b4308d6740c3de5b74dac09",
+        "httpStatus": 200,
+        "elapsedMs": 3910,
+        "usage": {
+          "promptTokens": 469,
+          "completionTokens": 678
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-23",
+      "category": "role-spoofing",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-8d3e8dbc7960c97a",
+        "requestId": "5dda744bfefe0d1f9d53faf47295e309",
+        "httpStatus": 200,
+        "elapsedMs": 3438,
+        "usage": {
+          "promptTokens": 466,
+          "completionTokens": 589
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-24",
+      "category": "cross-account-source",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-9b20af7074ce95f8",
+        "requestId": "130a028e9e61b390da684c22d8219070",
+        "httpStatus": 200,
+        "elapsedMs": 1071,
+        "usage": {
+          "promptTokens": 442,
+          "completionTokens": 42
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-25",
+      "category": "mixed-accounts",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-928053020c22c542",
+        "requestId": "fba7ea769a06f3fcac93153a49bdf35a",
+        "httpStatus": 200,
+        "elapsedMs": 2595,
+        "usage": {
+          "promptTokens": 479,
+          "completionTokens": 369
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-26",
+      "category": "unknown-feature",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-9c99631b36a0bcf7",
+        "requestId": "b6d6848f066c63d4cbf576af338f0e36",
+        "httpStatus": 200,
+        "elapsedMs": 3741,
+        "usage": {
+          "promptTokens": 474,
+          "completionTokens": 677
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-27",
+      "category": "duplicate-mention",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-99bbea4d29ce2fdf",
+        "requestId": "93810d3ba4a6a3e03d65a06bc09c4795",
+        "httpStatus": 200,
+        "elapsedMs": 3938,
+        "usage": {
+          "promptTokens": 478,
+          "completionTokens": 706
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-28",
+      "category": "hearsay",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "eu-residency",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "eu-residency",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-a706fe3a1d46780a",
+        "requestId": "89c68fdd52573051943cb7c1cbea8f89",
+        "httpStatus": 200,
+        "elapsedMs": 3664,
+        "usage": {
+          "promptTokens": 450,
+          "completionTokens": 682
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-29",
+      "category": "hypothetical",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-b36b524c6662d1dc",
+        "requestId": "bee1c8ce860abda2b356b111f90bcde2",
+        "httpStatus": 200,
+        "elapsedMs": 2432,
+        "usage": {
+          "promptTokens": 455,
+          "completionTokens": 92
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-30",
+      "category": "field-labels",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-afef5ea4e5214891",
+        "requestId": "a12ff99cd732ca4dd342e12cdea5d748",
+        "httpStatus": 200,
+        "elapsedMs": 1582,
+        "usage": {
+          "promptTokens": 459,
+          "completionTokens": 148
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-31",
+      "category": "mixed-intents",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        },
+        {
+          "featureId": "dashboard",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        },
+        {
+          "featureId": "saml",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        },
+        {
+          "featureId": "dashboard",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        },
+        {
+          "featureId": "saml",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-8edc255ab6f1a6e4",
+        "requestId": "613721cc0ae1bcd0470a0ed3bbf7d05e",
+        "httpStatus": 200,
+        "elapsedMs": 8584,
+        "usage": {
+          "promptTokens": 488,
+          "completionTokens": 1814
+        }
+      },
+      "error": null
+    },
+    {
+      "id": "hold-32",
+      "category": "quoted-markup",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "trace": {
+        "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "runId": "chatcmpl-bcc5a20d6413ef1f",
+        "requestId": "748adfabb3aae7d0c0d5958c0b002f22",
+        "httpStatus": 200,
+        "elapsedMs": 3298,
+        "usage": {
+          "promptTokens": 474,
+          "completionTokens": 578
+        }
+      },
+      "error": null
+    }
+  ]
+}
