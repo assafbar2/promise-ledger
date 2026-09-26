@@ -51,7 +51,7 @@ Try the hosted reference demo: **https://promise-ledger-chi.vercel.app**. The Ve
 - Source validation and server-side Nebius integration with explicit failure handling.
 - Open, rate-limited live mode: per-IP hourly and shared daily caps, durable with free Upstash Redis, and friendly limit messages with one-click reference fallback. A full pipeline counts as one run, and a per-run budget caps its worst-case cost at $0.05.
 - Pluggable evidence providers with one validating registry (account scope, exact-quote facts and signals, no fixtures in live runs).
-- Sentry runtime errors as a fourth evidence family: "enabled, but crashing for this customer" lowers a verdict to needs verification, while no errors never proves delivery. Live mode reads the API; the labelled reference scenario "Enabled, but crashing" replays a recorded response. See [Sentry runtime evidence](docs/SENTRY.md).
+- Sentry runtime errors as a fourth evidence family: "enabled, but crashing for this customer" lowers a verdict to needs verification, while no errors never proves delivery. It applies only to Northstar's labelled "Enabled, but crashing" scenario, which reads the live API in live mode and replays a recorded response in reference mode. The other scenarios make no Sentry call. See [Sentry runtime evidence](docs/SENTRY.md).
 
 All four sample accounts and everyone in their evidence packs are fictional. Their snapshot is fixed to September 13, 2026; bring-your-own evidence is checked against today's date. Reviews, activity and pasted sources are saved only in this browser. Clear them from **Accounts**, and export first if you want a copy. No real CRM, support or telemetry service is connected.
 

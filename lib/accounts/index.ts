@@ -32,7 +32,7 @@ export const SCENARIO_LABEL: Record<Scenario, string> = {
   blocked: "Built, but not available",
   enabled: "Enabled + customer verified",
   stale: "Stale availability evidence",
-  crashing: "Enabled, but crashing · recorded Sentry",
+  crashing: "Enabled, but crashing · Sentry errors",
 };
 
 export type { AccountPack, AccountRef } from "./types";
