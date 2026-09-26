@@ -8,7 +8,7 @@ import { RunBudget, utf8Bytes } from "./budget";
 import type { Emit } from "./events";
 import { validateBriefs } from "./guardrails";
 import { parseModelJson } from "./json";
-import { modelInfo, pipelineModels, RUN_DEADLINE_MS, runBudgetUsd, STEP_LIMITS, type Env } from "./models";
+import { modelInfo, pipelineModels, RUN_DEADLINE_MS, runBudgetUsd, STEP_LIMITS, stepReasoningEffort, type Env } from "./models";
 import { briefNarrative, NARRATIVE_PROMPT, narrativeInput, narrativeSources, templateNarrative } from "./narrative";
 import { createQuoteScanner } from "./quotes";
 import { stepSummary } from "./steps";
@@ -133,7 +133,7 @@ export async function runPipeline(options: PipelineOptions): Promise<Analysis> {
       update("triage", { status: "running", reservedUsd: reservation.reservedUsd, detail: `Classifying ${sources.length} sources…` });
       let trace: InferenceTrace | null = null;
       try {
-        const result = await chatCompletion({ model, system, user, maxTokens: STEP_LIMITS.triage.maxOutputTokens, timeoutMs, stream, signal: options.signal, onProgress: progress("triage"), fetcher });
+        const result = await chatCompletion({ model, system, user, maxTokens: STEP_LIMITS.triage.maxOutputTokens, reasoningEffort: stepReasoningEffort(env).triage, timeoutMs, stream, signal: options.signal, onProgress: progress("triage"), fetcher });
         trace = result.trace;
         const cost = budget!.settle("triage", trace.usage);
         const common = { reportedModel: trace.model, latencyMs: trace.elapsedMs, usage: usageOf(trace), runId: trace.runId, costUsd: cost };
@@ -235,7 +235,7 @@ export async function runPipeline(options: PipelineOptions): Promise<Analysis> {
       update("narrative", { status: "running", reservedUsd: reservation.reservedUsd, detail: `Writing ${targets.length} evidence briefs…` });
       const scanNarrative = createQuoteScanner(sources, ACCOUNT.id);
       try {
-        const { content, trace } = await chatCompletion({ model, system: NARRATIVE_PROMPT, user, maxTokens: STEP_LIMITS.narrative.maxOutputTokens, timeoutMs, stream, signal: options.signal, onProgress: progress("narrative", emitQuotes("narrative", scanNarrative)), fetcher });
+        const { content, trace } = await chatCompletion({ model, system: NARRATIVE_PROMPT, user, maxTokens: STEP_LIMITS.narrative.maxOutputTokens, reasoningEffort: stepReasoningEffort(env).narrative, timeoutMs, stream, signal: options.signal, onProgress: progress("narrative", emitQuotes("narrative", scanNarrative)), fetcher });
         const cost = budget!.settle("narrative", trace.usage);
         const common = { reportedModel: trace.model, latencyMs: trace.elapsedMs, usage: usageOf(trace), runId: trace.runId, costUsd: cost };
         let decisions;

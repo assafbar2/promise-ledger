@@ -61,6 +61,8 @@ export type ChatRequest = {
   system: string;
   user: string;
   maxTokens: number;
+  /** Sent as `reasoning_effort` only when set; honoured per model, not guaranteed. */
+  reasoningEffort?: string | null;
   timeoutMs?: number;
   stream?: boolean;
   signal?: AbortSignal;
@@ -138,6 +140,7 @@ export async function chatCompletion(request: ChatRequest): Promise<{ content: s
         response_format: { type: "json_object" },
         temperature: 0,
         max_tokens: request.maxTokens,
+        ...(request.reasoningEffort ? { reasoning_effort: request.reasoningEffort } : {}),
         stream,
         ...(stream ? { stream_options: { include_usage: true } } : {}),
         store: false,

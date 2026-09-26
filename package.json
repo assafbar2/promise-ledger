@@ -19,7 +19,8 @@
     "eval": "node --import tsx scripts/evaluate.ts",
     "eval:live": "node --env-file-if-exists=.env.local --import tsx scripts/evaluate-live.ts",
     "eval:development": "npm run eval:live -- --suite=development",
-    "eval:held-out": "npm run eval:live -- --suite=held-out"
+    "eval:held-out": "npm run eval:live -- --suite=held-out",
+    "smoke:live": "node --env-file-if-exists=.env.local --import tsx scripts/pipeline-smoke.ts"
   },
   "dependencies": {
     "lucide-react": "^1.45.0",

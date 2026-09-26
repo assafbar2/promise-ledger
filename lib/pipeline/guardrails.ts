@@ -5,7 +5,7 @@ const citationSchema = z.object({ sourceId: z.string().min(1).max(80), quote: z.
 const claimSchema = z.object({ text: z.string().min(8).max(420), citations: z.array(citationSchema).min(1).max(3) }).strict();
 const briefSchema = z.object({
   commitmentId: z.string().min(1).max(40),
-  explanation: z.array(claimSchema).min(1).max(3),
+  explanation: z.array(claimSchema).min(1).max(4),
   customerUpdate: z.array(claimSchema).min(1).max(4),
   ownerNudge: z.array(claimSchema).min(1).max(2),
 }).strict();
@@ -92,8 +92,12 @@ export function validateBriefs(input: unknown, commitments: ReconciledCommitment
       for (const claim of parsed.data[section]) {
         for (const citation of claim.citations) {
           const source = sources.find((candidate) => candidate.id === citation.sourceId);
-          if (!source || !source.text.includes(citation.quote)) { reason ??= `cites a quote that is not exact text from ${citation.sourceId.slice(0, 40)}`; }
-          else citations++;
+          if (source?.text.includes(citation.quote)) { citations++; continue; }
+          const actual = sources.find((candidate) => candidate.text.includes(citation.quote));
+          const named = citation.sourceId.slice(0, 40);
+          reason ??= actual ? `attributes a quote to ${named} that actually comes from ${actual.id}`
+            : source ? `cites a quote that is not exact text from ${named}`
+              : `cites ${named}, which is not part of this commitment's evidence`;
         }
         reason ??= claimViolation(claim, section, commitment);
       }

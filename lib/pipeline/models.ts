@@ -51,6 +51,26 @@ export const STEP_LIMITS = {
   extraction: { maxInputBytes: 16000, maxOutputTokens: 6000, timeoutMs: 45000 },
   narrative: { maxInputBytes: 16000, maxOutputTokens: 7000, timeoutMs: 30000 },
 } as const;
+
+/**
+ * Measured September 26: Nano reasons by default at about 60 tokens/s and blew the 15 s triage
+ * timeout, while `reasoning_effort: "none"` was honoured (3.9 s, 312 output tokens). Ultra spent
+ * 4,832 (default effort) and 6,035 ("low", not honoured) of its 7,000 output tokens reasoning and
+ * was truncated both times; with "none" it answered in 5.4 s and 1,781 tokens. Extraction keeps
+ * the settings verified on September 19. `default` sends no `reasoning_effort` at all.
+ */
+export const REASONING_EFFORTS = ["none", "minimal", "low", "medium", "high", "xhigh", "max"] as const;
+
+function effort(value: string | undefined, fallback: string) {
+  const trimmed = (value ?? "").trim().toLowerCase();
+  if (!trimmed) return fallback;
+  if (trimmed === "default") return null;
+  return (REASONING_EFFORTS as readonly string[]).includes(trimmed) ? trimmed : fallback;
+}
+
+export function stepReasoningEffort(env: Env = process.env) {
+  return { triage: effort(env.NEBIUS_TRIAGE_REASONING_EFFORT, "none"), narrative: effort(env.NEBIUS_NARRATIVE_REASONING_EFFORT, "none") };
+}
 export const CHAT_TEMPLATE_OVERHEAD_TOKENS = 512;
 export const RUN_DEADLINE_MS = 70000;
 export const RUN_BUDGET_DEFAULT_USD = 0.05;
