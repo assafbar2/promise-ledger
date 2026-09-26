@@ -1,4 +1,5 @@
-import { extractionSchema, type Commitment, type ProductFact, type ReconciledCommitment, type Source } from "./schema";
+import { extractionSchema, type Commitment, type ProductFact, type ProviderSignal, type ReconciledCommitment, type Source } from "./schema";
+import { runtimeFailure, runtimeReason } from "./sentry/policy";
 
 export function validateExtraction(input: unknown, sources: Source[], accountId: string, featureIds: string[]): Commitment[] {
   const { commitments } = extractionSchema.parse(input);
@@ -22,7 +23,7 @@ export function validateExtraction(input: unknown, sources: Source[], accountId:
   return commitments;
 }
 
-export function reconcile(commitment: Commitment, facts: ProductFact[], accountId: string, asOf: string): ReconciledCommitment {
+export function reconcile(commitment: Commitment, facts: ProductFact[], accountId: string, asOf: string, runtime?: { signals: readonly ProviderSignal[]; sources: readonly Source[] }): ReconciledCommitment {
   const fact = facts.find((candidate) => candidate.featureId === commitment.featureId && candidate.accountId === accountId) ?? null;
   const base = { ...commitment, fact };
   if (commitment.intent === "tentative") return { ...base, verdict: "discussed", reason: "An idea was discussed, but no delivery commitment was made.", nextAction: "Clarify scope before creating a promise. Do not invent an owner or deadline." };
@@ -30,6 +31,8 @@ export function reconcile(commitment: Commitment, facts: ProductFact[], accountI
   const age = Date.parse(asOf) - Date.parse(fact.observedAt);
   if (!Number.isFinite(age) || age < 0 || age > 72 * 60 * 60 * 1000) return { ...base, verdict: "unknown", reason: "The availability evidence is stale or has an invalid timestamp.", nextAction: "Refresh the customer-specific evidence. Old or future-dated telemetry cannot prove delivery." };
   if (fact.built === true && fact.enabled === false) return { ...base, verdict: "blocked", reason: "Engineering is done. The customer-specific feature flag is still off.", nextAction: "Ask the owner to enable the Northstar entitlement, then confirm a successful customer test." };
+  const failing = runtime ? runtimeFailure(fact, runtime.signals, runtime.sources) : null;
+  if (failing) return { ...base, runtime: failing, verdict: "verify", reason: runtimeReason(failing, "Northstar"), nextAction: "Review the linked runtime issue with the owner and confirm a successful Northstar run before claiming delivery. Enabled is not the same as working." };
   if (fact.built === true && fact.enabled === true && fact.verified === true) return { ...base, verdict: "verified", reason: "Built, enabled for this customer, and confirmed by an acceptance test.", nextAction: "Review the evidence before sharing the delivery update." };
   if (fact.built === null || fact.enabled === null || (fact.verified === true && (fact.built !== true || fact.enabled !== true))) return { ...base, verdict: "unknown", reason: "The product signals are incomplete or inconsistent.", nextAction: "Resolve the conflicting evidence rather than inferring delivery." };
   if (commitment.dueDate && commitment.dueDate < asOf.slice(0, 10)) return { ...base, verdict: "overdue", reason: "The promised date has passed without verified customer delivery.", nextAction: "Confirm the blocker and agree a new date with the owner before updating the customer." };

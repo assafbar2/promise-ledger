@@ -33,13 +33,13 @@ export const FEATURE_IDS = referenceCommitments.map((commitment) => commitment.f
 export function createScenario(scenario: Scenario) {
   const sources = structuredClone(baseSources);
   const snapshot = sources.find((source) => source.id === "SRC-03")!;
-  if (scenario === "enabled") {
+  if (scenario === "enabled" || scenario === "crashing") {
     snapshot.text = "account=northstar; feature=audit-export; built=true; enabled=true; verified=true. Northstar exported an audit log successfully in the acceptance test at 16:50 UTC.";
     snapshot.observedAt = "2026-09-13T16:55:00Z";
   }
   if (scenario === "stale") snapshot.observedAt = "2026-09-07T16:45:00Z";
   const facts: ProductFact[] = [
-    { featureId: "audit-export", accountId: ACCOUNT.id, built: true, enabled: scenario === "enabled", verified: scenario === "enabled", observedAt: snapshot.observedAt, evidence: [{ sourceId: "SRC-02", quote: sources[1].text }, { sourceId: snapshot.id, quote: snapshot.text }] },
+    { featureId: "audit-export", accountId: ACCOUNT.id, built: true, enabled: scenario === "enabled" || scenario === "crashing", verified: scenario === "enabled" || scenario === "crashing", observedAt: snapshot.observedAt, evidence: [{ sourceId: "SRC-02", quote: sources[1].text }, { sourceId: snapshot.id, quote: snapshot.text }] },
     ...["eu-residency", "usage-report", "scim"].map((featureId): ProductFact => ({
       featureId, accountId: ACCOUNT.id, built: featureId === "scim", enabled: featureId === "scim", verified: featureId === "scim" ? null : false,
       observedAt: sources[4].observedAt, evidence: [{ sourceId: "SRC-05", quote: sources[4].text.split("\n").find((line) => line.includes(`feature=${featureId};`))! }],

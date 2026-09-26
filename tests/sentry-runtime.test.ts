@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createScenario } from "../lib/fixtures.ts";
+import type { Source } from "../lib/schema.ts";
 import { runtimeFailure, runtimeReason } from "../lib/sentry/policy.ts";
 import recording from "../lib/sentry/recorded-runtime.json" with { type: "json" };
 import { createRuntimeCache, fetchRuntimeIssues, replayRuntimeIssues, runtimeEvidence, sentryConfig, sentryConfigured, SentryError, type RuntimeRecording, type RuntimeSignal, type SentryConfig } from "../lib/sentry/runtime.ts";
@@ -148,29 +149,42 @@ test("the recorded replay parses through the live path and is labelled recorded"
   assert.ok(!JSON.stringify(recording).includes("northstar-admin"));
 });
 
+const runtimeSource = (id: string, fetchedAt = NOW, patch: Partial<Source> = {}): Source => ({ id, accountId: "northstar", kind: "Runtime", title: `${id} runtime`, author: "Sentry · promise-ledger-demo", observedAt: "2026-09-26T08:30:00Z", text: `issue=${id}; count=14; count=2; customer=northstar; feature=audit-export`, url: "https://demo-org.sentry.io/issues/1001/", provenance: { fetchedAt, recorded: false }, ...patch });
+const SOURCES = [runtimeSource("RT-1001-audit-export"), runtimeSource("RT-2")];
 const signal = (overrides: Partial<RuntimeSignal> = {}): RuntimeSignal => ({ kind: "runtimeErrors", featureId: "audit-export", count: 14, users: 3, lastSeen: "2026-09-26T08:30:00Z", evidence: { sourceId: "RT-1001-audit-export", quote: "count=14" }, ...overrides });
 
 test("enabled but crashing: a fresh post-acceptance issue is a runtime failure", () => {
   const enabled = createScenario("enabled").facts[0];
-  const failure = runtimeFailure(enabled, [signal()], NOW);
-  assert.deepEqual(failure, { featureId: "audit-export", count: 14, users: 3, issues: 1, lastSeen: "2026-09-26T08:30:00Z", sourceIds: ["RT-1001-audit-export"] });
+  const failure = runtimeFailure(enabled, [signal()], SOURCES);
+  assert.deepEqual(failure, { count: 14, users: 3, issues: 1, lastSeen: "2026-09-26T08:30:00Z", evidence: [{ sourceId: "RT-1001-audit-export", quote: "count=14" }] });
   assert.equal(runtimeReason(failure!, "Northstar"), "Enabled for Northstar, but failing at runtime (14 events, 3 users).");
-  const two = runtimeFailure(enabled, [signal(), signal({ count: 2, users: 1, lastSeen: "2026-09-26T08:45:00Z", evidence: { sourceId: "RT-2", quote: "count=2" } })], NOW)!;
+  const two = runtimeFailure(enabled, [signal(), signal({ count: 2, users: 1, lastSeen: "2026-09-26T08:45:00Z", evidence: { sourceId: "RT-2", quote: "count=2" } })], SOURCES)!;
   assert.equal(runtimeReason(two, "Northstar"), "Enabled for Northstar, but failing at runtime (16 events, at least 3 users across 2 issues).");
   assert.equal(two.lastSeen, "2026-09-26T08:45:00Z");
+  assert.equal(runtimeReason({ ...failure!, count: 1, users: 1 }, "Northstar"), "Enabled for Northstar, but failing at runtime (1 event, 1 user).");
 });
 
 test("runtime errors never apply to disabled, unbuilt or unknown features, stale issues, or pre-acceptance errors", () => {
   const enabled = createScenario("enabled").facts[0];
-  assert.equal(runtimeFailure(null, [signal()], NOW), null);
-  assert.equal(runtimeFailure(createScenario("blocked").facts[0], [signal()], NOW), null);
-  assert.equal(runtimeFailure({ ...enabled, built: null }, [signal()], NOW), null);
-  assert.equal(runtimeFailure({ ...enabled, enabled: null }, [signal()], NOW), null);
-  assert.equal(runtimeFailure(enabled, [], NOW), null);
-  assert.equal(runtimeFailure(enabled, [signal({ featureId: "saml" })], NOW), null);
-  assert.equal(runtimeFailure(enabled, [signal({ count: 0 })], NOW), null);
-  assert.equal(runtimeFailure(enabled, [signal({ lastSeen: "2026-09-23T08:59:00Z" })], NOW), null);
-  assert.equal(runtimeFailure(enabled, [signal({ lastSeen: "2026-09-26T10:00:00Z" })], NOW), null);
-  assert.equal(runtimeFailure(enabled, [signal({ lastSeen: "2026-09-13T16:00:00Z" })], "2026-09-14T00:00:00Z"), null);
-  assert.equal(runtimeFailure(enabled, [signal({ lastSeen: "not-a-date" })], NOW), null);
+  assert.equal(runtimeFailure(null, [signal()], SOURCES), null);
+  assert.equal(runtimeFailure(createScenario("blocked").facts[0], [signal()], SOURCES), null);
+  assert.equal(runtimeFailure({ ...enabled, built: null }, [signal()], SOURCES), null);
+  assert.equal(runtimeFailure({ ...enabled, enabled: null }, [signal()], SOURCES), null);
+  assert.equal(runtimeFailure(enabled, [], SOURCES), null);
+  assert.equal(runtimeFailure(enabled, [signal({ featureId: "saml" })], SOURCES), null);
+  assert.equal(runtimeFailure(enabled, [signal({ count: 0 })], SOURCES), null);
+  assert.equal(runtimeFailure(enabled, [signal({ lastSeen: "2026-09-23T08:59:00Z" })], SOURCES), null);
+  assert.equal(runtimeFailure(enabled, [signal({ lastSeen: "2026-09-26T10:00:00Z" })], SOURCES), null);
+  assert.equal(runtimeFailure(enabled, [signal({ lastSeen: "2026-09-13T16:00:00Z" })], [runtimeSource("RT-1001-audit-export", "2026-09-14T00:00:00Z")]), null);
+  assert.equal(runtimeFailure(enabled, [signal({ lastSeen: "not-a-date" })], SOURCES), null);
+});
+
+test("a runtime signal counts only with its own fetched, account-scoped Runtime source and exact quote", () => {
+  const enabled = createScenario("enabled").facts[0];
+  assert.equal(runtimeFailure(enabled, [signal()], []), null);
+  assert.equal(runtimeFailure(enabled, [signal()], [runtimeSource("RT-1001-audit-export", NOW, { kind: "Support" })]), null);
+  assert.equal(runtimeFailure(enabled, [signal()], [runtimeSource("RT-1001-audit-export", NOW, { accountId: "globex" })]), null);
+  assert.equal(runtimeFailure(enabled, [signal()], [runtimeSource("RT-1001-audit-export", NOW, { provenance: {} })]), null);
+  assert.equal(runtimeFailure(enabled, [signal({ evidence: { sourceId: "RT-1001-audit-export", quote: "count=999" } })], SOURCES), null);
+  assert.equal(runtimeFailure(enabled, [signal()], [runtimeSource("RT-1001-audit-export", "2026-09-30T00:00:00Z")]), null, "recorded evidence ages against its own capture time");
 });

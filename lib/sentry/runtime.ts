@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ProviderSignal } from "../schema";
 
 /**
  * Read-only Sentry client for runtime-error evidence. It turns Sentry API responses into
@@ -195,7 +196,7 @@ export type RuntimeSource = {
   url: string;
   provenance: { requestId: string; fetchedAt: string; httpStatus: number; recorded: boolean };
 };
-export type RuntimeSignal = { kind: "runtimeErrors"; featureId: string; count: number; users: number; lastSeen: string; evidence: { sourceId: string; quote: string } };
+export type RuntimeSignal = Extract<ProviderSignal, { kind: "runtimeErrors" }>;
 
 export function runtimeEvidence(result: RuntimeFetch, recorded: boolean): { sources: RuntimeSource[]; signals: RuntimeSignal[] } {
   const sources: RuntimeSource[] = [];
