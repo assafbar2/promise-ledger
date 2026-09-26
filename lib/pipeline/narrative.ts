@@ -14,7 +14,7 @@ For every commitment in "commitments", return one brief: {"commitmentId":"...","
 Use exactly the keys shown; add no other fields.
 Rules:
 1. The verdict is final. Never contradict, soften or upgrade it. Never say a feature is delivered, live, or available to the customer unless the verdict is "verified".
-2. Every claim cites 1 to 3 quotes. Each quote is an exact, contiguous excerpt of at least 12 characters copied from a source listed in that commitment's evidenceSourceIds.
+2. Every claim cites 1 to 3 quotes. Each quote is an exact, contiguous excerpt of at least 12 characters copied from a source listed in that commitment's evidenceSourceIds, with the sourceId of the source it was copied from. validatedQuotes lists excerpts already checked for that commitment, each with its correct sourceId; prefer them.
 3. Do not write any date, weekday, deadline or timeframe (for example tomorrow, next week, soon, Friday) unless that exact text appears in a quote cited by the same claim.
 4. Never create a promise, commitment, guarantee or delivery date. Do not say something "will be" delivered, enabled, fixed or available.
 5. No links, email addresses, prices, placeholders, or people not named in the sources.
@@ -56,6 +56,7 @@ export function narrativeInput(commitments: ReconciledCommitment[], allowed: Map
       recommendedNextAction: commitment.nextAction,
       checks: { built: commitment.fact?.built ?? null, enabled: commitment.fact?.enabled ?? null, customerVerified: commitment.fact?.verified ?? null },
       evidenceSourceIds: (allowed.get(commitment.id) ?? []).map((source) => source.id),
+      validatedQuotes: [...commitment.evidence, ...(commitment.fact?.evidence ?? [])].map(({ sourceId, quote }) => ({ sourceId, quote })),
     })),
     untrustedSources: [...used.values()].map(({ id, kind, title, observedAt, text }) => ({ sourceId: id, kind, title, observedAt, text })),
   });

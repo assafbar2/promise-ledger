@@ -15,6 +15,7 @@ function formatProblem(error: z.ZodError) {
   const path = issue.path.filter((part) => typeof part === "string").join(".") || "brief";
   if (issue.code === "unrecognized_keys") return `adds fields the format does not allow (${issue.keys.join(", ").slice(0, 60)})`;
   if (issue.code === "too_small" && issue.path.at(-1) === "citations") return "has a claim without citations";
+  if (issue.code === "too_small" && issue.path.at(-1) === "quote") return "cites a quote shorter than 12 characters";
   if (issue.code === "too_small" || issue.code === "too_big") return `has ${issue.code === "too_big" ? "too many or too long" : "too few or too short"} entries in ${path}`;
   return `does not match the brief format at ${path}`;
 }

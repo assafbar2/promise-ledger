@@ -14,8 +14,11 @@ Intended use: **synthetic-data hackathon demo**, including an open, rate-limited
 - Strict JSON input, same-origin checks and small request-size limit.
 - Server-owned synthetic inputs only; no arbitrary source/URL/account submission.
 - Untrusted model output: schema, known feature IDs, unique records, exact account-scoped quotes and grounded owners/dates.
+- Multi-model pipeline guardrails (September 26): triage can only narrow what extraction reads, and a recall guard always forwards sources with commitment language. The narrative model runs after the verdicts are fixed and has no verdict field. Every claim must cite exact quotes from that commitment's own evidence. New dates, timeframes and customer-facing promises are rejected, as are delivery or access claims that contradict the facts, and links, addresses and placeholders. A failing brief falls back to a labelled template. See [architecture](docs/ARCHITECTURE.md#guardrails).
+- Evidence providers are validated by one registry: account scope, unique IDs, size caps, HTTPS URLs, facts only from curated providers, signals citing exact quotes, and no recorded fixtures in live runs.
+- Per-run spending guard: each paid call reserves its worst case before dispatch (`LIVE_RUN_BUDGET_USD`, default $0.05); one rate-limit reservation covers a whole pipeline; a 70-second run deadline applies.
 - LLM cannot alter trusted product facts, invoke tools or send communications.
-- Bounded inference timeout; no automatic paid retries or secret-bearing provider error output.
+- Bounded inference timeouts; no automatic paid retries or secret-bearing provider error output. Client disconnects abort in-flight provider calls.
 - Source text rendered as text; no injected HTML.
 - Noncacheable API results; edits/new evidence invalidate local approvals.
 
@@ -25,7 +28,7 @@ Open live mode is acceptable only because every input is a fixed synthetic pack 
 
 **Key rotation, accepted risk:** the Nebius key was pasted into chat on September 19. By owner decision on September 26 it is not rotated. Anyone holding it could spend its free credits outside this app, and the app's limits cannot prevent that. Reassess if credits drop unexpectedly. Before any real-data use, add authenticated identities, per-user quotas, persistent reviewer attribution and retention controls. The current log is memory-only, not an immutable compliance audit.
 
-Exact quotations do not guarantee semantic correctness; test negation, cancellation, source authority and contradictions. Real telemetry needs authorized account mapping and validated timestamps.
+Exact quotations do not guarantee semantic correctness, and a model-written draft that passes every guardrail can still mislead. Human edits to a draft are not re-checked; test negation, cancellation, source authority and contradictions. Real telemetry needs authorized account mapping and validated timestamps.
 
 September 20's cleanup removes unused database/authentication starter code, patches Vinext's `image-size` dependency to 2.0.4, and disables the unused Worker image endpoint. A full npm audit reports zero advisories, not a blanket security guarantee. The September 20 hosted release has no provider credential and cannot run inference until the owner completes the live setup. Browser, keyboard and contrast testing remains pending. No blanket security or WCAG claim is made.
 

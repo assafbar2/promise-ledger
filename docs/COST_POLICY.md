@@ -33,3 +33,20 @@ Fresh verification metadata was populated for the September 19 first live invoca
 ## Verification before each live run
 
 Recheck the saved stop-usage preference and available credit before recording fresh guard metadata. Do not run inference while paid rollover is enabled. If applying a promotional credit changes trial status or disables the no-charge safeguard, stop and verify equivalent provider protection before using the credit. Record actual redeemed credit and its expiry; do not assume an activation code is itself a redeemable promo code. A new evaluation process does not automatically know what an earlier process spent: reverify the actual balance, do not reuse an old credit figure.
+
+## Per-run budget for the live pipeline
+
+Added September 26, 2026. A live evidence check runs up to three paid calls: Nemotron 3 Nano triage, Nemotron 3 Super extraction, and Nemotron 3 Ultra narrative. The rate limiter counts the whole pipeline as **one** live run. Rates are from the public Token Factory catalog, checked September 26: Nano $0.06/$0.24, Super $0.30/$0.90, Ultra $1.00/$3.00 per million input/output tokens.
+
+| Step | Input cap | Output cap (`max_tokens`, includes reasoning) | Worst case |
+| --- | --- | --- | --- |
+| Triage (Nano) | 16,000 bytes (≤ 16,512 tokens) | 3,000 | $0.001711 |
+| Extract (Super) | 16,000 bytes (≤ 16,512 tokens) | 6,000 | $0.010354 |
+| Explain (Ultra) | 16,000 bytes (≤ 16,512 tokens) | 7,000 | $0.037512 |
+| **Hard ceiling per run** | | | **$0.049577** |
+
+The input bound assumes each token encodes at least one UTF-8 byte, plus 512 tokens of chat-template overhead. `LIVE_RUN_BUDGET_USD` (default **$0.05**, maximum $0.50) enforces the ceiling at runtime. Each call reserves its worst case before dispatch and then settles to reported usage. Missing usage keeps the full reservation, and usage above a bound stops every later paid call. Unlisted model IDs are budgeted at the highest listed rate ($1/$3).
+
+**Measured on September 26:** four full live runs with the shipped settings cost an estimated $0.0084–$0.0095 each, in 16–20 seconds. The input to the three calls totalled about 3,400–3,900 tokens, and the output 3,300–4,700 tokens. See [the live pipeline check](evaluation/PIPELINE-LIVE-2026-09-26.md).
+
+**Daily exposure at the current defaults**, 30 public plus 40 owner-token runs: worst case 70 × $0.05 = **$3.47 per day**; typical 70 × $0.0095 ≈ **$0.67 per day**. Set `LIVE_RUNS_PER_DAY` to at most *verified remaining free credit ÷ (days of judge access left × $0.05)*. With about $50 of credit and 80 days left, that's about 12 runs per day in the worst case. Typical runs cost about a fifth of the ceiling, so actual consumption is much lower. Setting `NEBIUS_NARRATIVE_MODEL=off` removes Ultra: the ceiling drops to $0.012 and template drafts are shown instead. The provider's **Stop usage after trial** setting remains the $0 guarantee. These figures are estimates at catalog rates, not invoices.

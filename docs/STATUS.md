@@ -1,5 +1,13 @@
 # Promise Ledger — handoff
 
+## Update — September 26, 2026: multi-model agent pipeline (branch `cursor/nemotron-agent-pipeline-a002`, [PR #2](https://github.com/assafbar2/promise-ledger/pull/2), draft)
+
+- Live mode is a visible pipeline: Nano triage, then Super extraction, then deterministic rules, then Ultra narrative. The live agent view streams each step, and reference mode replays it with a label. See [architecture](ARCHITECTURE.md).
+- Guardrails keep models from changing verdicts or inventing dates or promises; failing briefs fall back to labelled templates. Evidence providers are pluggable.
+- Checked: `npm run check` (133 tests plus 3 Worker tests) and `npm run test:vercel` (6 tests) pass. 20 real Token Factory calls on the trial credit (about $0.092 estimated); four full runs with shipped settings took 16–20 s at about $0.009 each ([report](evaluation/PIPELINE-LIVE-2026-09-26.md)). Browser check of live and reference modes, desktop and 390 px.
+- **Owner actions after merge:** no new required variables; the defaults are tested. If the Vercel WAF rule exists, change its path condition to "starts with `/api/`" (the UI now posts to `/api/pipeline`). Recalculate `LIVE_RUNS_PER_DAY` with the new $0.05 per-run ceiling ([cost policy](COST_POLICY.md#per-run-budget-for-the-live-pipeline)). The key-after-trial question for Nebius support still decides whether live mode survives October 18.
+- The video's live beat should now show the agent panel. The script narration still describes the single extraction call and needs an owner-approved revision.
+
 ## Update — September 26, 2026: open, rate-limited live mode
 
 Owner decisions: judges must be able to use **live Nemotron mode with no token**, protected by rate limits; the existing Nebius key is **not rotated**; the zero-cash policy still applies.
