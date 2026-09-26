@@ -4,7 +4,7 @@
 
 ### Public-claim check (Tavily)
 
-- Adds the `tavily-public-claim` evidence provider. Live runs fetch the fictional vendor's public changelog (`/changelog`, served by the app) with a basic Tavily Extract call. Reference runs show the same page as a labelled fixture with no Tavily call.
+- Adds the `tavily-public-claim` evidence provider. Live runs fetch the fictional vendor's public changelog (`/changelog`, served by the app) with a basic Tavily Extract call. Reference runs replay a genuine recorded Tavily response for that page (labelled "Recorded Tavily response") with no live call.
 - Claims are detected deterministically and accepted only as exact quotes of the fetched text, never Tavily's generated answers. The allowlist is re-checked on returned URLs, and failures show "Public claim not checked" with no fixture fallback.
 - A public GA claim never changes a verdict. It adds a "Publicly GA ≠ usable by this customer" note and guardrail check when the account can't use the feature, and public-claim sources are kept out of the narrative model's inputs.
 - UI: the agent view now shows external provider outcomes (reusing `ProviderStatus`). The evidence trail shows a "Public claim, not customer evidence" card with the Tavily request ID, the draft editor warns on conflicts, and public-claim source cards reuse `SourceOrigin` and are labelled as not customer evidence.

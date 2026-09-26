@@ -1,9 +1,9 @@
 // One real Tavily Extract call through the public-claim check, for manual verification.
-// node --env-file-if-exists=.env.local --import tsx scripts/tavily-smoke.ts [--url=https://<allowlisted>/path] [--record=file.json]
+// node --env-file-if-exists=.env.local --import tsx scripts/tavily-smoke.ts [--url=https://<allowlisted>/path] [--record=recorded-response.json]
 import { writeFile } from "node:fs/promises";
 import { ACCOUNT, FEATURE_IDS } from "../lib/fixtures";
 import { checkPublicClaims } from "../lib/public-claims/check";
-import { tavilyConfig } from "../lib/public-claims/tavily";
+import { TAVILY_EXTRACT_URL, tavilyConfig } from "../lib/public-claims/tavily";
 
 const args = new Map(process.argv.slice(2).map((arg): [string, string] => {
   const [name, ...value] = arg.replace(/^--/, "").split("=");
@@ -21,7 +21,13 @@ const env = { ...process.env, KV_REST_API_URL: "", UPSTASH_REDIS_REST_URL: "", .
 const { apiKey, urls } = tavilyConfig(env);
 if (!apiKey) throw new Error("Set TAVILY_API_KEY in .env.local first.");
 console.log(JSON.stringify({ urls, before: await keyUsage(apiKey) }, null, 2));
-const result = await checkPublicClaims({ accountId: ACCOUNT.id, featureIds: FEATURE_IDS, env });
+let raw: Record<string, unknown> | null = null;
+const recordingFetch: typeof fetch = async (input, init) => {
+  const response = await fetch(input, init);
+  if (String(input) === TAVILY_EXTRACT_URL && response.ok) raw = await response.clone().json() as Record<string, unknown>;
+  return response;
+};
+const result = await checkPublicClaims({ accountId: ACCOUNT.id, featureIds: FEATURE_IDS, env, fetcher: recordingFetch });
 if (result.status !== "checked") {
   console.log(JSON.stringify(result, null, 2));
   process.exitCode = 1;
@@ -33,7 +39,12 @@ if (result.status !== "checked") {
     claims: result.claims,
   }, null, 2));
   const record = args.get("record");
-  if (record) await writeFile(record, `${JSON.stringify({ capturedAt: result.sources[0]?.observedAt, sources: result.sources, claims: result.claims }, null, 2)}\n`);
+  // Keeps only the fields the parser reads; the response never contains the API key.
+  if (record && raw) {
+    const { results, failed_results, response_time, usage, request_id } = raw as { results: { url: string; raw_content: string | null }[]; failed_results?: unknown[]; response_time?: number; usage?: { credits: number }; request_id?: string };
+    const response = { results: results.map(({ url, raw_content }) => ({ url, raw_content })), failed_results: failed_results ?? [], response_time, usage, request_id };
+    await writeFile(record, `${JSON.stringify({ capturedAt: result.sources[0]?.observedAt, request: { urls, extract_depth: "basic", format: "text" }, response }, null, 2)}\n`);
+  }
 }
 await new Promise((resolve) => setTimeout(resolve, 1500));
 console.log(JSON.stringify({ after: await keyUsage(apiKey) }, null, 2));

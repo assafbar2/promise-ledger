@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { tavilyPublicClaimProvider } from "../lib/evidence/providers/tavily-public-claim.ts";
+import { RECORDED_PUBLIC_CLAIMS, tavilyPublicClaimProvider } from "../lib/evidence/providers/tavily-public-claim.ts";
+import { normalizeText } from "../lib/public-claims/claims.ts";
 import { syntheticPackProvider } from "../lib/evidence/providers/synthetic-pack.ts";
 import { collectEvidence } from "../lib/evidence/registry.ts";
 import { AS_OF, createScenario, FEATURE_IDS, referenceCommitments } from "../lib/fixtures.ts";
@@ -35,12 +36,15 @@ const tavilyOk: typeof fetch = async (input) => {
   return Response.json({ results: [{ url: "https://promise-ledger-chi.vercel.app/changelog", raw_content: changelogText() }], failed_results: [], usage: { credits: 1 }, request_id: "req-live-1" });
 };
 
-test("reference runs add the labelled changelog fixture and its GA signals without calling Tavily", async () => {
+test("reference runs replay the recorded Tavily response and its GA signals without calling Tavily", async () => {
   const collected = await withFetch(async () => { throw new Error("reference mode must not use the network"); }, () => collectEvidence({ ...context, mode: "reference", env: liveEnv }, providers));
   const source = collected.sources.find((candidate) => candidate.id === "PUB-01")!;
   assert.equal(source.kind, "PublicClaim");
   assert.equal(source.provenance?.recorded, true);
-  assert.match(source.author, /no Tavily call/);
+  assert.equal(source.author, "Recorded Tavily response · no live call");
+  assert.equal(source.provenance?.requestId, "ec1cc9b8-cd2b-4e30-9ff9-689b1883b1c3");
+  assert.equal(source.observedAt, RECORDED_PUBLIC_CLAIMS.capturedAt);
+  assert.equal(normalizeText(source.text), normalizeText(changelogText()), "the recording still matches the page the app serves");
   assert.deepEqual(collected.signals.map((signal) => signal.featureId), ["audit-export", "saml"]);
   assert.deepEqual(collected.providers.map(({ id, status, recorded, trust }) => ({ id, status, recorded, trust })), [
     { id: "synthetic-pack", status: "ok", recorded: false, trust: "curated" },

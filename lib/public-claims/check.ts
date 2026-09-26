@@ -87,17 +87,31 @@ export async function checkPublicClaims({ accountId, featureIds, now = new Date(
     }
   }
   const pages = config.urls.map((url) => byUrl.get(url)).filter((page): page is CachedPage => Boolean(page));
+  return { status: "checked", ...claimEvidenceFromPages(pages, accountId, featureIds, false), usage };
+}
+
+function claimEvidenceFromPages(pages: CachedPage[], accountId: string, featureIds: readonly string[], recorded: boolean) {
   const sources = pages.map((page, index): PublicClaimSource => ({
     id: `PUB-${String(index + 1).padStart(2, "0")}`,
     accountId,
     kind: "PublicClaim",
     title: `${PUBLIC_VENDOR} public page · ${new URL(page.url).pathname}`,
-    author: "Public web · fetched by Tavily Extract",
+    author: recorded ? "Recorded Tavily response · no live call" : "Public web · fetched by Tavily Extract",
     observedAt: page.fetchedAt,
     text: sourceText(page.chunks),
     url: page.url,
-    provenance: { ...(page.requestId ? { requestId: page.requestId } : {}), fetchedAt: page.fetchedAt, httpStatus: page.httpStatus, ...(page.credits === null ? {} : { credits: page.credits }), recorded: false },
+    provenance: { ...(page.requestId ? { requestId: page.requestId } : {}), fetchedAt: page.fetchedAt, httpStatus: page.httpStatus, ...(page.credits === null ? {} : { credits: page.credits }), recorded },
   }));
   const claims = sources.flatMap((source) => findPublicClaims({ text: source.text, sourceId: source.id, url: source.url, featureIds }));
-  return { status: "checked", sources, claims, signals: claims.map((claim) => ({ kind: "publicClaimGA", featureId: claim.featureId, evidence: claimEvidence(claim) })), usage };
+  return { sources, claims, signals: claims.map((claim): PublicClaimSignal => ({ kind: "publicClaimGA", featureId: claim.featureId, evidence: claimEvidence(claim) })) };
+}
+
+export type PublicClaimRecording = { capturedAt: string; request: { urls: string[] }; response: unknown };
+
+/** Replays a recorded Extract response through the same parser, allowlist and grounding as a live fetch. No network. */
+export async function replayPublicClaims(recording: PublicClaimRecording, { accountId, featureIds }: { accountId: string; featureIds: readonly string[] }) {
+  const replay: typeof fetch = async () => Response.json(recording.response);
+  const extracted = await tavilyExtract({ apiKey: "recorded", urls: recording.request.urls, allowlist: tavilyConfig({}).allowlist, fetcher: replay });
+  const pages = extracted.map((page): CachedPage => ({ url: page.url, chunks: page.chunks, requestId: page.requestId, credits: page.credits, httpStatus: page.httpStatus, fetchedAt: recording.capturedAt }));
+  return claimEvidenceFromPages(pages, accountId, featureIds, true);
 }
