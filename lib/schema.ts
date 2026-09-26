@@ -21,7 +21,7 @@ export const extractionSchema = z.object({
 
 export const requestSchema = z.object({
   mode: z.enum(["reference", "live"]),
-  scenario: z.enum(["blocked", "enabled", "stale"]),
+  scenario: z.enum(["blocked", "enabled", "stale", "crashing"]),
 }).strict();
 
 export type Evidence = z.infer<typeof evidenceSchema>;
@@ -59,11 +59,14 @@ export type ProductFact = {
   evidence: Evidence[];
 };
 export type Verdict = "blocked" | "overdue" | "verify" | "on-track" | "verified" | "discussed" | "unknown";
+/** Fresh runtime errors for an enabled feature, aggregated from cited Runtime sources. */
+export type RuntimeFinding = { count: number; users: number; issues: number; lastSeen: string; evidence: Evidence[] };
 export type ReconciledCommitment = Commitment & {
   verdict: Verdict;
   reason: string;
   nextAction: string;
   fact: ProductFact | null;
+  runtime?: RuntimeFinding;
 };
 
 export type Claim = { text: string; citations: Evidence[] };

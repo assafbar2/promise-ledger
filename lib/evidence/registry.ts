@@ -48,7 +48,7 @@ export async function collectEvidence(context: Omit<EvidenceContext, "signal"> &
   const reports: EvidenceProviderReport[] = [];
   const parent = context.signal ?? new AbortController().signal;
   for (const provider of providers) {
-    if (!provider.enabled(context.env)) continue;
+    if (!provider.enabled(context.env, context)) continue;
     const started = performance.now();
     const elapsed = () => Math.round(performance.now() - started);
     try {

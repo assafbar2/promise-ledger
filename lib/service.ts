@@ -3,7 +3,7 @@ import { configuration } from "./nebius";
 import type { PipelineEvent } from "./pipeline/events";
 import { modelInfo, pipelineModels, runBudgetUsd } from "./pipeline/models";
 import { PipelineError, runPipeline } from "./pipeline/run";
-import { requestSchema } from "./schema";
+import { requestSchema, type Scenario } from "./schema";
 
 export function capabilities() {
   const { apiKey, model, accessToken } = configuration();
@@ -50,7 +50,7 @@ function fail(error: string, status: number, extra: Record<string, unknown> = {}
  * Validates the request and, for live mode, applies the owner token and reserves exactly one
  * live run. A whole pipeline (triage, extraction, narrative) counts as that one run.
  */
-async function admit(request: Request): Promise<{ ok: true; mode: "reference" | "live"; scenario: "blocked" | "enabled" | "stale" } | { ok: false; response: Response }> {
+async function admit(request: Request): Promise<{ ok: true; mode: "reference" | "live"; scenario: Scenario } | { ok: false; response: Response }> {
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return { ok: false, response: fail("Cross-origin requests are not allowed.", 403) };
   if (!request.headers.get("content-type")?.startsWith("application/json")) return { ok: false, response: fail("Send a JSON request.", 415) };

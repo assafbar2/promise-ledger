@@ -42,6 +42,6 @@ export interface EvidenceProvider {
   /** Hard per-provider deadline. The registry aborts `context.signal` when it passes. No retries. */
   readonly timeoutMs: number;
   /** Env present and feature flag on. Called on every run; keep it cheap and side-effect free. */
-  enabled(env: EvidenceEnv): boolean;
+  enabled(env: EvidenceEnv, run: Pick<EvidenceContext, "mode" | "scenario">): boolean;
   fetch(context: EvidenceContext): Promise<EvidenceBundle>;
 }

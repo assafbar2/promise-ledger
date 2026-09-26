@@ -23,14 +23,14 @@ Keep each claim to one short sentence. Return only a compact JSON object without
 const CUSTOMER_KINDS: Source["kind"][] = ["Support", "UserSupplied"];
 
 /**
- * Sources a commitment's brief may cite: its own evidence, its fact's evidence, and related
+ * Sources a commitment's brief may cite: its own evidence, its fact's and runtime finding's evidence, and related
  * customer signals. Triage labels add signals; customer tickets naming the feature are always
  * included, because Nano's labels proved noisy with reasoning off.
  */
 export function narrativeSources(commitments: ReconciledCommitment[], sources: Source[], labels: TriageLabel[]) {
   const allowed = new Map<string, Source[]>();
   for (const commitment of commitments) {
-    const ids = new Set([...commitment.evidence, ...(commitment.fact?.evidence ?? [])].map((evidence) => evidence.sourceId));
+    const ids = new Set([...commitment.evidence, ...(commitment.fact?.evidence ?? []), ...(commitment.runtime?.evidence ?? [])].map((evidence) => evidence.sourceId));
     for (const label of labels) if (label.role === "customer-signal" && label.features.includes(commitment.featureId)) ids.add(label.sourceId);
     const phrase = commitment.featureId.replace(/-/g, " ");
     for (const source of sources) if (CUSTOMER_KINDS.includes(source.kind) && source.text.toLowerCase().includes(phrase)) ids.add(source.id);
@@ -56,7 +56,7 @@ export function narrativeInput(commitments: ReconciledCommitment[], allowed: Map
       recommendedNextAction: commitment.nextAction,
       checks: { built: commitment.fact?.built ?? null, enabled: commitment.fact?.enabled ?? null, customerVerified: commitment.fact?.verified ?? null },
       evidenceSourceIds: (allowed.get(commitment.id) ?? []).map((source) => source.id),
-      validatedQuotes: [...commitment.evidence, ...(commitment.fact?.evidence ?? [])].map(({ sourceId, quote }) => ({ sourceId, quote })),
+      validatedQuotes: [...commitment.evidence, ...(commitment.fact?.evidence ?? []), ...(commitment.runtime?.evidence ?? [])].map(({ sourceId, quote }) => ({ sourceId, quote })),
     })),
     untrustedSources: [...used.values()].map(({ id, kind, title, observedAt, text }) => ({ sourceId: id, kind, title, observedAt, text })),
   });

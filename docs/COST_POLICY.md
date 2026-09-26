@@ -11,6 +11,10 @@ Owner instruction, September 19, 2026: apply free credits as needed; the project
 - Recheck pricing, available credit and the maximum possible request cost before real model work. A local evaluation budget is an additional guard, not a substitute for the provider's no-charge setting.
 - Never infer missing personal or professional details for a credit application. Obtain the necessary answers and submission approval.
 
+## Sentry — September 26, 2026
+
+The demo org is on the free Developer plan (5,000 errors a month, 30-day retention, no card). The read token is read-only. Seeding sends at most 60 events per run and the daily cron at most 32 a day, about 1,000 a month. Events over quota are rejected, not billed. See [Sentry runtime evidence](SENTRY.md#cost).
+
 ## Nebius checkpoint — September 19, 2026
 
 - Billing is active; the console shows **$1.00 trial credit**, **29 days remaining**, and **$0.00 account balance**.

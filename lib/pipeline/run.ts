@@ -208,7 +208,7 @@ export async function runPipeline(options: PipelineOptions): Promise<Analysis> {
   // 3. Deterministic rules
   update("rules", { status: "running", detail: "Applying the ordered delivery policy…" });
   const rulesStarted = performance.now();
-  const reconciled: ReconciledCommitment[] = commitments.map((commitment) => reconcile(commitment, facts, ACCOUNT.id, AS_OF));
+  const reconciled: ReconciledCommitment[] = commitments.map((commitment) => reconcile(commitment, facts, ACCOUNT.id, AS_OF, evidence));
   for (const commitment of reconciled) emit({ type: "verdict", commitmentId: commitment.id, title: commitment.title, verdict: commitment.verdict });
   const gaps = reconciled.filter((commitment) => ["blocked", "overdue", "verify", "unknown"].includes(commitment.verdict)).length;
   update("rules", { status: "done", latencyMs: Math.max(1, Math.round(performance.now() - rulesStarted)), detail: `${reconciled.length} verdicts from customer-specific facts; ${gaps} need attention. No model can change these.` });
