@@ -37,12 +37,15 @@ export function reconcile(commitment: Commitment, facts: ProductFact[], accountI
   return { ...base, verdict: "on-track", reason: "The deadline is ahead; delivery has not yet been verified.", nextAction: "Confirm progress with the owner. A future deadline is not evidence of delivery." };
 }
 
-export function draftUpdate(commitment: ReconciledCommitment): string {
-  const context = `${commitment.title} — Northstar`;
-  const summary = commitment.verdict === "verified"
+export function draftSummary(commitment: ReconciledCommitment): string {
+  return commitment.verdict === "verified"
     ? `We have verified that ${commitment.title.toLowerCase()} is enabled for your workspace and has passed the customer acceptance test.`
     : commitment.verdict === "blocked"
       ? `The ${commitment.title.toLowerCase()} implementation is complete, but it is not yet available in your workspace. We are checking customer access before confirming delivery.`
       : `${commitment.title} is not yet verified as delivered. ${commitment.reason}`;
-  return `${context}\n\n${summary}\n\nNext step: ${commitment.nextAction}\n${commitment.owner ? `Owner: ${commitment.owner}.` : "Owner: not agreed."} We will confirm timing after that check; this update does not create a new delivery date.\n\nPrepared for human review. Nothing has been sent.`;
+}
+
+export function draftUpdate(commitment: ReconciledCommitment): string {
+  const context = `${commitment.title} — Northstar`;
+  return `${context}\n\n${draftSummary(commitment)}\n\nNext step: ${commitment.nextAction}\n${commitment.owner ? `Owner: ${commitment.owner}.` : "Owner: not agreed."} We will confirm timing after that check; this update does not create a new delivery date.\n\nPrepared for human review. Nothing has been sent.`;
 }
