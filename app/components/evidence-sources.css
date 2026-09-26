@@ -1,0 +1,15 @@
+.source-origin{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;font-size:8.5px}
+.source-origin a{display:inline-flex;align-items:center;gap:3px;color:#6f8a58}
+.source-origin a:hover{color:#436436;text-decoration:underline}
+.origin-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 6px;border-radius:4px}
+.origin-pill.live{background:#e5efdc;color:#5f7f43}
+.origin-pill.recorded{background:#f5eedf;color:#977d45}
+.provider-status{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px;padding:0}
+.provider-status li{display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #dfe7d6;border-radius:6px;background:#fff;font-size:9.5px;color:#728360}
+.provider-status li strong{font-weight:550;color:var(--ink)}
+.provider-status li.failed{border-color:#ecdcc2;background:#fbf6ee;color:#a07239}
+.runtime-alert{border:1px solid #ecdcc2;background:#fbf6ee;border-radius:6px;padding:11px 13px;margin:-6px 0 20px;color:#8d6a3a}
+.runtime-alert>span{display:flex;align-items:center;gap:5px;font-size:8px;letter-spacing:.06em;font-weight:600;color:#a07239}
+.runtime-alert p{font-size:10.5px;line-height:1.6;margin-top:6px;color:#6f5530}
+.runtime-alert small{display:block;font-size:8.5px;line-height:1.5;margin-top:5px;color:#a38358}
+.timeline-icon.runtime{background:#f8ece4;border-color:#ecd7c8;color:#b07a57}

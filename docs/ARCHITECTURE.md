@@ -71,7 +71,7 @@ interface EvidenceProvider {
   kinds: readonly SourceKind[];       // e.g. ["PublicClaim"], ["Runtime"], ["UserSupplied"]
   required: boolean;                  // a required provider's failure fails the run
   timeoutMs: number;                  // enforced by the registry, which aborts context.signal
-  enabled(env): boolean;              // env present + feature flag; cheap, no side effects
+  enabled(env, { mode, scenario }): boolean; // env present + feature flag; cheap, no side effects
   fetch(ctx: { accountId, featureIds, scenario, mode, asOf, now, signal, env }):
     Promise<{ sources: Source[]; facts?: ProductFact[]; signals?: ProviderSignal[]; provenance?: { requestId?, httpStatus?, credits?, recorded } }>;
 }
@@ -86,7 +86,7 @@ The registry (`collectEvidence`) validates everything before any model or rule s
 
 `Source` carries optional `providerId`, `url` and `provenance` (`requestId`, `fetchedAt`, `httpStatus`, `credits`, `recorded`).
 
-**Adding a provider** (Tavily public-claim check, Sentry runtime errors, user-pasted evidence): add one file under `lib/evidence/providers/`, register it in `index.ts`, and add its env names to `.env.example`. Nothing in the pipeline changes. Untrusted sources become citable in extraction and narrative automatically. Triage labels `PublicClaim` and `Runtime` sources as delivery evidence and `UserSupplied` as customer signals. Signals (`publicClaimGA`, `runtimeErrors`) are typed and validated, but the verdict policy does not read them yet. Adding the rule, for example "enabled but failing at runtime means `verify`", is a separate reviewed change to `reconcile()`. The provider research is in the project's integration plan.
+**Adding a provider** (Tavily public-claim check, Sentry runtime errors, user-pasted evidence): add one file under `lib/evidence/providers/`, register it in `index.ts`, and add its env names to `.env.example`. Nothing in the pipeline changes. Untrusted sources become citable in extraction and narrative automatically. Triage labels `PublicClaim` and `Runtime` sources as delivery evidence and `UserSupplied` as customer signals. Signals (`publicClaimGA`, `runtimeErrors`) are typed and validated. `reconcile()` reads `runtimeErrors` (rule 5 below; see [Sentry runtime evidence](SENTRY.md)); any other signal needs its own reviewed rule. The provider research is in the project's integration plan.
 
 ## Ordered verdict policy
 
@@ -94,11 +94,12 @@ The registry (`collectEvidence`) validates everything before any model or rule s
 2. Missing customer-specific evidence means evidence needed.
 3. Invalid, future-dated or older-than-72-hour availability means evidence needed.
 4. Built + explicitly disabled means delivery gap.
-5. Built + enabled + customer acceptance, all true, means verified delivered.
-6. Missing or inconsistent necessary signals mean evidence needed.
-7. A past UTC deadline without verified delivery means overdue.
-8. Built + enabled without acceptance means needs verification.
-9. Other work before the deadline means in progress, not guaranteed success.
+5. Built + enabled, but an unresolved runtime-error issue for this customer and feature seen after the acceptance snapshot and within 72 hours, means needs verification. No errors changes nothing.
+6. Built + enabled + customer acceptance, all true, means verified delivered.
+7. Missing or inconsistent necessary signals mean evidence needed.
+8. A past UTC deadline without verified delivery means overdue.
+9. Built + enabled without acceptance means needs verification.
+10. Other work before the deadline means in progress, not guaranteed success.
 
 The demo clock is fixed at September 13, 2026, 17:00 UTC. Real connectors must replace it with current, validated observations. A newer successful acceptance snapshot may supersede an earlier support complaint; the older source remains inspectable.
 
