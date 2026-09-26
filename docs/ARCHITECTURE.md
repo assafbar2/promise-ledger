@@ -21,7 +21,9 @@ React workbench -> POST /api/pipeline {mode, scenario, account} or {mode, byo}  
 
 | Location | Responsibility |
 | --- | --- |
-| `app/page.tsx` | Ledger, sources, review queue, activity log, exports, workspace switching and persistence; reads the event stream |
+| `app/page.tsx` | Landing page (static): problem, approach, pipeline, guardrails, models and sample-account deep links into `/app` |
+| `app/app/page.tsx` | The workbench at `/app`: ledger, sources, review queue, activity log, exports, workspace switching and persistence; reads the event stream; opens `?account=<id>` deep links |
+| `app/components/theme-toggle.tsx` | Light/dark toggle and the pre-paint theme script used by the root layout |
 | `app/components/account-gallery.tsx` | Sample account gallery, saved bring-your-own workspaces, export and clear |
 | `app/components/byo-panel.tsx` | Bring-your-own evidence: paste and file drop, caps meter, extraction, fact confirmation and correction |
 | `app/components/guided-tour.tsx` | First-run tour (five steps, keyboard accessible, remembered in the browser) |

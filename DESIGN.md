@@ -15,6 +15,20 @@ Quiet authority, not a futuristic AI command center. The interface should feel l
 | Typography | Geist UI; Georgia italic editorial accent |
 | Icons | Existing Lucide set |
 
+## Colour tokens and themes
+
+Every colour outside the evergreen sidebar is a semantic token in `app/globals.css`: surfaces (`--bg`, `--surface`, `--surface-2…4`), lines, three text levels, the forest accent, and warn (amber, delivery gap), caution (gold, needs verification), danger and info families, each with text, background and line values. Light is the default. Dark mode follows the operating system until the person picks a theme with the toggle in the top bar or landing navigation; the choice is stored in the browser and applied before first paint. The dark palette is deep evergreen, not grey, with the same hue families.
+
+Every text token meets WCAG AA (4.5:1) against every surface token in both themes, as do the fixed sidebar and landing-band colours. Status never relies on colour alone.
+
+## Type scale
+
+The workbench body is 13–15 px, with secondary text at 12 px and uppercase labels at 10.5–11 px with letter spacing; nothing on screen is smaller than 9 px (the sidebar tagline). The landing page runs larger: 16 px body, 18–19 px leads, and headings up to 68 px, always with the Georgia-italic accent on the second phrase.
+
+## Landing page
+
+`/` introduces the product; the workbench is at `/app`, one click from every section (“Try it live”). The order is problem, approach, how it works, guardrails, NVIDIA Nemotron on Nebius Token Factory, then the four sample accounts, which deep-link into the workbench (`/app?account=…`). The hero visual is a coded evidence brief, not a screenshot or illustration, so it stays sharp in both themes. Every quote on it comes from the Northstar fixture. The “How it works” band reuses the sidebar evergreen. A caution-toned note states plainly that the data is synthetic and what leaves the browser. Third-party tools are named in text only; no vendor logos are used.
+
 ## Composition
 
 Sidebar → product-specific headline → explicit demo controls → computed summary counts → contradiction banner → ledger/evidence split workbench. The evidence brief progresses from verdict to built/enabled/verified checks, exact quotations, recommended next action and human-reviewed draft.
@@ -48,6 +62,8 @@ The gallery uses the same white cards as the ledger. Each shows the account's se
 
 ## Responsive and accessibility intent
 
-The workbench stacks below 980px, mobile navigation becomes horizontal, and mobile metrics become a 2×2 grid. Pipeline step cards go from four columns to two below 1180px and to one below 680px. Native labeled controls, skip navigation, focus styles, status/alert regions, text verdicts and reduced-motion handling are implemented. Browser interaction, keyboard, contrast and assistive-technology audits remain release gates; no WCAG conformance claim is made.
+The workbench stacks below 980px, mobile navigation becomes horizontal, and mobile metrics become a 2×2 grid. Pipeline step cards go from four columns to two below 1180px and to one below 680px. The landing page goes to one column below 720px. Native labeled controls, skip navigation, a 3 px focus ring in the `--focus` token, `aria-current` on the active section, labelled button groups, status/alert regions, `aria-busy` while a check runs, text verdicts and reduced-motion handling are implemented. Colour contrast is checked token by token; a full assistive-technology audit has not been done, so no WCAG conformance claim is made.
 
-A bespoke social card was omitted because image generation was unavailable; no unrelated fallback image is used.
+## Social card and icons
+
+`public/og.png` (1200×630) is the Open Graph and Twitter card: the headline beside the Northstar evidence brief, on evergreen. `public/favicon.svg` is the Layers mark in mint on evergreen, with `favicon.ico` and `apple-touch-icon.png` fallbacks.

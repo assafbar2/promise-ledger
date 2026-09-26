@@ -38,11 +38,16 @@ The token needs only **Issue & Event: Read** (`event:read`). Seeding also reads 
 
 ## Modes and scenarios
 
+Sentry evidence belongs to one scenario, Northstar's **"Enabled, but crashing"** (`crashing`). Its facts are identical to `enabled`, so the only difference is the runtime evidence.
+
 | Run | Sentry |
 | --- | --- |
-| Live, any scenario | Live API when the four `SENTRY_*` read variables are set; off otherwise |
-| Reference `blocked`, `enabled`, `stale` | Off. Results unchanged |
-| Reference `crashing` ("Enabled, but crashing · recorded Sentry") | Replays `lib/sentry/recorded-runtime.json` through the same parser, labelled "Recorded response · captured 2026-09-26". Facts are identical to `enabled` |
+| `blocked`, `enabled`, `stale` (live or reference) | Off. No Sentry call, so "Enabled + customer verified" still ends at verified delivered |
+| Live `crashing` | Reads the live API. If the `SENTRY_*` read variables are missing or wrong, the provider report says "Sentry unavailable: …" rather than showing a clean result |
+| Reference `crashing` | Replays `lib/sentry/recorded-runtime.json` through the same parser, labelled "Recorded response · captured 2026-09-26" |
+| Bring-your-own evidence and the other sample accounts | Off. They offer no `crashing` scenario |
+
+Why not every live scenario: the demo project is re-seeded daily, so its errors are always fresh. Applied everywhere, they would turn every enabled feature into "needs verification" and hide the "evidence changed, so now it is verified" story.
 
 The recording is aged against its own capture time, not the demo clock. `npm run sentry:check -- --record` refreshes it, and saves only schema fields, with event tags narrowed to `customer` and `feature`.
 

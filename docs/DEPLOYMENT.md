@@ -10,6 +10,8 @@
 
 Share **https://promise-ledger-chi.vercel.app**, which was tested without cookies and does not require a Vercel login. The generated team/branch deployment aliases redirect to Vercel authentication; do not use those as the demo link. Existing preview protection was preserved.
 
+Since September 26, `/` is the landing page and the workbench is at **https://promise-ledger-chi.vercel.app/app**; `/app?account=<id>` opens a sample account directly. Share the root for context or `/app` to go straight to the product.
+
 ## Hosted functionality
 
 The September 20 production release is a **reference-only synthetic demo**: no Nebius key is configured on Vercel, and `/api/status` reports `liveConfigured: false`. Run evidence checks, switch among three scenarios, inspect original sources, prepare/edit/approve drafts, and export. Refreshing clears session state. Nothing sends to a customer.

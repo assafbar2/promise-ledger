@@ -41,13 +41,28 @@ test("Sentry is registered after the synthetic pack, optional and untrusted", ()
   assert.deepEqual({ trust: sentryRuntimeProvider.trust, required: sentryRuntimeProvider.required, kinds: sentryRuntimeProvider.kinds }, { trust: "untrusted", required: false, kinds: ["Runtime"] });
 });
 
-test("live-only: off without env; reference only in the labelled crashing scenario", () => {
+test("only the labelled crashing scenario uses Sentry, in either mode", () => {
   const on = (mode: "reference" | "live", scenario: "blocked" | "enabled" | "stale" | "crashing", env: Record<string, string> = {}) => sentryRuntimeProvider.enabled(env, { mode, scenario });
-  assert.equal(on("live", "enabled"), false);
-  assert.equal(on("live", "enabled", SENTRY_ENV), true);
-  assert.equal(on("live", "blocked", SENTRY_ENV), true);
-  for (const scenario of ["blocked", "enabled", "stale"] as const) assert.equal(on("reference", scenario, SENTRY_ENV), false, scenario);
-  assert.equal(on("reference", "crashing"), true);
+  for (const mode of ["reference", "live"] as const) {
+    for (const scenario of ["blocked", "enabled", "stale"] as const) assert.equal(on(mode, scenario, SENTRY_ENV), false, `${mode} ${scenario}`);
+    assert.equal(on(mode, "crashing", SENTRY_ENV), true, mode);
+  }
+  assert.equal(on("live", "crashing"), true, "missing env must fail visibly, not look clean");
+});
+
+test("live blocked, enabled and stale make no Sentry call; enabled still reaches verified", async () => {
+  const savedKey = process.env.NEBIUS_API_KEY;
+  process.env.NEBIUS_API_KEY = NEBIUS_ENV.NEBIUS_API_KEY;
+  try {
+    const { result, calls } = await withSentry(northstarAuditExport, async () => {
+      const runs = [];
+      for (const scenario of ["blocked", "enabled", "stale"] as const) runs.push(await runPipeline({ mode: "live", scenario, fetcher: nebiusMock({}).fetcher, env: { ...NEBIUS_ENV, ...SENTRY_ENV } }));
+      return runs;
+    });
+    assert.equal(calls.length, 0);
+    assert.deepEqual(result.map((analysis) => auditExport(analysis).verdict), ["blocked", "verified", "unknown"]);
+    assert.ok(result.every((analysis) => !analysis.pipeline.providers.some((provider) => provider.id === "sentry-runtime")));
+  } finally { if (savedKey === undefined) delete process.env.NEBIUS_API_KEY; else process.env.NEBIUS_API_KEY = savedKey; }
 });
 
 test("reference scenarios blocked, enabled and stale are unchanged and make no Sentry call", async () => {
@@ -83,12 +98,12 @@ test("the HTTP endpoint accepts the crashing scenario", async () => {
   assert.equal(auditExport((await response.json()) as Analysis).verdict, "verify");
 });
 
-test("live: fresh customer errors turn an enabled + verified feature into needs verification", async () => {
+test("live crashing: fresh customer errors turn an enabled + verified feature into needs verification", async () => {
   const savedKey = process.env.NEBIUS_API_KEY;
   process.env.NEBIUS_API_KEY = NEBIUS_ENV.NEBIUS_API_KEY;
   try {
     const mock = nebiusMock({});
-    const { result: analysis, calls } = await withSentry(northstarAuditExport, () => runPipeline({ mode: "live", scenario: "enabled", fetcher: mock.fetcher, env: { ...NEBIUS_ENV, ...SENTRY_ENV } }));
+    const { result: analysis, calls } = await withSentry(northstarAuditExport, () => runPipeline({ mode: "live", scenario: "crashing", fetcher: mock.fetcher, env: { ...NEBIUS_ENV, ...SENTRY_ENV } }));
     assert.equal(calls.filter((url) => url.pathname.endsWith("/issues/")).length, FEATURE_IDS.length);
     const commitment = auditExport(analysis);
     assert.equal(commitment.verdict, "verify");
@@ -100,16 +115,16 @@ test("live: fresh customer errors turn an enabled + verified feature into needs 
   } finally { if (savedKey === undefined) delete process.env.NEBIUS_API_KEY; else process.env.NEBIUS_API_KEY = savedKey; }
 });
 
-const liveContext = (env: Record<string, string>, scenario: "blocked" | "enabled" = "enabled") => ({ accountId: ACCOUNT.id, featureIds: FEATURE_IDS, scenario, mode: "live" as const, asOf: AS_OF, now: new Date().toISOString(), env });
+const liveContext = (env: Record<string, string>) => ({ accountId: ACCOUNT.id, featureIds: FEATURE_IDS, scenario: "crashing" as const, mode: "live" as const, asOf: AS_OF, now: new Date().toISOString(), env });
 const verdictFor = (evidence: Awaited<ReturnType<typeof collectEvidence>>) => reconcile(referenceCommitments[0], evidence.facts, ACCOUNT.id, AS_OF, evidence).verdict;
 
 test("live: no Sentry issues never proves or changes delivery", async () => {
   const { result } = await withSentry(() => undefined, () => collectEvidence(liveContext({ ...SENTRY_ENV, SENTRY_ORG: "demo-org-empty" })));
   assert.equal(result.signals.length, 0);
   assert.equal(verdictFor(result), "verified");
-  const blocked = await withSentry(northstarAuditExport, () => collectEvidence(liveContext(SENTRY_ENV, "blocked")));
-  assert.equal(blocked.result.signals.length, 1);
-  assert.equal(verdictFor(blocked.result), "blocked", "runtime errors never soften a disabled feature");
+  const failing = await withSentry(northstarAuditExport, () => collectEvidence(liveContext(SENTRY_ENV)));
+  assert.equal(failing.result.signals.length, 1);
+  assert.equal(reconcile(referenceCommitments[0], createScenario("blocked").facts, ACCOUNT.id, AS_OF, failing.result).verdict, "blocked", "runtime errors never soften a disabled feature");
 });
 
 test("live: Sentry failures are reported explicitly and never fall back to the recording", async () => {
@@ -120,6 +135,9 @@ test("live: Sentry failures are reported explicitly and never fall back to the r
   assert.equal(verdictFor(result), "verified");
   const misconfigured = await withSentry(() => undefined, () => collectEvidence(liveContext({ ...SENTRY_ENV, SENTRY_PROJECT: "promise-ledger-demo" })));
   assert.match(misconfigured.result.providers[1].error ?? "", /SENTRY_PROJECT/);
+  const unset = await withSentry(() => undefined, () => collectEvidence(liveContext({})));
+  assert.deepEqual([unset.calls.length, unset.result.providers[1].status], [0, "failed"]);
+  assert.match(unset.result.providers[1].error ?? "", /SENTRY_READ_TOKEN/);
 });
 
 test("live: repeated runs within ten minutes reuse one Sentry fetch", async () => {

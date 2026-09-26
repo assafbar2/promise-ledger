@@ -21,8 +21,18 @@ test("Vercel output has a bounded Node function and filesystem routing", async (
   assert.equal(functionConfig.maxDuration, 75);
 });
 
-test("Vercel production entry renders Promise Ledger and its controls", async () => {
+test("Vercel production entry renders the landing page, social card and icons", async () => {
   const response = await request("/");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  for (const text of ["Promises made", "Try it live", 'href="/app"', "NVIDIA Nemotron", "Nebius Token Factory"]) assert.ok(html.includes(text), `Missing ${text}`);
+  assert.match(html, /property="og:image" content="https:\/\/promise-ledger-chi\.vercel\.app\/og\.png"/);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
+  for (const file of ["og.png", "favicon.svg", "favicon.ico", "apple-touch-icon.png"]) await readFile(new URL(`../.vercel/output/static/${file}`, import.meta.url));
+});
+
+test("Vercel production entry renders Promise Ledger and its controls", async () => {
+  const response = await request("/app");
   assert.equal(response.status, 200);
   const html = await response.text();
   for (const label of ["Promise Ledger", "Run evidence check", "Reference mode", "Synthetic demo", "Audit log export", "AGENT PIPELINE", "Replayed reference trace", "Accounts", "Bring your own", "Take the tour"]) {
