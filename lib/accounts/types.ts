@@ -13,6 +13,8 @@ export type AccountPack = {
   /** One-line description of what makes this account's evidence interesting. */
   situation: string;
   headlineFeatureId: string;
+  /** Scenarios this pack can build; only Northstar has the recorded Sentry data behind "crashing". */
+  scenarios: readonly Scenario[];
   defaultScenario: Scenario;
   asOf: string;
   featureIds: string[];

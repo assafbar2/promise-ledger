@@ -15,7 +15,7 @@ function provider(bundle: Partial<EvidenceBundle> | (() => Promise<EvidenceBundl
 }
 
 test("the synthetic pack supplies curated facts; Sentry stays off without its env", async () => {
-  assert.deepEqual(EVIDENCE_PROVIDERS.map((item) => item.id), ["synthetic-pack", "sentry-runtime"]);
+  assert.deepEqual(EVIDENCE_PROVIDERS.map((item) => item.id), ["synthetic-pack", "sentry-runtime", "user-supplied"]);
   const collected = await collectEvidence(context);
   assert.equal(collected.sources.length, 6);
   assert.equal(collected.facts.length, 5);

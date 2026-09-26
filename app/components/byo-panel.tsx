@@ -232,7 +232,7 @@ export function ByoPanel({ draft, onChange, live, liveNote, running, continuatio
         <div className="byo-decide">
           {continuationValid && <button className="button primary byo-action" disabled={running || duplicates.length > 0 || included === 0} onClick={() => onDecide(true)}><Sparkles size={15} />{running ? "Deciding…" : `Let the rules decide, then Ultra explains · no extra run`}</button>}
           <button className={`button ${continuationValid ? "secondary" : "primary"} byo-action`} disabled={running || duplicates.length > 0 || included === 0} onClick={() => onDecide(false)}><ArrowRight size={15} />{continuationValid ? "Rules only, with template drafts · no AI" : "Let the rules decide · template drafts, no AI"}</button>
-          <p>{confirmedCount} confirmed fact{confirmedCount === 1 ? "" : "s"} · {included} commitment{included === 1 ? "" : "s"}. {proposal.continuation && !continuationValid ? "The live explain step for this extraction has expired or was used; re-running the rules is free." : ""}</p>
+          <p>{confirmedCount} confirmed fact{confirmedCount === 1 ? "" : "s"} · {included} commitment{included === 1 ? "" : "s"}. {proposal.extractor === "nemotron" && !continuationValid ? "The live explain step for this extraction has expired or was used; re-running the rules is free." : ""}</p>
         </div>
         {decided && <button className="text-button byo-view" onClick={onViewLedger}>Verdicts are ready. Open the ledger<ArrowRight size={12} /></button>}
       </div>}

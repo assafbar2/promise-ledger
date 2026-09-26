@@ -43,7 +43,7 @@ export function AccountGallery({ accounts, activeId, saved, persistence, onOpenS
             </button>
           );
         })}
-        <button className={`account-card byo-card ${activeId.startsWith("byo:") ? "" : ""}`} onClick={onNewByo} data-tour="byo-card">
+        <button className="account-card byo-card" onClick={onNewByo} data-tour="byo-card">
           <span className="account-top"><span className="account-avatar byo"><ClipboardPaste size={16} /></span><span><strong>Bring your own evidence</strong><small>Paste text or drop .txt, .md, .csv, .eml</small></span></span>
           <span className="account-situation">Nemotron proposes commitments and availability facts with exact quotes. You confirm or correct every fact, then the same rules decide.</span>
           <span className="account-stats">Start a new workspace<ArrowRight size={13} /></span>
