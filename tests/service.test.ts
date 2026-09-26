@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import test, { type TestContext } from "node:test";
+import { referenceCommitments } from "../lib/fixtures.ts";
+import { resetLiveLimitMemory } from "../lib/live-limits.ts";
 import { analyzeRequest, capabilities } from "../lib/service.ts";
 import type { Analysis } from "../lib/schema.ts";
 
@@ -54,18 +56,117 @@ test("live mode fails explicitly without credentials and never substitutes a dem
   } finally { if (saved !== undefined) process.env.NEBIUS_API_KEY = saved; }
 });
 
-test("configured live inference requires a private access token", async () => {
-  const saved = { ...process.env };
-  process.env.NEBIUS_API_KEY = "test-not-a-real-key";
-  process.env.NEBIUS_MODEL = "nvidia/test-Nemotron";
-  process.env.DEMO_ACCESS_TOKEN = "test-access-token-at-least-24-chars";
-  try {
-    const response = await analyzeRequest(request({ mode: "live", scenario: "blocked" }));
-    assert.equal(response.status, 401);
-    assert.doesNotMatch(JSON.stringify(await response.json()), /test-not-a-real-key/);
-  } finally {
-    for (const name of ["NEBIUS_API_KEY", "NEBIUS_MODEL", "DEMO_ACCESS_TOKEN"]) {
-      if (saved[name] === undefined) delete process.env[name]; else process.env[name] = saved[name];
-    }
+const LIVE_ENV = ["NEBIUS_API_KEY", "NEBIUS_MODEL", "DEMO_ACCESS_TOKEN", "LIVE_RUNS_PER_IP_PER_HOUR", "LIVE_RUNS_PER_DAY", "LIVE_TOKEN_RUNS_PER_DAY", "KV_REST_API_URL", "KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"];
+const OWNER_TOKEN = "test-access-token-at-least-24-chars";
+
+function withLiveServer(context: TestContext, env: Record<string, string> = {}) {
+  const saved = Object.fromEntries(LIVE_ENV.map((name) => [name, process.env[name]]));
+  const savedFetch = globalThis.fetch;
+  const providerCalls: string[] = [];
+  for (const name of LIVE_ENV) delete process.env[name];
+  Object.assign(process.env, { NEBIUS_API_KEY: "test-not-a-real-key", NEBIUS_MODEL: "nvidia/test-Nemotron", ...env });
+  globalThis.fetch = async (url) => {
+    providerCalls.push(String(url));
+    if (String(url).startsWith("https://api.tokenfactory.nebius.com/")) return Response.json({ id: "stub-live-run", model: "nvidia/test-Nemotron", choices: [{ finish_reason: "stop", message: { content: JSON.stringify({ commitments: referenceCommitments }) } }], usage: { prompt_tokens: 10, completion_tokens: 5 } });
+    throw new Error(`Unexpected network call to ${String(url)}`);
+  };
+  resetLiveLimitMemory();
+  context.after(() => {
+    globalThis.fetch = savedFetch;
+    for (const name of LIVE_ENV) if (saved[name] === undefined) delete process.env[name]; else process.env[name] = saved[name];
+    resetLiveLimitMemory();
+  });
+  return providerCalls;
+}
+
+function live(ip: string, headers: Record<string, string> = {}) {
+  return analyzeRequest(request({ mode: "live", scenario: "blocked" }, { "x-real-ip": ip, ...headers }));
+}
+
+test("configured live inference is open without a token and reports its limits", async (context) => {
+  const providerCalls = withLiveServer(context);
+  const status = capabilities();
+  assert.equal(status.liveConfigured, true);
+  assert.deepEqual(status.liveAccess, { open: true, perIpPerHour: 5, perDay: 50, durableLimits: false, ownerToken: false });
+  const response = await live("198.51.100.20");
+  assert.equal(response.status, 200);
+  const result = await response.json() as Analysis;
+  assert.equal(result.mode, "live");
+  assert.equal(result.model, "nvidia/test-Nemotron");
+  assert.equal(result.runId, "stub-live-run");
+  assert.deepEqual(providerCalls, ["https://api.tokenfactory.nebius.com/v1/chat/completions"]);
+});
+
+test("per-IP limit returns a friendly 429 with reference fallback before any provider call", async (context) => {
+  const providerCalls = withLiveServer(context, { LIVE_RUNS_PER_IP_PER_HOUR: "2" });
+  assert.equal((await live("198.51.100.21")).status, 200);
+  assert.equal((await live("198.51.100.21")).status, 200);
+  const limited = await live("198.51.100.21");
+  assert.equal(limited.status, 429);
+  assert.equal(limited.headers.get("cache-control"), "no-store");
+  assert.ok(Number(limited.headers.get("retry-after")) > 0);
+  const body = await limited.json() as { error: string; code: string; fallback: string; retryAfterSeconds: number; commitments?: unknown };
+  assert.equal(body.code, "live_limit_ip");
+  assert.equal(body.fallback, "reference");
+  assert.match(body.error, /2 live Nemotron runs/);
+  assert.match(body.error, /reference mode/);
+  assert.equal(body.commitments, undefined);
+  assert.equal(providerCalls.length, 2);
+  assert.equal((await live("198.51.100.22")).status, 200, "other visitors keep live access");
+});
+
+test("shared daily cap blocks live runs across visitors but never blocks reference mode", async (context) => {
+  withLiveServer(context, { LIVE_RUNS_PER_DAY: "2" });
+  assert.equal((await live("192.0.2.31")).status, 200);
+  assert.equal((await live("192.0.2.32")).status, 200);
+  const capped = await live("192.0.2.33");
+  assert.equal(capped.status, 429);
+  const body = await capped.json() as { error: string; code: string; fallback: string };
+  assert.equal(body.code, "live_limit_daily");
+  assert.equal(body.fallback, "reference");
+  assert.match(body.error, /00:00 UTC/);
+  for (let index = 0; index < 5; index++) {
+    const reference = await analyzeRequest(request({ mode: "reference", scenario: "blocked" }, { "x-real-ip": "192.0.2.33" }));
+    assert.equal(reference.status, 200);
   }
+});
+
+test("owner token is an optional bypass for per-IP limits; a wrong token is rejected clearly", async (context) => {
+  const providerCalls = withLiveServer(context, { DEMO_ACCESS_TOKEN: OWNER_TOKEN, LIVE_RUNS_PER_IP_PER_HOUR: "1" });
+  assert.equal(capabilities().liveAccess?.ownerToken, true);
+  assert.equal((await live("198.51.100.40")).status, 200);
+  assert.equal((await live("198.51.100.40")).status, 429);
+  for (let index = 0; index < 3; index++) assert.equal((await live("198.51.100.40", { authorization: `Bearer ${OWNER_TOKEN}` })).status, 200);
+  const wrong = await live("198.51.100.40", { authorization: "Bearer not-the-owner-token-but-long-enough" });
+  assert.equal(wrong.status, 401);
+  const body = await wrong.json() as { error: string; code: string };
+  assert.equal(body.code, "invalid_owner_token");
+  assert.doesNotMatch(JSON.stringify(body), new RegExp(`${OWNER_TOKEN}|test-not-a-real-key`));
+  assert.equal(providerCalls.length, 4);
+});
+
+test("a bearer header is rejected when no owner token is configured", async (context) => {
+  withLiveServer(context);
+  assert.equal((await live("198.51.100.41", { authorization: "Bearer anything-at-all-long-enough-here" })).status, 401);
+});
+
+test("zero public daily limit pauses open live mode and says so", async (context) => {
+  const providerCalls = withLiveServer(context, { LIVE_RUNS_PER_DAY: "0" });
+  assert.equal(capabilities().liveAccess?.open, false);
+  const paused = await live("198.51.100.50");
+  assert.equal(paused.status, 503);
+  const body = await paused.json() as { code: string; fallback: string };
+  assert.equal(body.code, "live_limit_closed");
+  assert.equal(body.fallback, "reference");
+  assert.equal(providerCalls.length, 0);
+});
+
+test("unreachable durable limit store fails closed for live mode only", async (context) => {
+  const providerCalls = withLiveServer(context, { KV_REST_API_URL: "https://limits.invalid", KV_REST_API_TOKEN: "store-token" });
+  assert.equal(capabilities().liveAccess?.durableLimits, true);
+  const response = await live("198.51.100.60");
+  assert.equal(response.status, 503);
+  assert.equal((await response.json() as { code: string }).code, "live_limit_unavailable");
+  assert.ok(providerCalls.every((url) => !url.startsWith("https://api.tokenfactory.nebius.com/")));
+  assert.equal((await analyzeRequest(request({ mode: "reference", scenario: "blocked" }))).status, 200);
 });

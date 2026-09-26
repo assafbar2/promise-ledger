@@ -36,7 +36,7 @@ test("Vercel production entry renders Promise Ledger and its controls", async ()
 test("Vercel reference API supports all three scenarios without credentials", async () => {
   const status = await request("/api/status");
   assert.equal(status.status, 200);
-  assert.deepEqual(await status.json(), { liveConfigured: false, model: null, syntheticOnly: true });
+  assert.deepEqual(await status.json(), { liveConfigured: false, model: null, syntheticOnly: true, liveAccess: null });
   for (const [scenario, verdict] of [["blocked", "blocked"], ["enabled", "verified"], ["stale", "unknown"]]) {
     const response = await request("/api/analyze", {
       method: "POST",
@@ -50,6 +50,24 @@ test("Vercel reference API supports all three scenarios without credentials", as
     assert.equal(result.mode, "reference");
     assert.equal(result.model, null);
   }
+});
+
+test("Vercel entry applies the open live-mode gate from runtime environment", async (context) => {
+  process.env.NEBIUS_API_KEY = "vercel-test-not-a-real-key";
+  process.env.NEBIUS_MODEL = "nvidia/test-Nemotron";
+  process.env.LIVE_RUNS_PER_DAY = "0";
+  context.after(() => { delete process.env.NEBIUS_API_KEY; delete process.env.NEBIUS_MODEL; delete process.env.LIVE_RUNS_PER_DAY; });
+  const status = await (await request("/api/status")).json();
+  assert.equal(status.liveConfigured, true);
+  assert.deepEqual(status.liveAccess, { open: false, perIpPerHour: 5, perDay: 0, durableLimits: false, ownerToken: false });
+  const live = (headers = {}) => request("/api/analyze", { method: "POST", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify({ mode: "live", scenario: "blocked" }) });
+  const paused = await live();
+  assert.equal(paused.status, 503);
+  const body = await paused.json();
+  assert.equal(body.code, "live_limit_closed");
+  assert.equal(body.fallback, "reference");
+  assert.doesNotMatch(JSON.stringify(body), /vercel-test-not-a-real-key/);
+  assert.equal((await live({ Authorization: "Bearer a-token-that-was-never-configured" })).status, 401);
 });
 
 test("Vercel entry fails closed for live inference and cross-origin requests", async () => {

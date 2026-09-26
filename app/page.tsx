@@ -9,6 +9,15 @@ import type { Analysis, ReconciledCommitment, Scenario, Source, Verdict } from "
 type View = "ledger" | "review" | "sources" | "activity";
 type Review = { commitmentId: string; text: string; approved: boolean; runId: string };
 type AuditEvent = { id: number; title: string; detail: string };
+type LiveAccess = { open: boolean; perIpPerHour: number; perDay: number; durableLimits: boolean; ownerToken: boolean };
+
+function parseLiveAccess(status: unknown): LiveAccess | null {
+  if (typeof status !== "object" || status === null || !("liveConfigured" in status) || status.liveConfigured !== true || !("liveAccess" in status)) return null;
+  const access = status.liveAccess;
+  if (typeof access !== "object" || access === null) return null;
+  const value = access as Record<string, unknown>;
+  return { open: value.open === true, perIpPerHour: typeof value.perIpPerHour === "number" ? value.perIpPerHour : 0, perDay: typeof value.perDay === "number" ? value.perDay : 0, durableLimits: value.durableLimits === true, ownerToken: value.ownerToken === true };
+}
 const verdicts: Record<Verdict, { label: string; className: string }> = {
   blocked: { label: "Delivery gap", className: "danger" },
   overdue: { label: "Overdue", className: "warning" },
@@ -62,16 +71,23 @@ export default function Home() {
   const [accessToken, setAccessToken] = useState("");
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
+  const [offerReference, setOfferReference] = useState(false);
   const [notice, setNotice] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [liveConfigured, setLiveConfigured] = useState(false);
+  const [liveAccess, setLiveAccess] = useState<LiveAccess | null>(null);
+  const liveConfigured = liveAccess !== null;
+  const liveSelectable = liveConfigured && (liveAccess.open || liveAccess.ownerToken);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [detailTab, setDetailTab] = useState<"evidence" | "draft">("evidence");
   const [events, setEvents] = useState<AuditEvent[]>([{ id: 0, title: "Reference workspace opened", detail: "Synthetic fixture loaded. No model call or customer communication." }]);
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch("/api/status", { signal: controller.signal }).then((response) => response.json()).then((status) => setLiveConfigured(typeof status === "object" && status !== null && "liveConfigured" in status && status.liveConfigured === true)).catch(() => {});
+    fetch("/api/status", { signal: controller.signal }).then((response) => response.json()).then((status) => {
+      const access = parseLiveAccess(status);
+      setLiveAccess(access);
+      if (access?.open) setMode("live");
+    }).catch(() => {});
     return () => controller.abort();
   }, []);
 
@@ -95,19 +111,24 @@ export default function Home() {
     setSearch("");
   }
 
-  async function runAnalysis() {
+  async function runAnalysis(runMode: "reference" | "live" = mode) {
     setRunning(true);
     setError("");
+    setOfferReference(false);
     setNotice("");
     try {
+      const token = accessToken.trim();
       const response = await fetch("/api/analyze", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(mode === "live" ? { Authorization: `Bearer ${accessToken}` } : {}) },
-        body: JSON.stringify({ mode, scenario }),
+        headers: { "Content-Type": "application/json", ...(runMode === "live" && token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ mode: runMode, scenario }),
         signal: AbortSignal.timeout(70000),
       });
       const result = await response.json();
-      if (!response.ok) throw new Error(typeof result === "object" && result !== null && "error" in result && typeof result.error === "string" ? result.error : "The evidence check failed.");
+      if (!response.ok) {
+        setOfferReference(runMode === "live" && typeof result === "object" && result !== null && "fallback" in result && result.fallback === "reference");
+        throw new Error(typeof result === "object" && result !== null && "error" in result && typeof result.error === "string" ? result.error : "The evidence check failed.");
+      }
       const next = result as Analysis;
       setAnalysis(next);
       setSelectedId(next.commitments.find((commitment) => commitment.featureId === "audit-export")?.id ?? next.commitments[0]?.id ?? "");
@@ -120,6 +141,11 @@ export default function Home() {
       setError(message);
       record("Evidence check failed", "The previous results remain visible. No fallback or delivery action was taken.");
     } finally { setRunning(false); }
+  }
+
+  function runReferenceInstead() {
+    setMode("reference");
+    void runAnalysis("reference");
   }
 
   function prepareDraft(commitment: ReconciledCommitment) {
@@ -157,12 +183,12 @@ export default function Home() {
       <div className="main-shell">
         <header className="topbar"><div><span className="breadcrumb">Workspace</span><ChevronRight size={13} /><strong>{view === "ledger" ? "Commitment ledger" : view === "review" ? "Review queue" : view === "sources" ? "Evidence sources" : "Activity log"}</strong></div><div className="topbar-right"><span className="demo-pill"><span />Synthetic demo</span><span className="avatar-mini">AB</span></div></header>
         <main id="main-content">
-          <section className="page-heading"><div><div className="eyebrow"><span />THE CUSTOMER REALITY CHECK</div><h1>{view === "ledger" ? <>Promises made.<br className="mobile-break" /> <span>Truth checked.</span></> : view === "review" ? <>Thoughtful updates.<br className="mobile-break" /> <span>Human approved.</span></> : view === "sources" ? <>Every claim.<br className="mobile-break" /> <span>Back to its source.</span></> : <>A clear record.<br className="mobile-break" /> <span>No silent actions.</span></>}</h1><p>{view === "ledger" ? "Know what was promised, what shipped, and what your customer can actually use." : view === "review" ? "Review the evidence, edit the message, then decide. Nothing sends automatically." : view === "sources" ? "Six synthetic source documents. No live customer systems are connected." : "Your current session only. Export it before leaving; refreshing clears this history."}</p></div><button className="button primary run-button" onClick={runAnalysis} disabled={running}><Sparkles size={16} className={running ? "spinning" : ""} />{running ? "Checking evidence…" : "Run evidence check"}</button></section>
+          <section className="page-heading"><div><div className="eyebrow"><span />THE CUSTOMER REALITY CHECK</div><h1>{view === "ledger" ? <>Promises made.<br className="mobile-break" /> <span>Truth checked.</span></> : view === "review" ? <>Thoughtful updates.<br className="mobile-break" /> <span>Human approved.</span></> : view === "sources" ? <>Every claim.<br className="mobile-break" /> <span>Back to its source.</span></> : <>A clear record.<br className="mobile-break" /> <span>No silent actions.</span></>}</h1><p>{view === "ledger" ? "Know what was promised, what shipped, and what your customer can actually use." : view === "review" ? "Review the evidence, edit the message, then decide. Nothing sends automatically." : view === "sources" ? "Six synthetic source documents. No live customer systems are connected." : "Your current session only. Export it before leaving; refreshing clears this history."}</p></div><button className="button primary run-button" onClick={() => runAnalysis()} disabled={running}><Sparkles size={16} className={running ? "spinning" : ""} />{running ? "Checking evidence…" : "Run evidence check"}</button></section>
 
-          <section className="demo-toolbar" aria-label="Analysis controls"><div><FlaskConical size={15} /><strong>Demo scenario</strong><select aria-label="Demo scenario" value={scenario} onChange={(event) => setScenario(event.target.value as Scenario)} disabled={running}><option value="blocked">Built, but not available</option><option value="enabled">Enabled + customer verified</option><option value="stale">Stale availability evidence</option></select></div><button className="text-button" onClick={() => setSettingsOpen(!settingsOpen)}>{analysis.mode === "reference" ? "Reference mode · no AI call" : "Live Nemotron run"}<Settings2 size={13} /></button></section>
-          {settingsOpen && <section className="settings-panel" aria-label="Demo settings"><div><h3>Choose your evidence engine</h3><p>Reference mode uses hand-labeled commitments and real reconciliation logic. Live mode asks Nemotron to extract them.</p></div><label>Engine<select value={mode} onChange={(event) => setMode(event.target.value as "reference" | "live")} disabled={running}><option value="reference">Reference fixture · no external call</option><option value="live" disabled={!liveConfigured}>Nebius + NVIDIA Nemotron{!liveConfigured ? " · not configured" : ""}</option></select></label>{mode === "live" && <label>Private demo access token<input type="password" autoComplete="off" value={accessToken} onChange={(event) => setAccessToken(event.target.value)} placeholder="Session-only token, never the Nebius API key" /></label>}<p className="settings-footnote">{liveConfigured ? "Live inference is available. Only the synthetic source pack is sent to Nebius. Each live run consumes your configured API credits." : "Live inference requires a server-side Nebius API key, an NVIDIA Nemotron model ID, and a private access token. No live inference has been claimed."}</p></section>}
+          <section className="demo-toolbar" aria-label="Analysis controls"><div><FlaskConical size={15} /><strong>Demo scenario</strong><select aria-label="Demo scenario" value={scenario} onChange={(event) => setScenario(event.target.value as Scenario)} disabled={running}><option value="blocked">Built, but not available</option><option value="enabled">Enabled + customer verified</option><option value="stale">Stale availability evidence</option></select></div><button className="text-button" onClick={() => setSettingsOpen(!settingsOpen)}>{mode === "live" ? "Engine: live Nemotron · rate-limited" : "Reference mode · no AI call"}<Settings2 size={13} /></button></section>
+          {settingsOpen && <section className="settings-panel" aria-label="Demo settings"><div><h3>Choose your evidence engine</h3><p>Live mode asks NVIDIA Nemotron on Nebius to extract the commitments. Reference mode uses hand-labeled commitments with the same reconciliation logic and no AI call.</p></div><label>Engine<select value={mode} onChange={(event) => setMode(event.target.value as "reference" | "live")} disabled={running}><option value="live" disabled={!liveSelectable}>Nebius + NVIDIA Nemotron{!liveConfigured ? " · not configured" : !liveSelectable ? " · paused" : ""}</option><option value="reference">Reference fixture · no external call</option></select></label>{mode === "live" && liveAccess?.ownerToken && <details className="owner-token"><summary>Owner access token (optional)</summary><label>Token for higher limits<input type="password" autoComplete="off" value={accessToken} onChange={(event) => setAccessToken(event.target.value)} placeholder="Leave empty for open live mode" /></label></details>}<p className="settings-footnote">{liveAccess?.open ? `Live runs are open to everyone, no token needed. To protect free credits they are limited to ${liveAccess.perIpPerHour} per hour per connection and ${liveAccess.perDay} per day overall. Only the synthetic source pack is sent to Nebius. Reference mode is always available.` : liveConfigured ? "Open live runs are paused by the project owner. Reference mode is always available." : "Live inference is not configured on this server. Reference mode is always available."}</p></section>}
           {scenario !== analysis.scenario && <div className="inline-notice"><CircleAlert size={15} />Scenario changed. Run the evidence check to refresh results.</div>}
-          {error && <div className="error-message" role="alert"><CircleAlert size={17} /><span>{error} Previous results are retained.</span><button aria-label="Dismiss error" onClick={() => setError("")}><X size={15} /></button></div>}
+          {error && <div className="error-message" role="alert"><CircleAlert size={17} /><span>{error} Previous results are retained.</span>{offerReference && <button className="error-action" onClick={runReferenceInstead} disabled={running}>Run reference check</button>}<button aria-label="Dismiss error" onClick={() => { setError(""); setOfferReference(false); }}><X size={15} /></button></div>}
           {notice && <div className="inline-notice" role="status"><Check size={15} /><span>{notice}</span><button aria-label="Dismiss notification" onClick={() => setNotice("")}><X size={14} /></button></div>}
 
           <section className="metrics" aria-label="Ledger summary"><div className="metric"><span>Active commitments <BookOpen size={15} /></span><strong>{analysis.commitments.filter((commitment) => commitment.intent === "committed").length}<small>promises to keep</small></strong></div><div className="metric"><span>Need your attention <CircleAlert size={15} /></span><strong className="metric-warning">{attentionCount}<small>worth a closer look</small></strong></div><div className="metric"><span>Verified delivered <CheckCheck size={16} /></span><strong className="metric-success">{analysis.commitments.filter((commitment) => commitment.verdict === "verified").length}<small>backed by customer evidence</small></strong></div><div className="metric"><span>Evidence sources <Layers3 size={15} /></span><strong>{analysis.sources.length}<small>every claim has a trail</small></strong></div></section>
