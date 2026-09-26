@@ -1,0 +1,59 @@
+{
+  "capturedAt": "2026-09-26T08:19:18.426Z",
+  "org": "self-swl",
+  "projectId": "4512151613210624",
+  "base": "https://us.sentry.io",
+  "accountId": "northstar",
+  "featureIds": [
+    "audit-export",
+    "eu-residency",
+    "saml",
+    "usage-report",
+    "scim",
+    "dashboard"
+  ],
+  "responses": {
+    "/api/0/organizations/self-swl/issues/?project=4512151613210624&query=is%3Aunresolved+customer%3Anorthstar+feature%3Asaml&statsPeriod=72h&sort=date&limit=3": [],
+    "/api/0/organizations/self-swl/issues/?project=4512151613210624&query=is%3Aunresolved+customer%3Anorthstar+feature%3Ascim&statsPeriod=72h&sort=date&limit=3": [],
+    "/api/0/organizations/self-swl/issues/?project=4512151613210624&query=is%3Aunresolved+customer%3Anorthstar+feature%3Ausage-report&statsPeriod=72h&sort=date&limit=3": [],
+    "/api/0/organizations/self-swl/issues/?project=4512151613210624&query=is%3Aunresolved+customer%3Anorthstar+feature%3Aeu-residency&statsPeriod=72h&sort=date&limit=3": [],
+    "/api/0/organizations/self-swl/issues/?project=4512151613210624&query=is%3Aunresolved+customer%3Anorthstar+feature%3Adashboard&statsPeriod=72h&sort=date&limit=3": [],
+    "/api/0/organizations/self-swl/issues/?project=4512151613210624&query=is%3Aunresolved+customer%3Anorthstar+feature%3Aaudit-export&statsPeriod=72h&sort=date&limit=3": [
+      {
+        "id": "7755979867",
+        "shortId": "PROMISE-LEDGER-DEMO-2",
+        "title": "AuditExportError: export job failed: audit event stream cursor expired after 900s for workspace northstar",
+        "culprit": "audit-export.run",
+        "level": "error",
+        "status": "unresolved",
+        "permalink": "https://self-swl.sentry.io/issues/7755979867/",
+        "project": {
+          "id": "4512151613210624",
+          "slug": "promise-ledger-demo"
+        },
+        "filtered": {
+          "count": "14",
+          "userCount": 3,
+          "firstSeen": "2026-09-26T05:51:38Z",
+          "lastSeen": "2026-09-26T08:14:38Z"
+        }
+      }
+    ],
+    "/api/0/organizations/self-swl/issues/7755979867/events/?query=customer%3Anorthstar+feature%3Aaudit-export&statsPeriod=72h&per_page=1": [
+      {
+        "eventID": "13f69aa4a4ca215b434ceb7630b51ea2",
+        "dateCreated": "2026-09-26T08:14:38Z",
+        "tags": [
+          {
+            "key": "customer",
+            "value": "northstar"
+          },
+          {
+            "key": "feature",
+            "value": "audit-export"
+          }
+        ]
+      }
+    ]
+  }
+}
