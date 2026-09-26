@@ -16,7 +16,7 @@ export function SourceOrigin({ source }: { source: Source }) {
   if (!source.url && !provenance?.fetchedAt) return null;
   return (
     <div className="source-origin">
-      {provenance?.fetchedAt && <span className={`origin-pill ${provenance.recorded ? "recorded" : "live"}`}>{provenance.recorded ? <History size={11} /> : <Radio size={11} />}{provenance.recorded ? source.kind === "PublicClaim" ? "Reference fixture of the public page · no Tavily call" : `Recorded response · captured ${utc(provenance.fetchedAt)}` : `Fetched live · ${utc(provenance.fetchedAt)}`}</span>}
+      {provenance?.fetchedAt && <span className={`origin-pill ${provenance.recorded ? "recorded" : "live"}`}>{provenance.recorded ? <History size={11} /> : <Radio size={11} />}{provenance.recorded ? `${source.kind === "PublicClaim" ? "Recorded Tavily response" : "Recorded response"} · captured ${utc(provenance.fetchedAt)}` : `Fetched live · ${utc(provenance.fetchedAt)}`}</span>}
       {source.url && <a href={source.url} target="_blank" rel="noopener noreferrer">{source.kind === "Runtime" ? "Sentry issue · owner sign-in" : "Open original"}<ArrowUpRight size={11} /></a>}
     </div>
   );
