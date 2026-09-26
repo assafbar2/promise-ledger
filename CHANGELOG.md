@@ -2,6 +2,15 @@
 
 ## Unreleased — September 26, 2026
 
+### Public-claim check (Tavily)
+
+- Adds the `tavily-public-claim` evidence provider. Live runs fetch the fictional vendor's public changelog (`/changelog`, served by the app) with a basic Tavily Extract call. Reference runs show the same page as a labelled fixture with no Tavily call.
+- Claims are detected deterministically and accepted only as exact quotes of the fetched text, never Tavily's generated answers. The allowlist is re-checked on returned URLs, and failures show "Public claim not checked" with no fixture fallback.
+- A public GA claim never changes a verdict. It adds a "Publicly GA ≠ usable by this customer" note and guardrail check when the account can't use the feature, and public-claim sources are kept out of the narrative model's inputs.
+- UI: the agent view lists each evidence provider's outcome. The evidence trail shows a "Public claim, not customer evidence" card, the draft editor warns on conflicts, and the source library shows URL, fetch time and Tavily request ID.
+- Cost guards: 6-hour cache, `TAVILY_DAILY_LIMIT` (default 20, fail closed), free plan with pay-as-you-go off. New env vars: `TAVILY_API_KEY`, `TAVILY_ALLOWED_DOMAINS`, `TAVILY_CLAIM_URLS`, `TAVILY_DAILY_LIMIT`.
+- `EvidenceError` moves to `lib/evidence/errors.ts`, still re-exported by the registry, so providers can import it without an import cycle.
+
 ### Multi-model Nemotron agent pipeline
 
 - Live mode now runs four steps. Nemotron 3 Nano triages and routes sources; Nemotron 3 Super extracts commitments, as before; deterministic rules decide verdicts; Nemotron 3 Ultra writes a why-the-evidence-disagrees explanation, a customer update and an internal owner nudge per commitment. Model IDs are configurable (`NEBIUS_TRIAGE_MODEL`, `NEBIUS_NARRATIVE_MODEL`, `off` to disable).

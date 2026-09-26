@@ -3,10 +3,13 @@ import test from "node:test";
 import { tavilyPublicClaimProvider } from "../lib/evidence/providers/tavily-public-claim.ts";
 import { syntheticPackProvider } from "../lib/evidence/providers/synthetic-pack.ts";
 import { collectEvidence } from "../lib/evidence/registry.ts";
-import { AS_OF, FEATURE_IDS } from "../lib/fixtures.ts";
+import { AS_OF, createScenario, FEATURE_IDS, referenceCommitments } from "../lib/fixtures.ts";
 import { changelogText } from "../lib/public-claims/changelog.ts";
 import { resetPublicClaimMemory } from "../lib/public-claims/store.ts";
+import { narrativeSources } from "../lib/pipeline/narrative.ts";
 import { runPipeline } from "../lib/pipeline/run.ts";
+import { reconcile } from "../lib/reconcile.ts";
+import type { Source } from "../lib/schema.ts";
 
 const providers = [syntheticPackProvider, tavilyPublicClaimProvider];
 const context = { accountId: "northstar", featureIds: FEATURE_IDS, scenario: "blocked" as const, asOf: AS_OF, now: "2026-09-26T08:00:00.000Z" };
@@ -17,6 +20,15 @@ async function withFetch<T>(fetcher: typeof fetch, work: () => Promise<T>) {
   globalThis.fetch = fetcher;
   try { return await work(); } finally { globalThis.fetch = original; }
 }
+
+test("the narrative step never receives public-claim sources, even when triage labels them customer signals", () => {
+  const { sources } = createScenario("blocked");
+  const claim: Source = { id: "PUB-01", accountId: "northstar", kind: "PublicClaim", title: "Public page", author: "Public web", observedAt: AS_OF, text: changelogText() };
+  const commitments = referenceCommitments.map((commitment) => reconcile(commitment, createScenario("blocked").facts, "northstar", AS_OF));
+  const labels = [...sources, claim].map((source) => ({ sourceId: source.id, role: "customer-signal" as const, features: ["audit-export"], injectionSuspected: false }));
+  const allowed = narrativeSources(commitments, [...sources, claim], labels);
+  assert.ok([...allowed.values()].every((list) => list.every((source) => source.kind !== "PublicClaim")));
+});
 
 const tavilyOk: typeof fetch = async (input) => {
   assert.equal(String(input), "https://api.tavily.com/extract");
