@@ -1,18 +1,22 @@
-import { ACCOUNT, AS_OF, FEATURE_IDS, createScenario, referenceCommitments } from "./fixtures";
 import { liveLimitSettings, limitStoreConfig, ownerTokenMatches, reserveLiveRun, type LimitDecision, type LiveTier } from "./live-limits";
-import { configuration, extractWithNebius, InferenceError } from "./nebius";
-import { reconcile, validateExtraction } from "./reconcile";
-import { requestSchema, type Analysis } from "./schema";
+import { configuration } from "./nebius";
+import type { PipelineEvent } from "./pipeline/events";
+import { modelInfo, pipelineModels, runBudgetUsd } from "./pipeline/models";
+import { PipelineError, runPipeline } from "./pipeline/run";
+import { requestSchema } from "./schema";
 
 export function capabilities() {
   const { apiKey, model, accessToken } = configuration();
   const liveConfigured = Boolean(apiKey && /^nvidia\/.*nemotron/i.test(model));
   const limits = liveLimitSettings();
+  const models = pipelineModels();
+  const describe = (id: string | null) => id ? { id, name: modelInfo(id).name } : null;
   return {
     liveConfigured,
     model: model || null,
     syntheticOnly: true,
     liveAccess: liveConfigured ? { open: limits.perDay > 0 && limits.perIpPerHour > 0, perIpPerHour: limits.perIpPerHour, perDay: limits.perDay, durableLimits: limitStoreConfig() !== null, ownerToken: accessToken.length >= 24 } : null,
+    pipeline: liveConfigured ? { triage: describe(models.triage.model), extraction: describe(model), narrative: describe(models.narrative.model), runBudgetUsd: runBudgetUsd() } : null,
   };
 }
 
@@ -36,40 +40,81 @@ function limitMessage(decision: Extract<LimitDecision, { allowed: false }>, tier
   return "Live mode is paused because its usage limits can't be verified right now. Reference mode is still available.";
 }
 
-export async function analyzeRequest(request: Request): Promise<Response> {
-  const headers = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
-  const fail = (error: string, status: number, extra: Record<string, unknown> = {}, extraHeaders: Record<string, string> = {}) => Response.json({ error, ...extra }, { status, headers: { ...headers, ...extraHeaders } });
+const HEADERS = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
+
+function fail(error: string, status: number, extra: Record<string, unknown> = {}, extraHeaders: Record<string, string> = {}) {
+  return Response.json({ error, ...extra }, { status, headers: { ...HEADERS, ...extraHeaders } });
+}
+
+/**
+ * Validates the request and, for live mode, applies the owner token and reserves exactly one
+ * live run. A whole pipeline (triage, extraction, narrative) counts as that one run.
+ */
+async function admit(request: Request): Promise<{ ok: true; mode: "reference" | "live"; scenario: "blocked" | "enabled" | "stale" } | { ok: false; response: Response }> {
   const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) return fail("Cross-origin requests are not allowed.", 403);
-  if (!request.headers.get("content-type")?.startsWith("application/json")) return fail("Send a JSON request.", 415);
+  if (origin && origin !== new URL(request.url).origin) return { ok: false, response: fail("Cross-origin requests are not allowed.", 403) };
+  if (!request.headers.get("content-type")?.startsWith("application/json")) return { ok: false, response: fail("Send a JSON request.", 415) };
   const text = await request.text();
-  if (text.length > 2048) return fail("Request is too large.", 413);
+  if (text.length > 2048) return { ok: false, response: fail("Request is too large.", 413) };
   let body;
-  try { body = requestSchema.parse(JSON.parse(text)); } catch { return fail("Choose a valid mode and demo scenario.", 400); }
+  try { body = requestSchema.parse(JSON.parse(text)); } catch { return { ok: false, response: fail("Choose a valid mode and demo scenario.", 400) }; }
   if (body.mode === "live") {
-    if (!capabilities().liveConfigured) return fail("Live inference is not configured. The reference demo remains available.", 503, { code: "live_not_configured", fallback: "reference" });
+    if (!capabilities().liveConfigured) return { ok: false, response: fail("Live inference is not configured. The reference demo remains available.", 503, { code: "live_not_configured", fallback: "reference" }) };
     const authorization = request.headers.get("authorization");
     let tier: LiveTier = "public";
     if (authorization) {
-      if (!(await ownerTokenMatches(authorization, configuration().accessToken))) return fail("That owner access token isn't valid. Clear the token field to use open live mode.", 401, { code: "invalid_owner_token" });
+      if (!(await ownerTokenMatches(authorization, configuration().accessToken))) return { ok: false, response: fail("That owner access token isn't valid. Clear the token field to use open live mode.", 401, { code: "invalid_owner_token" }) };
       tier = "token";
     }
     const decision = await reserveLiveRun({ request, tier });
     if (!decision.allowed) {
       const status = decision.reason === "ip" || decision.reason === "daily" ? 429 : 503;
-      return fail(limitMessage(decision, tier), status, { code: `live_limit_${decision.reason}`, retryAfterSeconds: decision.retryAfterSeconds, fallback: "reference" }, { "Retry-After": String(decision.retryAfterSeconds) });
+      return { ok: false, response: fail(limitMessage(decision, tier), status, { code: `live_limit_${decision.reason}`, retryAfterSeconds: decision.retryAfterSeconds, fallback: "reference" }, { "Retry-After": String(decision.retryAfterSeconds) }) };
     }
   }
-  const started = performance.now();
-  const { sources, facts } = createScenario(body.scenario);
+  return { ok: true, mode: body.mode, scenario: body.scenario };
+}
+
+function failure(error: unknown, mode: "reference" | "live") {
+  const fallback = mode === "live" ? { fallback: "reference" as const } : {};
+  if (error instanceof PipelineError) return { error: error.message, code: error.code, status: error.status, ...fallback };
+  return { error: "Analysis could not be validated. No results were accepted.", code: "internal", status: 500, ...fallback };
+}
+
+/** JSON endpoint: runs the full pipeline and returns the final analysis, including its trace. */
+export async function analyzeRequest(request: Request): Promise<Response> {
+  const admission = await admit(request);
+  if (!admission.ok) return admission.response;
   try {
-    const result = body.mode === "live"
-      ? await extractWithNebius(sources)
-      : { commitments: validateExtraction({ commitments: referenceCommitments }, sources, ACCOUNT.id, FEATURE_IDS), model: null, runId: crypto.randomUUID(), usage: null };
-    const analysis: Analysis = { ...result, commitments: result.commitments.map((commitment) => reconcile(commitment, facts, ACCOUNT.id, AS_OF)), mode: body.mode, scenario: body.scenario, asOf: AS_OF, sources, elapsedMs: Math.round(performance.now() - started) };
-    return Response.json(analysis, { headers });
+    const analysis = await runPipeline({ mode: admission.mode, scenario: admission.scenario, signal: request.signal });
+    return Response.json(analysis, { headers: HEADERS });
   } catch (error) {
-    const extra = body.mode === "live" ? { fallback: "reference" } : {};
-    return fail(error instanceof InferenceError ? error.message : "Analysis could not be validated. No results were accepted.", error instanceof InferenceError ? error.status : 500, extra);
+    const { status, code, ...body } = failure(error, admission.mode);
+    return fail(body.error, status, admission.mode === "live" ? { fallback: "reference", code } : { code });
   }
+}
+
+/** Streaming endpoint: newline-delimited PipelineEvents, ending with `result` or `error`. */
+export async function pipelineRequest(request: Request): Promise<Response> {
+  const admission = await admit(request);
+  if (!admission.ok) return admission.response;
+  const encoder = new TextEncoder();
+  const body = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      let open = true;
+      const send = (event: PipelineEvent) => {
+        if (!open) return;
+        try { controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`)); } catch { open = false; }
+      };
+      try {
+        await runPipeline({ mode: admission.mode, scenario: admission.scenario, signal: request.signal, emit: send });
+      } catch (error) {
+        send({ type: "error", ...failure(error, admission.mode) });
+      } finally {
+        open = false;
+        try { controller.close(); } catch { /* client already gone */ }
+      }
+    },
+  });
+  return new Response(body, { headers: { ...HEADERS, "Content-Type": "application/x-ndjson; charset=utf-8", "X-Accel-Buffering": "no" } });
 }

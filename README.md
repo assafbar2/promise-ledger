@@ -6,6 +6,8 @@ An evidence-first customer-success workbench for the Nebius × NVIDIA Global AI 
 
 Engineering closes an audit-export ticket, but Northstar's feature flag is still off. Promise Ledger exposes the gap, shows the original promise and conflicting evidence, and prepares an accurate customer update for human review. Nothing sends automatically.
 
+Under the hood, a visible **three-model NVIDIA Nemotron pipeline on Nebius Token Factory** does the work. Nano triages the sources and Super extracts commitments with exact quotes. Deterministic rules then decide every verdict, and only after that does Ultra explain why the evidence disagrees, draft a situation-specific customer update, and nudge the owner. Every model-written claim must cite exact source text, and server-side guardrails reject new dates, new promises and verdict changes. A live agent view streams each step, model, latency, token count and cited quote as it happens.
+
 > **Status:** the synthetic workbench and Vercel build are implemented. The first hosted release is reference-only: no provider key is deployed and no inference credits are consumed. Real NVIDIA-on-Nebius evaluation completed separately on September 19, 2026: 7/8 development and 32/32 frozen held-out exact matches, with no provider/validation errors. These synthetic cases do not establish real-world model quality. See [the measured results](docs/evaluation/LIVE-RESULTS-2026-09-19.md), [deployment and access](docs/DEPLOYMENT.md), and [current handoff](docs/STATUS.md). The hackathon submission is not complete.
 
 ## Goal
@@ -16,9 +18,9 @@ Our hackathon goal is a strong, distinctive Best Apps and Agents entry, with **$
 
 ## Current scope
 
-One fictional account, a fixed synthetic evidence pack and three scenarios: customer access disabled, successful customer acceptance, and stale evidence. NVIDIA Nemotron extracts commitments from conversations; separate rules check built, enabled and customer-verified facts. The workbench connects the ledger, exact source quotes, evidence review, editable drafts and exports.
+One fictional account, a fixed synthetic evidence pack and three scenarios: customer access disabled, successful customer acceptance, and stale evidence. Nemotron 3 Nano routes sources, Nemotron 3 Super extracts commitments, separate rules check built, enabled and customer-verified facts, and Nemotron 3 Ultra writes grounded explanations and drafts. The workbench connects the agent trace, ledger, exact source quotes, evidence review, editable drafts and exports.
 
-This is not a full customer-success platform. There are no live CRM/support connectors, arbitrary customer uploads, persistent records, multi-customer tenancy, background monitoring or outbound sending. The customer-update wording is template-generated, not a second model call. These exclusions are deliberate, not missing hackathon requirements.
+This is not a full customer-success platform. There are no live CRM/support connectors, arbitrary customer uploads, persistent records, multi-customer tenancy, background monitoring or outbound sending. Evidence comes through a pluggable provider interface. Only the synthetic pack is registered today; Tavily public-claim, Sentry runtime-error and pasted-evidence providers are planned. In reference mode, and whenever a model draft fails a guardrail, the customer update is a clearly labelled template. These exclusions are deliberate, not missing hackathon requirements.
 
 ## Run locally
 
@@ -35,13 +37,16 @@ Open the exact local URL printed by the server. No credentials are needed for th
 
 Try the hosted reference demo: **https://promise-ledger-chi.vercel.app**. The Vercel project is **promise-ledger**, on the owner's verified Hobby account; the homepage and all three reference scenarios passed anonymous HTTP checks on September 20. See [deployment and access](docs/DEPLOYMENT.md). The repository remains private. The code now supports **open live mode**: anyone can run live Nemotron extraction with no token, limited to 5 runs per connection per hour and 30 per UTC day overall, and reference mode stays available as a fallback. It turns on once the owner sets the Vercel variables in the [owner setup](docs/DEPLOYMENT.md#owner-setup-for-open-live-mode) and redeploys. Until then the hosted app is reference-only. By owner decision on September 26 the existing Nebius key is not rotated; the accepted risk is recorded in [security](SECURITY.md).
 
+- Live agent view: four step cards (Triage, Extract, Decide, Explain) with model, status, latency, tokens and cost, plus cited quotes checked against their sources as they stream in, verdicts and guardrail results. Reference mode replays the same trace, clearly labelled, with no AI calls.
+- "Why the evidence disagrees" explanations, situation-specific customer updates and internal owner nudges written by Nemotron 3 Ultra after the rules decide. Each claim expands to its exact quotes, and any brief that fails a guardrail falls back to a template labelled with the reason.
 - Searchable, filterable commitment ledger with owners, dates and seven conservative verdicts.
 - Exact source quotations and separate customer-specific built, enabled and verified checks.
 - Six synthetic source documents and three replayable evidence scenarios.
 - Editable customer drafts, explicit local review and export.
 - Source library and exportable session activity.
 - Source validation and server-side Nebius integration with explicit failure handling.
-- Open, rate-limited live mode: per-IP hourly and shared daily caps, durable with free Upstash Redis, and friendly limit messages with one-click reference fallback.
+- Open, rate-limited live mode: per-IP hourly and shared daily caps, durable with free Upstash Redis, and friendly limit messages with one-click reference fallback. A full pipeline counts as one run, and a per-run budget caps its worst-case cost at $0.05.
+- Pluggable evidence providers with one validating registry (account scope, exact-quote facts and signals, no fixtures in live runs).
 
 Northstar and everyone in its evidence pack are fictional. The snapshot is fixed to September 13, 2026. Reviews and activity live in memory: refreshing clears them, so export first. No real CRM, support or telemetry service is connected.
 
@@ -49,9 +54,17 @@ Northstar and everyone in its evidence pack are fictional. The snapshot is fixed
 
 Follow [live setup](docs/NEBIUS.md). Provide a real Nebius key and an available NVIDIA Nemotron model ID in ignored `.env.local`, then restart the server. Live mode becomes the default with no token, within the rate limits. `DEMO_ACCESS_TOKEN` is optional and gives the owner higher limits. Never put the Nebius API key in the browser.
 
-On Vercel, the owner sets these variables, names only: `NEBIUS_API_KEY` and `NEBIUS_MODEL` (required); `KV_REST_API_URL` and `KV_REST_API_TOKEN` (created by the free Upstash integration, recommended); `DEMO_ACCESS_TOKEN`, `LIVE_RUNS_PER_DAY`, `LIVE_RUNS_PER_IP_PER_HOUR` and `LIVE_TOKEN_RUNS_PER_DAY` (optional). See [owner setup](docs/DEPLOYMENT.md#owner-setup-for-open-live-mode) for the exact steps, including the Vercel WAF rule.
+On Vercel, the owner sets these variables, names only: `NEBIUS_API_KEY` and `NEBIUS_MODEL` (required; `NEBIUS_MODEL` stays the Super extraction model); `KV_REST_API_URL` and `KV_REST_API_TOKEN` (created by the free Upstash integration, recommended); `DEMO_ACCESS_TOKEN`, `LIVE_RUNS_PER_DAY`, `LIVE_RUNS_PER_IP_PER_HOUR` and `LIVE_TOKEN_RUNS_PER_DAY` (optional). The pipeline works with its tested defaults. Optional overrides are `NEBIUS_TRIAGE_MODEL`, `NEBIUS_NARRATIVE_MODEL`, `NEBIUS_TRIAGE_REASONING_EFFORT`, `NEBIUS_NARRATIVE_REASONING_EFFORT`, `NEBIUS_STREAM` and `LIVE_RUN_BUDGET_USD`; see [Nebius setup](docs/NEBIUS.md#multi-model-pipeline--september-26-2026). See [owner setup](docs/DEPLOYMENT.md#owner-setup-for-open-live-mode) for the exact steps, including the Vercel WAF rule.
 
-The model extracts commitments; a separate policy determines delivery from customer-specific facts. Successful live responses expose real model/run provenance. Failures do not silently substitute a reference fixture.
+Models extract, route and explain; a separate policy determines delivery from customer-specific facts. Successful live responses expose real model/run provenance, usage and estimated cost per step. A failed extraction never silently substitutes a reference fixture; a failed triage or narrative step falls back visibly.
+
+| Step | Model ID (default) | Verified |
+| --- | --- | --- |
+| Triage | `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` | Public catalog and live calls, September 26 |
+| Extract | `nvidia/nemotron-3-super-120b-a12b` | Live evaluation September 19; live calls September 26 |
+| Explain | `nvidia/Nemotron-3-Ultra-550b-a55b` | Public catalog and live calls, September 26 |
+
+On September 26, four live pipeline runs with the shipped settings took 16–20 seconds and cost an estimated $0.008–$0.010 each, against a $0.0496 hard ceiling. In the final run all five Ultra briefs passed the guardrails; in earlier runs, rejected briefs fell back to labelled templates. See [the live pipeline check](docs/evaluation/PIPELINE-LIVE-2026-09-26.md). That is a smoke test, not an accuracy result.
 
 The first live evaluation used `nvidia/nemotron-3-super-120b-a12b`. Nebius Token Factory supplies the inference API, so this prototype did not need us to provision or operate a GPU server. The web interface does not need to be hosted on Nebius: a runtime Token Factory inference call satisfies that part of the event's platform requirement. See the [verified submission checklist](docs/HACKATHON.md).
 
@@ -65,16 +78,19 @@ npm run eval
 npm run test:render
 npm run test:vercel
 npm run check
+# Optional, billed: one live pipeline run (up to three Nemotron calls), no retries
+npm run smoke:live -- --scenario=blocked --confirm
 ```
 
 `test:render` builds and checks the Worker output and API routes. `eval` measures 18 deterministic rule cases, not model quality. `eval:live` runs eight development examples and a separate frozen 32-case held-out set, recording actual latency, usage, IDs and failures. It requires a Nebius key and consumes API credits. The held-out cases are assistant-authored synthetic examples, not an independent external benchmark. Without credentials the runner writes a blocked report, never a fabricated score.
 
-## Readiness — September 20, 2026
+## Readiness — updated September 26, 2026
 
 | Area | Last verified state |
 | --- | --- |
 | Local product | Core workbench implemented; browser loading and reference evidence check verified September 19 |
-| Engineering checks | September 20: 73 automated tests, 3 Worker production tests, 4 Vercel production tests and 18 rule cases passed; type checking, lint and both builds passed |
+| Engineering checks | September 26: 133 automated tests (pipeline, guardrails, streaming, budget, evidence registry, service), 3 Worker production tests and 6 Vercel production tests passed; type checking, lint and both builds passed |
+| Live pipeline | September 26: 20 real calls across Nano, Super and Ultra while tuning; four full runs with shipped settings at 16–20 s and about $0.009 each ([report](docs/evaluation/PIPELINE-LIVE-2026-09-26.md)) |
 | Real model execution | 40 requests completed; 7/8 development and 32/32 frozen held-out exact matches, one missed tentative item, no provider/validation errors |
 | Model evidence | Actual latency, model/run/request IDs and usage saved; synthetic results are not independent real-world validation |
 | Cost | First run's estimated trial-credit consumption: $0.025144; paid rollover was verified disabled September 19; recheck before further inference |

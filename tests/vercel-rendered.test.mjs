@@ -25,7 +25,7 @@ test("Vercel production entry renders Promise Ledger and its controls", async ()
   const response = await request("/");
   assert.equal(response.status, 200);
   const html = await response.text();
-  for (const label of ["Promise Ledger", "Run evidence check", "Reference mode", "Synthetic demo", "Audit log export"]) {
+  for (const label of ["Promise Ledger", "Run evidence check", "Reference mode", "Synthetic demo", "Audit log export", "AGENT PIPELINE", "Replayed reference trace"]) {
     assert.ok(html.includes(label), `Missing ${label}`);
   }
   assert.match(html, /name="robots" content="noindex, nofollow"/);
@@ -36,7 +36,7 @@ test("Vercel production entry renders Promise Ledger and its controls", async ()
 test("Vercel reference API supports all three scenarios without credentials", async () => {
   const status = await request("/api/status");
   assert.equal(status.status, 200);
-  assert.deepEqual(await status.json(), { liveConfigured: false, model: null, syntheticOnly: true, liveAccess: null });
+  assert.deepEqual(await status.json(), { liveConfigured: false, model: null, syntheticOnly: true, liveAccess: null, pipeline: null });
   for (const [scenario, verdict] of [["blocked", "blocked"], ["enabled", "verified"], ["stale", "unknown"]]) {
     const response = await request("/api/analyze", {
       method: "POST",
@@ -50,6 +50,29 @@ test("Vercel reference API supports all three scenarios without credentials", as
     assert.equal(result.mode, "reference");
     assert.equal(result.model, null);
   }
+});
+
+test("Vercel entry streams the reference pipeline as NDJSON with a replayed trace", async () => {
+  const response = await request("/api/pipeline", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Origin: "https://promise-ledger.example" },
+    body: JSON.stringify({ mode: "reference", scenario: "blocked" }),
+  });
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type"), /application\/x-ndjson/);
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  const events = (await response.text()).trim().split("\n").map((line) => JSON.parse(line));
+  assert.equal(events[0].type, "run");
+  assert.equal(events[0].replay, true);
+  assert.deepEqual(events[0].steps.map((step) => step.id), ["triage", "extraction", "rules", "narrative"]);
+  assert.ok(events.filter((event) => event.type === "quote").length >= 5);
+  const result = events.at(-1);
+  assert.equal(result.type, "result");
+  assert.equal(result.analysis.commitments[0].verdict, "blocked");
+  assert.equal(result.analysis.commitments[0].narrative.origin, "template");
+  assert.equal(result.analysis.usage, null);
+  const live = await request("/api/pipeline", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "live", scenario: "blocked" }) });
+  assert.equal(live.status, 503, "live pipeline fails closed without credentials, before streaming");
 });
 
 test("Vercel entry applies the open live-mode gate from runtime environment", async (context) => {

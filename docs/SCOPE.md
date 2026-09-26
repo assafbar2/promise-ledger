@@ -31,10 +31,11 @@ This follows the earlier selected Promise Ledger proposal. No independent multi-
 - Three scenarios: disabled entitlement, successful acceptance and stale evidence.
 - Server-side NVIDIA Nemotron-on-Nebius adapter with strict output validation and explicit failures.
 - Deterministic tests and evaluation, plus a separate credential-gated live evaluation harness.
+- September 26: a visible three-model Nemotron pipeline (Nano triage, Super extraction, Ultra narrative after the rules decide) with a streaming agent trace, per-claim citation guardrails, labelled template fallbacks, and a pluggable evidence-provider interface.
 
 ## Deliberate exclusions
 
-No real CRM/support connectors, arbitrary uploads, tenant authentication, persistent records, background monitoring, outbound sending, or production compliance audit. No live AI result, customer adoption, saved revenue or measured time savings is claimed. Real customer data is out of scope for this prototype.
+No real CRM/support connectors (the evidence-provider interface is ready for them, but only the synthetic pack is registered), arbitrary uploads, tenant authentication, persistent records, background monitoring, outbound sending, or production compliance audit. No live AI result, customer adoption, saved revenue or measured time savings is claimed. Real customer data is out of scope for this prototype.
 
 ## Acceptance criteria
 
@@ -45,6 +46,8 @@ No real CRM/support connectors, arbitrary uploads, tenant authentication, persis
 5. Failed live inference never silently substitutes a reference result.
 6. No draft is sent; edits and new evidence runs clear local approval.
 7. Synthetic data, snapshot time, inference mode and session-only state stay visible.
+8. No model can change a verdict; every model-written claim cites exact quotes from that commitment's evidence, introduces no new date or promise, or falls back to a labelled template.
+9. A full pipeline counts as one rate-limited live run and cannot exceed its per-run worst-case budget.
 
 ## Next unknowns
 

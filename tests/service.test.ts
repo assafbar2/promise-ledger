@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test, { type TestContext } from "node:test";
-import { referenceCommitments } from "../lib/fixtures.ts";
 import { resetLiveLimitMemory } from "../lib/live-limits.ts";
 import { analyzeRequest, capabilities } from "../lib/service.ts";
+import { nebiusMock, type Reply, type Step } from "./helpers/nebius-mock.ts";
 import type { Analysis } from "../lib/schema.ts";
 
 function request(body: unknown, headers: Record<string, string> = {}) {
@@ -56,19 +56,19 @@ test("live mode fails explicitly without credentials and never substitutes a dem
   } finally { if (saved !== undefined) process.env.NEBIUS_API_KEY = saved; }
 });
 
-const LIVE_ENV = ["NEBIUS_API_KEY", "NEBIUS_MODEL", "DEMO_ACCESS_TOKEN", "LIVE_RUNS_PER_IP_PER_HOUR", "LIVE_RUNS_PER_DAY", "LIVE_TOKEN_RUNS_PER_DAY", "KV_REST_API_URL", "KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"];
+const LIVE_ENV = ["NEBIUS_API_KEY", "NEBIUS_MODEL", "NEBIUS_TRIAGE_MODEL", "NEBIUS_NARRATIVE_MODEL", "NEBIUS_STREAM", "LIVE_RUN_BUDGET_USD", "DEMO_ACCESS_TOKEN", "LIVE_RUNS_PER_IP_PER_HOUR", "LIVE_RUNS_PER_DAY", "LIVE_TOKEN_RUNS_PER_DAY", "KV_REST_API_URL", "KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"];
 const OWNER_TOKEN = "test-access-token-at-least-24-chars";
 
-function withLiveServer(context: TestContext, env: Record<string, string> = {}) {
+function withLiveServer(context: TestContext, env: Record<string, string> = {}, replies: Partial<Record<Step, Reply>> = {}) {
   const saved = Object.fromEntries(LIVE_ENV.map((name) => [name, process.env[name]]));
   const savedFetch = globalThis.fetch;
   const providerCalls: string[] = [];
   for (const name of LIVE_ENV) delete process.env[name];
   Object.assign(process.env, { NEBIUS_API_KEY: "test-not-a-real-key", NEBIUS_MODEL: "nvidia/test-Nemotron", ...env });
-  globalThis.fetch = async (url) => {
+  const mock = nebiusMock(replies);
+  globalThis.fetch = async (url, init) => {
     providerCalls.push(String(url));
-    if (String(url).startsWith("https://api.tokenfactory.nebius.com/")) return Response.json({ id: "stub-live-run", model: "nvidia/test-Nemotron", choices: [{ finish_reason: "stop", message: { content: JSON.stringify({ commitments: referenceCommitments }) } }], usage: { prompt_tokens: 10, completion_tokens: 5 } });
-    throw new Error(`Unexpected network call to ${String(url)}`);
+    return mock.fetcher(url, init);
   };
   resetLiveLimitMemory();
   context.after(() => {
@@ -76,7 +76,7 @@ function withLiveServer(context: TestContext, env: Record<string, string> = {}) 
     for (const name of LIVE_ENV) if (saved[name] === undefined) delete process.env[name]; else process.env[name] = saved[name];
     resetLiveLimitMemory();
   });
-  return providerCalls;
+  return Object.assign(providerCalls, { steps: mock.calls });
 }
 
 function live(ip: string, headers: Record<string, string> = {}) {
@@ -88,13 +88,15 @@ test("configured live inference is open without a token and reports its limits",
   const status = capabilities();
   assert.equal(status.liveConfigured, true);
   assert.deepEqual(status.liveAccess, { open: true, perIpPerHour: 5, perDay: 30, durableLimits: false, ownerToken: false });
+  assert.deepEqual(status.pipeline, { triage: { id: "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B", name: "Nemotron 3 Nano 30B-A3B" }, extraction: { id: "nvidia/test-Nemotron", name: "Unlisted Nemotron model" }, narrative: { id: "nvidia/Nemotron-3-Ultra-550b-a55b", name: "Nemotron 3 Ultra 550B-A55B" }, runBudgetUsd: 0.05 });
   const response = await live("198.51.100.20");
   assert.equal(response.status, 200);
   const result = await response.json() as Analysis;
   assert.equal(result.mode, "live");
   assert.equal(result.model, "nvidia/test-Nemotron");
-  assert.equal(result.runId, "stub-live-run");
-  assert.deepEqual(providerCalls, ["https://api.tokenfactory.nebius.com/v1/chat/completions"]);
+  assert.equal(result.runId, "stub-extraction-run");
+  assert.deepEqual(providerCalls.steps.map((call) => call.step), ["triage", "extraction", "narrative"]);
+  assert.ok(providerCalls.every((url) => url === "https://api.tokenfactory.nebius.com/v1/chat/completions"));
 });
 
 test("per-IP limit returns a friendly 429 with reference fallback before any provider call", async (context) => {
@@ -111,7 +113,7 @@ test("per-IP limit returns a friendly 429 with reference fallback before any pro
   assert.match(body.error, /2 live Nemotron runs/);
   assert.match(body.error, /reference mode/);
   assert.equal(body.commitments, undefined);
-  assert.equal(providerCalls.length, 2);
+  assert.equal(providerCalls.length, 6, "two full pipelines (three model calls each) count as two runs");
   assert.equal((await live("198.51.100.22")).status, 200, "other visitors keep live access");
 });
 
@@ -142,7 +144,7 @@ test("owner token is an optional bypass for per-IP limits; a wrong token is reje
   const body = await wrong.json() as { error: string; code: string };
   assert.equal(body.code, "invalid_owner_token");
   assert.doesNotMatch(JSON.stringify(body), new RegExp(`${OWNER_TOKEN}|test-not-a-real-key`));
-  assert.equal(providerCalls.length, 4);
+  assert.equal(providerCalls.length, 12);
 });
 
 test("a bearer header is rejected when no owner token is configured", async (context) => {

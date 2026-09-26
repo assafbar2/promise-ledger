@@ -6,6 +6,33 @@ As of September 19, 2026, the first real evaluation is complete on `nvidia/nemot
 
 The owner later pasted the provider key into chat, so it must be treated as exposed. **Owner decision, September 26, 2026: the key will not be rotated.** The accepted risk is that anyone who saw it could spend its free credits outside this app, and the app's rate limits cannot stop that. **Stop usage after trial** keeps cash spend at $0. One-time display does not mean one-time use or establish an expiry; the actual expiry is unverified. Never copy the secret into reports, source, browser inputs or commits. On Vercel it belongs only in a Sensitive Production environment variable; see [owner setup](DEPLOYMENT.md#owner-setup-for-open-live-mode).
 
+## Multi-model pipeline — September 26, 2026
+
+Live mode now runs three Nemotron models plus deterministic rules. See [architecture](ARCHITECTURE.md) for the flow and guardrails.
+
+| Step | Default model ID | Status of the ID | Rates (in/out per M) | Context | Settings |
+| --- | --- | --- | --- | --- | --- |
+| Triage | `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` | Public catalog, and live-called September 26 | $0.06 / $0.24 | 262,144 | `reasoning_effort: "none"`, 3,000 output cap |
+| Extract | `nvidia/nemotron-3-super-120b-a12b` (`NEBIUS_MODEL`) | Public catalog; live-verified September 19 and 26 | $0.30 / $0.90 | 262,144 | Unchanged from September 19, reasoning on, 6,000 output cap |
+| Explain | `nvidia/Nemotron-3-Ultra-550b-a55b` (mixed case, as listed) | Public catalog, and live-called September 26 | $1.00 / $3.00 | 1,048,576 | `reasoning_effort: "none"`, 7,000 output cap |
+
+The source is the public catalog JSON at `https://tokenfactory.nebius.com/api/public/models_info`, read September 26. The older `nvidia/Llama-3_1-Nemotron-Ultra-253B-v1` was removed from serverless on August 31, 2026. `nvidia/Nemotron-3_5-Lightning` (a Nano-class model at the same price, listed at about 314 tokens/s against Nano's 60) is a drop-in alternative for triage through `NEBIUS_TRIAGE_MODEL`, but it has not been called by this project. All calls use the global endpoint; the catalog lists different regions per model, and the global endpoint served all three.
+
+Measured behaviour ([live check](evaluation/PIPELINE-LIVE-2026-09-26.md)): streaming with `stream_options.include_usage` and `json_object` output worked on all three. Reasoning tokens count toward `max_tokens` and are billed as output. With default reasoning, Nano exceeded the 15-second triage timeout and Ultra spent its whole output allowance reasoning. `"low"` was not honoured by Ultra, while `"none"` was honoured by both, so it is the default for those two steps. Nano and Ultra output is parsed leniently (fences or prose around one JSON object are tolerated) and then validated as strictly as extraction output.
+
+Optional variables, all with safe defaults:
+
+| Variable | Default | Effect |
+| --- | --- | --- |
+| `NEBIUS_TRIAGE_MODEL` | Nano ID above | Any `nvidia/…nemotron…` ID, or `off` to skip triage (every source goes to extraction) |
+| `NEBIUS_NARRATIVE_MODEL` | Ultra ID above | Any Nemotron ID, or `off` for labelled template drafts (ceiling drops to about $0.012 per run) |
+| `NEBIUS_TRIAGE_REASONING_EFFORT` | `none` | `none`…`max`, or `default` to send no `reasoning_effort` |
+| `NEBIUS_NARRATIVE_REASONING_EFFORT` | `none` | As above. At `default` or `low`, Ultra truncated at 7,000 tokens on September 26. |
+| `NEBIUS_STREAM` | on | `false` turns provider streaming off; the UI still streams step events |
+| `LIVE_RUN_BUDGET_USD` | `0.05` | Per-run worst-case cap (at most 0.50); optional steps that don't fit are skipped and labelled |
+
+To check the pipeline against the real API without the UI, run `npm run smoke:live -- --scenario=blocked --confirm`. It makes up to three billed calls, never retries, and writes nothing into the repository. It is separate from `eval:live` and does not touch the September 19 reports.
+
 ## Setup
 
 Billing verification and approved dedicated-key creation are complete. The assistant did not enter or inspect the owner's card or address. After explicit owner approval, **Stop usage when the trial ends** was saved and verified; it remained active after the evaluation. Do not switch to paid usage. The local evaluation guard permits at most $0.50 per invocation from freshly verified free credit. The first run used an estimated $0.025144 of trial credit. No top-up, paid rollover or dedicated compute was enabled.
@@ -45,6 +72,9 @@ For a fresh checkout, copy `.env.example` to `.env.local` and provide the follow
 NEBIUS_API_KEY=your-token-factory-key
 NEBIUS_MODEL=nvidia/nemotron-3-super-120b-a12b
 # Optional:
+NEBIUS_TRIAGE_MODEL=
+NEBIUS_NARRATIVE_MODEL=
+LIVE_RUN_BUDGET_USD=
 DEMO_ACCESS_TOKEN=a-random-owner-token-at-least-24-characters
 LIVE_RUNS_PER_IP_PER_HOUR=5
 LIVE_RUNS_PER_DAY=30
@@ -57,7 +87,7 @@ The model ID was verified through authenticated model listing and all 40 live re
 
 ## Request contract
 
-`lib/nebius.ts` calls `https://api.tokenfactory.nebius.com/v1/chat/completions` with server-side Bearer authentication and structured JSON output. It sends only the synthetic sources. The request has a 60-second timeout, bounded output tokens, and no automatic retry. The model receives no tools, API key, or owner token in its prompt. Before any live call, `lib/service.ts` checks the optional owner token and reserves one run against the limits in `lib/live-limits.ts`. A limited request never reaches Nebius.
+`lib/nebius.ts` calls `https://api.tokenfactory.nebius.com/v1/chat/completions` with server-side Bearer authentication and structured JSON output. It sends only the synthetic sources. Every call has bounded output tokens, a timeout that fits the run's 70-second deadline, and no automatic retry. In the app, calls stream (`stream: true`, `stream_options.include_usage`); the evaluation CLI keeps the non-streaming September 19 contract. The model receives no tools, API key, or owner token in its prompt. Before any live call, `lib/service.ts` checks the optional owner token and reserves one run against the limits in `lib/live-limits.ts`. That single reservation covers the whole three-call pipeline. A limited request never reaches Nebius.
 
 Successful runs report actual provider model, run ID and usage when supplied. Truncation, refusal, invalid JSON, wrong model, missing citation, ungrounded owner/date, rate limiting or transport failure produces an explicit error. Live mode never silently falls back to reference fixtures.
 

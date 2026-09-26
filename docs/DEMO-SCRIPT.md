@@ -6,6 +6,8 @@
 
 **The line to remember:** A closed ticket is not a kept promise.
 
+> **September 26 update, pending owner approval of narration changes:** live runs now show the Agent pipeline panel, where Nano triages, Super extracts, the rules decide and Ultra explains. Cited quotes stream in with exact-match checks, and any guardrail rejection is shown with its reason. This is the natural visual for 00:38–01:02; the words below still describe a single extraction call.
+
 This is the recording script, not a claim that footage or narration has been captured. The live scenes require genuine, successful NVIDIA-on-Nebius runs. The hosted reference demo is useful for rehearsal but must never stand in for live extraction footage.
 
 ## Narration — read verbatim
