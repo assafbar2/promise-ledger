@@ -16,7 +16,7 @@ export function SourceOrigin({ source }: { source: Source }) {
   if (!source.url && !provenance?.fetchedAt) return null;
   return (
     <div className="source-origin">
-      {provenance?.fetchedAt && <span className={`origin-pill ${provenance.recorded ? "recorded" : "live"}`}>{provenance.recorded ? <History size={11} /> : <Radio size={11} />}{provenance.recorded ? `Recorded response · captured ${utc(provenance.fetchedAt)}` : `Fetched live · ${utc(provenance.fetchedAt)}`}</span>}
+      {provenance?.fetchedAt && <span className={`origin-pill ${provenance.recorded ? "recorded" : "live"}`}>{provenance.recorded ? <History size={11} /> : <Radio size={11} />}{provenance.recorded ? source.kind === "PublicClaim" ? "Reference fixture of the public page · no Tavily call" : `Recorded response · captured ${utc(provenance.fetchedAt)}` : `Fetched live · ${utc(provenance.fetchedAt)}`}</span>}
       {source.url && <a href={source.url} target="_blank" rel="noopener noreferrer">{source.kind === "Runtime" ? "Sentry issue · owner sign-in" : "Open original"}<ArrowUpRight size={11} /></a>}
     </div>
   );
@@ -32,7 +32,7 @@ export function ProviderStatus({ providers }: { providers: EvidenceProviderRepor
         <li key={provider.id} className={provider.status}>
           {provider.status === "failed" ? <CircleAlert size={13} /> : <Radio size={13} />}
           <strong>{provider.label}</strong>
-          <span>{provider.status === "failed" ? provider.error ?? "Unavailable." : `${provider.sourceCount} ${provider.sourceCount === 1 ? "source" : "sources"}${provider.recorded ? " · recorded response" : " · live"}`}</span>
+          <span>{provider.status === "failed" ? provider.error ?? "Unavailable." : `${provider.sourceCount} ${provider.sourceCount === 1 ? "source" : "sources"}${provider.recorded ? " · reference replay, no live call" : " · live"}`}</span>
         </li>
       ))}
     </ul>

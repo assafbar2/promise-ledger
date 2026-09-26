@@ -79,7 +79,9 @@ export type Narrative = {
   draftText: string;
   fallbackReason: string | null;
 };
-export type AnalyzedCommitment = ReconciledCommitment & { narrative: Narrative | null };
+/** A vendor's public GA statement shown beside the verdict. It never sets or changes the verdict. */
+export type PublicClaimNote = { sourceId: string; url: string | null; quote: string; date: string | null; conflict: boolean; message: string };
+export type AnalyzedCommitment = ReconciledCommitment & { narrative: Narrative | null; publicClaim?: PublicClaimNote | null };
 
 export type Usage = { promptTokens: number; completionTokens: number };
 export type StepId = "triage" | "extraction" | "rules" | "narrative";

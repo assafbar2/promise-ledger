@@ -42,6 +42,7 @@ Try the hosted reference demo: **https://promise-ledger-chi.vercel.app**. The Ve
 - Searchable, filterable commitment ledger with owners, dates and seven conservative verdicts.
 - Exact source quotations and separate customer-specific built, enabled and verified checks.
 - Six synthetic source documents and three replayable evidence scenarios.
+- Public-claim check with a runtime Tavily Extract call: the fictional vendor's [public changelog](https://promise-ledger-chi.vercel.app/changelog) says audit log export is generally available, and Promise Ledger shows that beside Northstar's disabled entitlement as "Publicly GA ≠ usable by this customer". Exact quotes only, and it never changes a verdict. See [public-claim check](docs/TAVILY.md).
 - Editable customer drafts, explicit local review and export.
 - Source library and exportable session activity.
 - Source validation and server-side Nebius integration with explicit failure handling.
@@ -55,7 +56,7 @@ Northstar and everyone in its evidence pack are fictional. The snapshot is fixed
 
 Follow [live setup](docs/NEBIUS.md). Provide a real Nebius key and an available NVIDIA Nemotron model ID in ignored `.env.local`, then restart the server. Live mode becomes the default with no token, within the rate limits. `DEMO_ACCESS_TOKEN` is optional and gives the owner higher limits. Never put the Nebius API key in the browser.
 
-On Vercel, the owner sets these variables, names only: `NEBIUS_API_KEY` and `NEBIUS_MODEL` (required; `NEBIUS_MODEL` stays the Super extraction model); `KV_REST_API_URL` and `KV_REST_API_TOKEN` (created by the free Upstash integration, recommended); `DEMO_ACCESS_TOKEN`, `LIVE_RUNS_PER_DAY`, `LIVE_RUNS_PER_IP_PER_HOUR` and `LIVE_TOKEN_RUNS_PER_DAY` (optional). The pipeline works with its tested defaults. Optional overrides are `NEBIUS_TRIAGE_MODEL`, `NEBIUS_NARRATIVE_MODEL`, `NEBIUS_TRIAGE_REASONING_EFFORT`, `NEBIUS_NARRATIVE_REASONING_EFFORT`, `NEBIUS_STREAM` and `LIVE_RUN_BUDGET_USD`; see [Nebius setup](docs/NEBIUS.md#multi-model-pipeline--september-26-2026). See [owner setup](docs/DEPLOYMENT.md#owner-setup-for-open-live-mode) for the exact steps, including the Vercel WAF rule.
+On Vercel, the owner sets these variables, names only: `NEBIUS_API_KEY` and `NEBIUS_MODEL` (required; `NEBIUS_MODEL` stays the Super extraction model); `KV_REST_API_URL` and `KV_REST_API_TOKEN` (created by the free Upstash integration, recommended); `DEMO_ACCESS_TOKEN`, `LIVE_RUNS_PER_DAY`, `LIVE_RUNS_PER_IP_PER_HOUR` and `LIVE_TOKEN_RUNS_PER_DAY` (optional); `TAVILY_API_KEY`, `TAVILY_ALLOWED_DOMAINS`, `TAVILY_CLAIM_URLS` and `TAVILY_DAILY_LIMIT` for the [public-claim check](docs/TAVILY.md). The pipeline works with its tested defaults. Optional overrides are `NEBIUS_TRIAGE_MODEL`, `NEBIUS_NARRATIVE_MODEL`, `NEBIUS_TRIAGE_REASONING_EFFORT`, `NEBIUS_NARRATIVE_REASONING_EFFORT`, `NEBIUS_STREAM` and `LIVE_RUN_BUDGET_USD`; see [Nebius setup](docs/NEBIUS.md#multi-model-pipeline--september-26-2026). See [owner setup](docs/DEPLOYMENT.md#owner-setup-for-open-live-mode) for the exact steps, including the Vercel WAF rule.
 
 Models extract, route and explain; a separate policy determines delivery from customer-specific facts. Successful live responses expose real model/run provenance, usage and estimated cost per step. A failed extraction never silently substitutes a reference fixture; a failed triage or narrative step falls back visibly.
 
@@ -119,6 +120,7 @@ Customer-success interviews and further independent evaluation are **optional wa
 - [Vercel deployment and access](docs/DEPLOYMENT.md)
 - [Nebius setup and evaluation](docs/NEBIUS.md)
 - [Sentry runtime evidence, seeding and cron](docs/SENTRY.md)
+- [Public-claim check (Tavily)](docs/TAVILY.md)
 - [Dependency review and hackathon relevance](docs/DEPENDENCY-REVIEW-2026-09-20.md)
 - [Security boundaries](SECURITY.md)
 - [Current status](docs/STATUS.md)
