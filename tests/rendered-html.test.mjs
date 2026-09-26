@@ -19,6 +19,10 @@ test("production build renders the product, provenance and safety controls", asy
   assert.match(html, /Reference mode/);
   assert.match(html, /Run evidence check/);
   assert.match(html, /No owner agreed/);
+  assert.match(html, /AGENT PIPELINE/);
+  assert.match(html, /Replayed reference trace · no AI calls/);
+  assert.match(html, /WHY THE EVIDENCE DISAGREES/);
+  assert.match(html, /Template draft\./);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Starter Project|Your site is taking shape/);
   assert.match(html, /name="robots" content="noindex, nofollow"/);
 });
@@ -32,6 +36,11 @@ test("production status and analysis routes work without external credentials", 
   const analysis = await result.json();
   assert.equal(analysis.commitments[0].verdict, "verified");
   assert.equal(analysis.model, null);
+  const stream = await request("/api/pipeline", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "reference", scenario: "stale" }) });
+  assert.equal(stream.status, 200);
+  const events = (await stream.text()).trim().split("\n").map((line) => JSON.parse(line));
+  assert.equal(events.at(-1).type, "result");
+  assert.equal(events.at(-1).analysis.commitments[0].verdict, "unknown");
 });
 
 test("unused Worker image optimizer is unavailable", async () => {

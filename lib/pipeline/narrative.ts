@@ -11,6 +11,7 @@ For every commitment in "commitments", return one brief: {"commitmentId":"...","
 - explanation: 1 to 4 claims explaining why the evidence sources disagree (or agree), for example engineering reports done while the customer's entitlement is off.
 - customerUpdate: 1 to 4 claims addressed to the customer contact. Honest, calm and specific to this situation. No greeting or sign-off.
 - ownerNudge: 1 or 2 claims addressed to the internal owner, asking for the concrete next action.
+Use exactly the keys shown; add no other fields.
 Rules:
 1. The verdict is final. Never contradict, soften or upgrade it. Never say a feature is delivered, live, or available to the customer unless the verdict is "verified".
 2. Every claim cites 1 to 3 quotes. Each quote is an exact, contiguous excerpt of at least 12 characters copied from a source listed in that commitment's evidenceSourceIds.

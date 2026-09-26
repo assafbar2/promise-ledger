@@ -1,9 +1,7 @@
 import assert from "node:assert/strict";
 import test, { type TestContext } from "node:test";
 import { resetLiveLimitMemory } from "../lib/live-limits.ts";
-import type { PipelineEvent } from "../lib/pipeline/events.ts";
-import { readPipelineEvents } from "../lib/pipeline/events.ts";
-import { analyzeRequest, capabilities, pipelineRequest } from "../lib/service.ts";
+import { analyzeRequest, capabilities } from "../lib/service.ts";
 import { nebiusMock, type Reply, type Step } from "./helpers/nebius-mock.ts";
 import type { Analysis } from "../lib/schema.ts";
 

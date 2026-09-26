@@ -90,8 +90,8 @@ test("a verdict field, extra keys, missing citations or missing briefs all fall 
   const { commitments, allowed } = setup();
   const [first, second, ...rest] = briefsFor();
   const decisions = validateBriefs({ briefs: [{ ...first, verdict: "verified" }, { ...second, customerUpdate: [{ text: "We are checking.", citations: [] }] }, ...rest.slice(1)] }, commitments, allowed);
-  assert.match(decisions[0].reason ?? "", /brief format/);
-  assert.match(decisions[1].reason ?? "", /brief format/);
+  assert.match(decisions[0].reason ?? "", /adds fields the format does not allow \(verdict\)/);
+  assert.match(decisions[1].reason ?? "", /claim without citations/);
   assert.match(decisions[2].reason ?? "", /not returned/);
   assert.throws(() => validateBriefs({ briefs: [], extra: true }, commitments, allowed));
 });

@@ -1,14 +1,23 @@
 import { z } from "zod";
 import type { AnalyzedCommitment, Claim, Evidence, ReconciledCommitment, Source } from "../schema";
 
-const citationSchema = z.object({ sourceId: z.string().min(1).max(80), quote: z.string().min(12).max(600) }).strict();
-const claimSchema = z.object({ text: z.string().min(8).max(420), citations: z.array(citationSchema).min(1).max(3) }).strict();
+const citationSchema = z.object({ sourceId: z.string().min(1).max(80), quote: z.string().min(12).max(800) }).strict();
+const claimSchema = z.object({ text: z.string().min(8).max(500), citations: z.array(citationSchema).min(1).max(4) }).strict();
 const briefSchema = z.object({
   commitmentId: z.string().min(1).max(40),
-  explanation: z.array(claimSchema).min(1).max(4),
-  customerUpdate: z.array(claimSchema).min(1).max(4),
-  ownerNudge: z.array(claimSchema).min(1).max(2),
+  explanation: z.array(claimSchema).min(1).max(5),
+  customerUpdate: z.array(claimSchema).min(1).max(5),
+  ownerNudge: z.array(claimSchema).min(1).max(3),
 }).strict();
+
+function formatProblem(error: z.ZodError) {
+  const issue = error.issues[0];
+  const path = issue.path.filter((part) => typeof part === "string").join(".") || "brief";
+  if (issue.code === "unrecognized_keys") return `adds fields the format does not allow (${issue.keys.join(", ").slice(0, 60)})`;
+  if (issue.code === "too_small" && issue.path.at(-1) === "citations") return "has a claim without citations";
+  if (issue.code === "too_small" || issue.code === "too_big") return `has ${issue.code === "too_big" ? "too many or too long" : "too few or too short"} entries in ${path}`;
+  return `does not match the brief format at ${path}`;
+}
 export const narrativeOutputSchema = z.object({ briefs: z.array(z.unknown()).max(20) }).strict();
 
 export type Brief = z.infer<typeof briefSchema>;
@@ -84,7 +93,7 @@ export function validateBriefs(input: unknown, commitments: ReconciledCommitment
     if (!commitmentId || !commitment || decisions.has(commitmentId)) continue;
     const reject = (reason: string, citations = 0) => decisions.set(commitmentId, { commitmentId, brief: null, reason, citations });
     const parsed = briefSchema.safeParse(raw);
-    if (!parsed.success) { reject("does not match the brief format"); continue; }
+    if (!parsed.success) { reject(formatProblem(parsed.error)); continue; }
     const sources = allowedSources.get(commitmentId) ?? [];
     let reason: string | null = null;
     let citations = 0;
