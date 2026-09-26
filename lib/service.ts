@@ -22,12 +22,16 @@ function waitText(seconds: number) {
   return `about ${Math.round(minutes / 60)} hours`;
 }
 
+function runs(count: number) {
+  return `${count} live Nemotron run${count === 1 ? "" : "s"}`;
+}
+
 function limitMessage(decision: Extract<LimitDecision, { allowed: false }>, tier: LiveTier) {
   const limits = liveLimitSettings();
   const wait = waitText(decision.retryAfterSeconds);
-  if (decision.reason === "ip") return `You've used this hour's ${limits.perIpPerHour} live Nemotron runs from your connection. Try again in ${wait}, or run reference mode now: it applies the same evidence checks without an AI call.`;
-  if (decision.reason === "daily" && tier === "token") return `The owner token's ${limits.tokenPerDay} live runs for today are used up. They reset at 00:00 UTC, in ${wait}.`;
-  if (decision.reason === "daily") return `Today's ${limits.perDay} shared live Nemotron runs are used up, to protect the project's free credits. They reset at 00:00 UTC, in ${wait}. Reference mode is still available.`;
+  if (decision.reason === "ip") return `You've reached this hour's limit of ${runs(limits.perIpPerHour)} for your connection. Try again in ${wait}, or run reference mode now: it applies the same evidence checks without an AI call.`;
+  if (decision.reason === "daily" && tier === "token") return `The owner token's daily limit of ${runs(limits.tokenPerDay)} is used up. It resets at 00:00 UTC, in ${wait}.`;
+  if (decision.reason === "daily") return `Today's shared limit of ${runs(limits.perDay)} is used up, to protect the project's free credits. It resets at 00:00 UTC, in ${wait}. Reference mode is still available.`;
   if (decision.reason === "closed") return "Open live runs are paused by the project owner. Reference mode is still available.";
   return "Live mode is paused because its usage limits can't be verified right now. Reference mode is still available.";
 }
