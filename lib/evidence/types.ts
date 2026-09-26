@@ -1,3 +1,4 @@
+import type { ByoSourceInput } from "../byo/schema";
 import type { ProductFact, ProviderSignal, Scenario, Source, SourceKind } from "../schema";
 
 export type EvidenceEnv = Record<string, string | undefined>;
@@ -21,6 +22,8 @@ export type EvidenceContext = {
   now: string;
   signal: AbortSignal;
   env: EvidenceEnv;
+  /** Text the user supplied for this run (bring-your-own evidence); absent for sample accounts. */
+  userEvidence?: readonly ByoSourceInput[];
 };
 
 export type ProviderProvenance = { requestId?: string; httpStatus?: number; credits?: number; recorded: boolean };

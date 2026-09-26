@@ -2,6 +2,16 @@
 
 ## Unreleased — September 26, 2026
 
+### Bring-your-own evidence, sample accounts, workspaces and tour
+
+- **Bring-your-own evidence** as a new `user-supplied` evidence provider. Paste text or drop `.txt`, `.md`, `.csv` or `.eml` files: up to 8 sources, 6,000 bytes each and 10,000 total, measured as JSON-encoded UTF-8. Text only, no URL is ever fetched, hidden and control characters are stripped, and text addressed to an AI is flagged. Nemotron 3 Super proposes commitments **and** availability facts with exact quotes (prompt `byo-commitments-and-facts-v1`), and ungrounded items are dropped and reported. The person confirms or corrects each fact before the unchanged deterministic rules decide. Unconfirmed facts are ignored, and the server re-checks every quote. Reference mode uses a no-AI pattern matcher.
+- **One run, one budget:** a live BYO extraction reserves one live run. The decide step (rules plus Ultra) presents an HMAC-signed, source-bound, single-use, 30-minute continuation instead of a second run, and gets only what is left of `LIVE_RUN_BUDGET_USD`. Caps are enforced before any reservation, and a test proves the worst case stays at $0.0496.
+- **Sample account gallery:** Harbor Health (healthcare), Ridgeway Freight (logistics) and Lumen Credit Union (banking) join Northstar. Each has its own synthetic pack, reference commitments and curated facts, and one click loads its reference result. Together they produce all seven verdicts. Requests take an `account`. Prompts, allowed features, next steps, drafts and the access guardrail use the account's name. `crashing` stays Northstar-only.
+- **Workspaces persist in the browser** (localStorage, validated on load, size-bounded), with export all, delete one and clear all.
+- **First-run guided tour:** five steps, about 20 seconds, keyboard accessible, and reopenable from the sidebar.
+- Pipeline: new `proposal` event; step engines `pattern` and `confirmed`; `Analysis.account` and `Analysis.byo`; `ProductFact.confirmation`; `reconcile(…, runtime, accountName)`; triage and extraction accept open feature slugs for user-supplied evidence. The registry's default provider list is account-scoped (`providersFor`).
+- Live check on September 26: 6 real calls, 18,091 tokens, about $0.018. See [the BYO live check](docs/evaluation/BYO-LIVE-2026-09-26.md).
+
 ### Public-claim check (Tavily)
 
 - Adds the `tavily-public-claim` evidence provider. Live runs fetch the fictional vendor's public changelog (`/changelog`, served by the app) with a basic Tavily Extract call. Reference runs replay a genuine recorded Tavily response for that page (labelled "Recorded Tavily response") with no live call.

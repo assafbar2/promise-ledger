@@ -31,6 +31,8 @@ function engineLabel(step: StepSummary) {
   if (step.engine === "fixture") return "Reference fixture · no AI call";
   if (step.engine === "rules") return "Deterministic rules · no AI";
   if (step.engine === "template") return "Template drafts · no AI call";
+  if (step.engine === "pattern") return "Pattern matcher · no AI call";
+  if (step.engine === "confirmed") return "Your confirmed extraction · no AI call";
   return step.model ? modelInfo(step.model).name : "Step turned off";
 }
 

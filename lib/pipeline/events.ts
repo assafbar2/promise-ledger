@@ -1,4 +1,4 @@
-import type { Analysis, EvidenceProviderReport, PipelineCheck, Scenario, StepId, StepSummary, Verdict } from "../schema";
+import type { Analysis, ByoProposal, EvidenceProviderReport, PipelineCheck, Scenario, StepId, StepSummary, Verdict } from "../schema";
 
 /** Newline-delimited JSON events streamed by POST /api/pipeline, in order. */
 export type PipelineEvent =
@@ -9,11 +9,13 @@ export type PipelineEvent =
   | { type: "verdict"; commitmentId: string; title: string; verdict: Verdict }
   | { type: "check"; check: PipelineCheck }
   | { type: "result"; analysis: Analysis }
+  /** Ends a bring-your-own extract step: facts wait for human confirmation before any rule runs. */
+  | { type: "proposal"; proposal: ByoProposal }
   | { type: "error"; error: string; code: string; status: number; fallback?: "reference" };
 
 export type Emit = (event: PipelineEvent) => void;
 
-const TYPES = new Set(["run", "step", "progress", "quote", "verdict", "check", "result", "error"]);
+const TYPES = new Set(["run", "step", "progress", "quote", "verdict", "check", "result", "proposal", "error"]);
 
 export function isPipelineEvent(value: unknown): value is PipelineEvent {
   return typeof value === "object" && value !== null && "type" in value && typeof value.type === "string" && TYPES.has(value.type);

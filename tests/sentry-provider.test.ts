@@ -37,7 +37,7 @@ function northstarAuditExport(url: URL) {
 }
 
 test("Sentry is registered after the synthetic pack, optional and untrusted", () => {
-  assert.deepEqual(EVIDENCE_PROVIDERS.map((provider) => provider.id), ["synthetic-pack", "sentry-runtime", "tavily-public-claim"]);
+  assert.deepEqual(EVIDENCE_PROVIDERS.map((provider) => provider.id), ["synthetic-pack", "sentry-runtime", "tavily-public-claim", "user-supplied"]);
   assert.deepEqual({ trust: sentryRuntimeProvider.trust, required: sentryRuntimeProvider.required, kinds: sentryRuntimeProvider.kinds }, { trust: "untrusted", required: false, kinds: ["Runtime"] });
 });
 

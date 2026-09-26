@@ -3,7 +3,8 @@ import type { PipelineEvent } from "./events";
 
 export type TraceQuote = { key: number; stepId: StepId; sourceId: string; quote: string; matched: boolean };
 export type TraceState = {
-  status: "idle" | "running" | "done" | "failed";
+  /** `awaiting`: a bring-your-own extraction finished and its facts wait for human confirmation. */
+  status: "idle" | "running" | "done" | "failed" | "awaiting";
   runId: string | null;
   mode: "reference" | "live";
   replay: boolean;
@@ -40,6 +41,8 @@ export function traceReducer(state: TraceState, event: PipelineEvent): TraceStat
       return { ...state, checks: [...state.checks, event.check] };
     case "result":
       return { ...state, status: "done", steps: event.analysis.pipeline.steps, totalMs: event.analysis.elapsedMs, usage: event.analysis.usage, costUsd: event.analysis.pipeline.costUsd, providers: event.analysis.pipeline.providers };
+    case "proposal":
+      return { ...state, status: "awaiting", steps: event.proposal.pipeline.steps, totalMs: event.proposal.elapsedMs, usage: event.proposal.usage, costUsd: event.proposal.pipeline.costUsd, providers: event.proposal.pipeline.providers };
     case "error":
       return { ...state, status: "failed", error: event.error, steps: state.steps.map((step) => step.status === "running" ? { ...step, status: "failed" } : step) };
   }
