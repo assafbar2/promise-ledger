@@ -18,9 +18,9 @@ Our hackathon goal is a strong, distinctive Best Apps and Agents entry, with **$
 
 ## Current scope
 
-One fictional account, a fixed synthetic evidence pack and three scenarios: customer access disabled, successful customer acceptance, and stale evidence. Nemotron 3 Nano routes sources, Nemotron 3 Super extracts commitments, separate rules check built, enabled and customer-verified facts, and Nemotron 3 Ultra writes grounded explanations and drafts. The workbench connects the agent trace, ledger, exact source quotes, evidence review, editable drafts and exports.
+Four fictional sample accounts in different industries, each with its own synthetic evidence pack and one-click reference result, plus **bring-your-own evidence**: paste notes, tickets, Slack threads or telemetry lines, or drop `.txt`, `.md`, `.csv` or `.eml` files. Scenarios cover customer access disabled, successful customer acceptance and stale evidence, plus Northstar's recorded runtime errors. Nemotron 3 Nano routes sources, Nemotron 3 Super extracts commitments, separate rules check built, enabled and customer-verified facts, and Nemotron 3 Ultra writes grounded explanations and drafts. The workbench connects the agent trace, ledger, exact source quotes, evidence review, editable drafts and exports.
 
-This is not a full customer-success platform. There are no live CRM/support connectors, arbitrary customer uploads, persistent records, multi-customer tenancy, background monitoring or outbound sending. Evidence comes through a pluggable provider interface. Only the synthetic pack is registered today; Tavily public-claim, Sentry runtime-error and pasted-evidence providers are planned. In reference mode, and whenever a model draft fails a guardrail, the customer update is a clearly labelled template. These exclusions are deliberate, not missing hackathon requirements.
+This is not a full customer-success platform. There are no live CRM/support connectors, server-side records, multi-customer tenancy, background monitoring or outbound sending. Pasted evidence is text only, capped, and treated as untrusted. Workspaces persist only in your browser. Evidence comes through a pluggable provider interface: the sample-account pack, the Tavily public-claim check, Sentry runtime errors and user-supplied evidence. In reference mode, and whenever a model draft fails a guardrail, the customer update is a clearly labelled template. These exclusions are deliberate, not missing hackathon requirements.
 
 ## Run locally
 
@@ -31,7 +31,7 @@ npm ci
 npm run dev
 ```
 
-Open the exact local URL printed by the server. No credentials are needed for the reference workflow. Select **Run evidence check**; change the scenario to see the same promise become verified or lose its proof when evidence becomes stale.
+Open the exact local URL printed by the server. No credentials are needed for the reference workflow. A 20-second tour starts on first visit, and you can reopen it from the sidebar. Pick an account under **Accounts** and select **Run evidence check**; change the scenario to see the same promise become verified or lose its proof when evidence becomes stale. Under **Bring your own**, select **Load example evidence** to try the confirm-then-decide flow; reference mode uses a no-AI pattern matcher.
 
 ## Working features
 
@@ -41,16 +41,19 @@ Try the hosted reference demo: **https://promise-ledger-chi.vercel.app**. The Ve
 - "Why the evidence disagrees" explanations, situation-specific customer updates and internal owner nudges written by Nemotron 3 Ultra after the rules decide. Each claim expands to its exact quotes, and any brief that fails a guardrail falls back to a template labelled with the reason.
 - Searchable, filterable commitment ledger with owners, dates and seven conservative verdicts.
 - Exact source quotations and separate customer-specific built, enabled and verified checks.
-- Six synthetic source documents and three replayable evidence scenarios.
+- Sample account gallery: Northstar (enterprise SaaS, engineering done but the flag is off), Harbor Health (healthcare, proof is five days old), Ridgeway Freight (logistics, enabled but not accepted, and an engineering ticket that isn't customer evidence) and Lumen Credit Union (banking, a ticket that tries a prompt injection). Each has its own synthetic pack; together they produce all seven verdicts. Reference and live modes work for each.
+- Bring-your-own evidence, implemented as the `user-supplied` provider. Paste text or drop `.txt`/`.md`/`.csv`/`.eml` files, up to 8 sources, 6,000 bytes each and 10,000 in total. Text only, links never opened, hidden characters stripped, and injection attempts flagged. Nemotron 3 Super proposes commitments **and** availability facts with exact quotes, and ungrounded items are dropped. You confirm or correct each fact before deterministic rules decide; unconfirmed facts are ignored. Extraction plus the explain step count as **one** live run within the same per-run budget. See [architecture](docs/ARCHITECTURE.md#bring-your-own-evidence).
+- Workspaces saved in your browser (localStorage): each sample account and each bring-your-own workspace keeps its last result, reviews and activity. Export all, delete one, or clear everything from **Accounts**.
+- A five-step first-run guided tour, keyboard accessible and remembered.
 - Public-claim check with a runtime Tavily Extract call: the fictional vendor's [public changelog](https://promise-ledger-chi.vercel.app/changelog) says audit log export is generally available, and Promise Ledger shows that beside Northstar's disabled entitlement as "Publicly GA ≠ usable by this customer". Exact quotes only, and it never changes a verdict. See [public-claim check](docs/TAVILY.md).
 - Editable customer drafts, explicit local review and export.
-- Source library and exportable session activity.
+- Source library and exportable workspace activity.
 - Source validation and server-side Nebius integration with explicit failure handling.
 - Open, rate-limited live mode: per-IP hourly and shared daily caps, durable with free Upstash Redis, and friendly limit messages with one-click reference fallback. A full pipeline counts as one run, and a per-run budget caps its worst-case cost at $0.05.
 - Pluggable evidence providers with one validating registry (account scope, exact-quote facts and signals, no fixtures in live runs).
 - Sentry runtime errors as a fourth evidence family: "enabled, but crashing for this customer" lowers a verdict to needs verification, while no errors never proves delivery. Live mode reads the API; the labelled reference scenario "Enabled, but crashing" replays a recorded response. See [Sentry runtime evidence](docs/SENTRY.md).
 
-Northstar and everyone in its evidence pack are fictional. The snapshot is fixed to September 13, 2026. Reviews and activity live in memory: refreshing clears them, so export first. No real CRM, support or telemetry service is connected.
+All four sample accounts and everyone in their evidence packs are fictional. Their snapshot is fixed to September 13, 2026; bring-your-own evidence is checked against today's date. Reviews, activity and pasted sources are saved only in this browser. Clear them from **Accounts**, and export first if you want a copy. No real CRM, support or telemetry service is connected.
 
 ## NVIDIA Nemotron on Nebius
 
@@ -91,7 +94,7 @@ npm run smoke:live -- --scenario=blocked --confirm
 | Area | Last verified state |
 | --- | --- |
 | Local product | Core workbench implemented; browser loading and reference evidence check verified September 19 |
-| Engineering checks | September 26: 133 automated tests (pipeline, guardrails, streaming, budget, evidence registry, service), 3 Worker production tests and 6 Vercel production tests passed; type checking, lint and both builds passed |
+| Engineering checks | September 26: 232 automated tests (pipeline, guardrails, streaming, budget, evidence registry, Tavily, Sentry, sample accounts, bring-your-own evidence, workspaces, service), 3 Worker production tests and 8 Vercel production tests passed; type checking, lint and both builds passed |
 | Live pipeline | September 26: 20 real calls across Nano, Super and Ultra while tuning; four full runs with shipped settings at 16–20 s and about $0.009 each ([report](docs/evaluation/PIPELINE-LIVE-2026-09-26.md)) |
 | Real model execution | 40 requests completed; 7/8 development and 32/32 frozen held-out exact matches, one missed tentative item, no provider/validation errors |
 | Model evidence | Actual latency, model/run/request IDs and usage saved; synthetic results are not independent real-world validation |

@@ -69,3 +69,10 @@ Added September 26, 2026. The check uses a free **Researcher** plan development 
 | Provider backstop | Recommended: set a per-key credit limit in the Tavily dashboard (for example 800 a month) so Tavily itself stops before the free quota is gone |
 
 **Measured on September 26:** one real single-URL Extract call reported 0 credits. `/usage` showed 0 of 1,000 used for both the key and the plan, with no pay-as-you-go limit set. Development of this feature used 0 of its 30-credit allowance.
+
+## Bring-your-own evidence — September 26, 2026
+
+A bring-your-own flow is **one** live run with the same three paid calls and the same $0.05 ceiling. The extract step (Nano, Super) reserves the run and settles its cost. The decide step (Ultra) presents a signed, single-use continuation instead of a second reservation, and gets only the budget left over. Inputs are capped before anything is reserved: at most 8 sources, 6,000 bytes each and 10,000 in total, counted as JSON-encoded UTF-8. A test fills every cap with worst-case characters and shows that the triage and extraction inputs stay under their 16,000-byte step caps, so the worst case stays at **$0.049577**. The narrative input is bounded by the same cap; above it the step is skipped with labelled template drafts. Re-running the rules after a correction makes no model call.
+
+**Measured on September 26** (local server, `.env.local` only, limits set to 2 runs): one Lumen Credit Union sample run took 3 calls, 7,639 tokens, about $0.0079 and 15.9 s. One bring-your-own run with the example pack took 3 calls and 10,452 tokens (extract 7,634, explain 2,818), about $0.0103, with extraction taking 28.7 s. These are estimates at catalog rates, not invoices. See [the BYO live check](evaluation/BYO-LIVE-2026-09-26.md).
+

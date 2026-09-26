@@ -38,7 +38,13 @@ The live agent view sits above the metrics on the ledger. It shows four numbered
 - Rerunning evidence invalidates previous draft approvals.
 - Editing an approved draft clears approval.
 - A failed live run leaves the previous results visible and identifies the failure.
-- Export exists; sending does not. Session state is lost on refresh and is labeled accordingly.
+- Export exists; sending does not. Workspaces persist in this browser only, which is labelled in the sidebar, the gallery and the footer. They can be exported, deleted or cleared.
+- Switching accounts is one click and never runs a model. It restores that workspace's last result, or the account's reference result.
+- Bring-your-own evidence runs in three numbered steps: add, extract, confirm. Sources lock while their extraction is under review; editing them clears the proposal. Every proposed fact starts unconfirmed, corrections are marked "corrected", and rules run only on confirmed facts. The evidence brief notes "Confirmed by you…" and names the corrected fields.
+
+## Accounts, bring-your-own evidence and the tour
+
+The gallery uses the same white cards as the ledger. Each shows the account's serif initial, industry, a one-sentence situation, and its headline verdict badge in the existing verdict colours. The bring-your-own card is dashed, like reference mode, because it starts empty. Fact confirmation uses Yes / No / Unknown segmented buttons (sage, amber, grey, always with a text label) and an explicit "I checked this against the quote" checkbox beside the exact quote. Text addressed to an AI system gets a restrained amber note that says it stays data. The tour is a sage highlight ring over a dimmed page with a small card: five steps, Back/Next/Skip, Escape to close, arrow keys to move, and no animation under reduced motion.
 
 ## Responsive and accessibility intent
 
