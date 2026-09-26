@@ -53,7 +53,7 @@ The input bound assumes each token encodes at least one UTF-8 byte, plus 512 tok
 
 **Measured on September 26:** four full live runs with the shipped settings cost an estimated $0.0084–$0.0095 each, in 16–20 seconds. The input to the three calls totalled about 3,400–3,900 tokens, and the output 3,300–4,700 tokens. See [the live pipeline check](evaluation/PIPELINE-LIVE-2026-09-26.md).
 
-**Daily exposure at the current defaults**, 30 public plus 40 owner-token runs: worst case 70 × $0.05 = **$3.47 per day**; typical 70 × $0.0095 ≈ **$0.67 per day**. Set `LIVE_RUNS_PER_DAY` to at most *verified remaining free credit ÷ (days of judge access left × $0.05)*. With about $50 of credit and 80 days left, that's about 12 runs per day in the worst case. Typical runs cost about a fifth of the ceiling, so actual consumption is much lower. Setting `NEBIUS_NARRATIVE_MODEL=off` removes Ultra: the ceiling drops to $0.012 and template drafts are shown instead. The provider's **Stop usage after trial** setting remains the $0 guarantee. These figures are estimates at catalog rates, not invoices.
+**Daily exposure at the current defaults**, 30 public plus 40 owner-token runs: worst case 70 × $0.05 = **$3.47 per day**; typical 70 × $0.0095 ≈ **$0.67 per day**. Set `LIVE_RUNS_PER_DAY` to at most *verified remaining free credit ÷ (days of judge access left × $0.05)*. With about $50 of credit and 80 days left, that's about 12 runs per day in the worst case. Typical runs cost about a fifth of the ceiling, so actual consumption is much lower. Setting `NEBIUS_NARRATIVE_MODEL=off` removes Ultra: the ceiling drops to $0.012 and template drafts are shown instead. These figures are estimates at catalog rates, not invoices. The lifetime cap below bounds the total.
 
 ## Tavily public-claim check
 
@@ -69,3 +69,15 @@ Added September 26, 2026. The check uses a free **Researcher** plan development 
 | Provider backstop | Recommended: set a per-key credit limit in the Tavily dashboard (for example 800 a month) so Tavily itself stops before the free quota is gone |
 
 **Measured on September 26:** one real single-URL Extract call reported 0 credits. `/usage` showed 0 of 1,000 used for both the key and the plan, with no pay-as-you-go limit set. Development of this feature used 0 of its 30-credit allowance.
+
+## Lifetime live-spend cap
+
+Added September 26, 2026. Nebius support confirmed that promotional credits apply after the trial (about October 18) only if the account switches to **paid usage**, and paid usage has **no hard stop**: an overrun would be charged to the owner's card. The **Stop usage after trial** setting therefore can't be the $0 guarantee once credits are redeemed. Judging runs to December 15, so the app itself keeps total live spend below the credit balance.
+
+- **Cap.** `LIVE_SPEND_CAP_USD`, default **$30**. It limits the app's cumulative estimated Nebius spend across all instances, days and deployments. An unparsable or negative value is treated as `0`, which closes live mode. Set it to the verified remaining credit minus a margin of at least 10%. Accounting uses catalog rates, not invoices.
+- **Reserve, then reconcile.** Before any Nebius call, each live run adds its worst case to a durable Upstash counter: `LIVE_RUN_BUDGET_USD` (default $0.05) plus the evidence-provider hook (Tavily and Sentry are free, so $0). If that would pass the cap, the run is refused and the reservation is released. After the run, even a failed one, the counter is corrected to the run's estimated cost from reported usage. Missing usage, a failed correction, or a function killed mid-run leave the full reservation in place. These cases only overstate spend.
+- **Fail closed.** Without `KV_REST_API_URL`/`KV_REST_API_TOKEN` (or the `UPSTASH_REDIS_*` names), or when the store errors, times out after 2.5 s, or answers unexpectedly, no live run is allowed. Live requests return HTTP 503 with `code: "live_spend_unavailable"` and `fallback: "reference"`, and no Nebius call is made. There is no in-memory fallback and no switch to turn the cap off.
+- **Cap reached.** Live requests return 503 `live_spend_cap`, including owner-token runs. The UI turns live off and offers the labelled reference replay.
+- **Not counted.** The owner's CLI runs (`npm run eval:live`, `npm run smoke:live`) call Nebius directly and aren't recorded in the ledger. Before each redeploy, subtract them from the credit figure that you base the cap on.
+
+See [Deployment](DEPLOYMENT.md#lifetime-spend-cap--owner-controls) for status fields, adjusting the cap and resetting the ledger.

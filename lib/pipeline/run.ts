@@ -27,6 +27,8 @@ export type PipelineOptions = {
   signal?: AbortSignal;
   env?: Env;
   providers?: readonly EvidenceProvider[];
+  /** Live mode only; lets the caller read what was spent even when the run throws. */
+  budget?: RunBudget;
 };
 
 function modelName(model: string | null) {
@@ -67,7 +69,7 @@ export async function runPipeline(options: PipelineOptions): Promise<Analysis> {
   }
   const { sources, facts } = evidence;
   const models = pipelineModels(env);
-  const budget = live ? new RunBudget(runBudgetUsd(env)) : null;
+  const budget = live ? options.budget ?? new RunBudget(runBudgetUsd(env)) : null;
   const checks: PipelineCheck[] = [];
   const steps: Record<StepId, StepSummary> = live
     ? {

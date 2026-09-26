@@ -2,8 +2,10 @@ import { liveLimitSettings, limitStoreConfig, ownerTokenMatches, reserveLiveRun,
 import { configuration } from "./nebius";
 import type { PipelineEvent } from "./pipeline/events";
 import { modelInfo, pipelineModels, runBudgetUsd } from "./pipeline/models";
+import { RunBudget } from "./pipeline/budget";
 import { PipelineError, runPipeline } from "./pipeline/run";
 import { requestSchema, type Scenario } from "./schema";
+import { liveSpendStatus, reserveLiveSpend, settleLiveSpend, type SpendReservation } from "./spend-cap";
 
 export function capabilities() {
   const { apiKey, model, accessToken } = configuration();
@@ -19,6 +21,17 @@ export function capabilities() {
     pipeline: liveConfigured ? { triage: describe(models.triage.model), extraction: describe(model), narrative: describe(models.narrative.model), runBudgetUsd: runBudgetUsd() } : null,
   };
 }
+
+/** `/api/status`: capabilities plus the non-secret lifetime spend ledger. */
+export async function status() {
+  const base = capabilities();
+  return { ...base, spend: base.liveConfigured ? await liveSpendStatus() : null };
+}
+
+const SPEND_MESSAGES = {
+  cap: "Live runs have used this demo's free-credit allowance, so live mode is now off for good. The reference replay runs the same evidence checks and rules with no AI call.",
+  unavailable: "Live mode is off because this server can't verify its total AI spend right now. The reference replay runs the same evidence checks and rules with no AI call.",
+};
 
 function waitText(seconds: number) {
   const minutes = Math.max(1, Math.ceil(seconds / 60));
@@ -48,9 +61,10 @@ function fail(error: string, status: number, extra: Record<string, unknown> = {}
 
 /**
  * Validates the request and, for live mode, applies the owner token and reserves exactly one
- * live run. A whole pipeline (triage, extraction, narrative) counts as that one run.
+ * live run. A whole pipeline (triage, extraction, narrative) counts as that one run, and reserves
+ * its worst-case cost against the lifetime spend cap.
  */
-async function admit(request: Request): Promise<{ ok: true; mode: "reference" | "live"; scenario: Scenario } | { ok: false; response: Response }> {
+async function admit(request: Request): Promise<{ ok: true; mode: "reference" | "live"; scenario: Scenario; spend?: SpendReservation } | { ok: false; response: Response }> {
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return { ok: false, response: fail("Cross-origin requests are not allowed.", 403) };
   if (!request.headers.get("content-type")?.startsWith("application/json")) return { ok: false, response: fail("Send a JSON request.", 415) };
@@ -71,8 +85,23 @@ async function admit(request: Request): Promise<{ ok: true; mode: "reference" | 
       const status = decision.reason === "ip" || decision.reason === "daily" ? 429 : 503;
       return { ok: false, response: fail(limitMessage(decision, tier), status, { code: `live_limit_${decision.reason}`, retryAfterSeconds: decision.retryAfterSeconds, fallback: "reference" }, { "Retry-After": String(decision.retryAfterSeconds) }) };
     }
+    const spend = await reserveLiveSpend();
+    if (!spend.allowed) return { ok: false, response: fail(SPEND_MESSAGES[spend.reason], 503, { code: `live_spend_${spend.reason}`, fallback: "reference" }) };
+    return { ok: true, mode: body.mode, scenario: body.scenario, spend: spend.reservation };
   }
   return { ok: true, mode: body.mode, scenario: body.scenario };
+}
+
+type Admitted = Extract<Awaited<ReturnType<typeof admit>>, { ok: true }>;
+
+/** Runs the pipeline, then settles any spend reservation to the run's estimated cost, even on failure. */
+async function execute(admission: Admitted, request: Request, emit?: (event: PipelineEvent) => void) {
+  const budget = admission.spend ? new RunBudget(runBudgetUsd()) : undefined;
+  try {
+    return await runPipeline({ mode: admission.mode, scenario: admission.scenario, signal: request.signal, emit, budget });
+  } finally {
+    if (admission.spend && budget) await settleLiveSpend(admission.spend, budget.totals().costUsd);
+  }
 }
 
 function failure(error: unknown, mode: "reference" | "live") {
@@ -86,7 +115,7 @@ export async function analyzeRequest(request: Request): Promise<Response> {
   const admission = await admit(request);
   if (!admission.ok) return admission.response;
   try {
-    const analysis = await runPipeline({ mode: admission.mode, scenario: admission.scenario, signal: request.signal });
+    const analysis = await execute(admission, request);
     return Response.json(analysis, { headers: HEADERS });
   } catch (error) {
     const { status, code, ...body } = failure(error, admission.mode);
@@ -107,7 +136,7 @@ export async function pipelineRequest(request: Request): Promise<Response> {
         try { controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`)); } catch { open = false; }
       };
       try {
-        await runPipeline({ mode: admission.mode, scenario: admission.scenario, signal: request.signal, emit: send });
+        await execute(admission, request, send);
       } catch (error) {
         send({ type: "error", ...failure(error, admission.mode) });
       } finally {
