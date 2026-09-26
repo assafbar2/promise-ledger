@@ -4,7 +4,7 @@
 
 As of September 19, 2026, the first real evaluation is complete on `nvidia/nemotron-3-super-120b-a12b`: 7/8 development and 32/32 frozen held-out exact matches, with all 40 actual traces saved and no provider/validation errors. These synthetic cases do not establish general model quality. See `evaluation/LIVE-RESULTS-2026-09-19.md`. The approved `promise-ledger-evaluation` key is stored in ignored `.env.local` with mode 0600; the demo-access token is separate. The profile was submitted with zero data retention selected, and the owner completed billing verification.
 
-The owner later pasted the provider key into chat. Treat it as exposed and rotate it after owner confirmation. One-time display does not mean one-time use or establish an expiry; the actual expiry is unverified. Never copy the secret into reports, source, browser inputs or commits.
+The owner later pasted the provider key into chat, so it must be treated as exposed. **Owner decision, September 26, 2026: the key will not be rotated.** The accepted risk is that anyone who saw it could spend its free credits outside this app, and the app's rate limits cannot stop that. **Stop usage after trial** keeps cash spend at $0. One-time display does not mean one-time use or establish an expiry; the actual expiry is unverified. Never copy the secret into reports, source, browser inputs or commits. On Vercel it belongs only in a Sensitive Production environment variable; see [owner setup](DEPLOYMENT.md#owner-setup-for-open-live-mode).
 
 ## Setup
 
@@ -44,14 +44,20 @@ For a fresh checkout, copy `.env.example` to `.env.local` and provide the follow
 ```dotenv
 NEBIUS_API_KEY=your-token-factory-key
 NEBIUS_MODEL=nvidia/nemotron-3-super-120b-a12b
-DEMO_ACCESS_TOKEN=a-random-private-token-at-least-24-characters
+# Optional:
+DEMO_ACCESS_TOKEN=a-random-owner-token-at-least-24-characters
+LIVE_RUNS_PER_IP_PER_HOUR=5
+LIVE_RUNS_PER_DAY=30
+LIVE_TOKEN_RUNS_PER_DAY=40
+KV_REST_API_URL=https://your-upstash-endpoint
+KV_REST_API_TOKEN=your-upstash-rest-token
 ```
 
-The model ID was verified through authenticated model listing and all 40 live responses on September 19, 2026. Do not replace the demo token with the provider key. Add replacement credentials directly to `.env.local` in a local editor or secret manager, not chat or a browser input. Restart `npm run dev` if needed, open Demo controls, select the live engine and enter only the **private demo token**. Each live app request also consumes credit; the CLI evaluation guard does not cover the app.
+The model ID was verified through authenticated model listing and all 40 live responses on September 19, 2026. Add credentials directly to `.env.local` in a local editor or secret manager, not chat or a browser input. Restart `npm run dev` if needed. With the key and model set, the app **defaults to live mode with no token**. Anonymous live runs are limited per connection per hour and per UTC day, and blank limit values use the defaults shown. `DEMO_ACCESS_TOKEN` is an optional owner bypass: enter it under **Demo controls → Owner access token** to skip the per-IP limit, within its own daily cap. Never use the provider key as that token. Without the Upstash variables the counters are in memory; see [limits](DEPLOYMENT.md#open-live-mode--limits). Each live app request consumes credit. The CLI evaluation guard does not cover the app; the app's own limits do.
 
 ## Request contract
 
-`lib/nebius.ts` calls `https://api.tokenfactory.nebius.com/v1/chat/completions` with server-side Bearer authentication and structured JSON output. It sends only the synthetic sources. The request has a 60-second timeout, bounded output tokens, and no automatic retry. The model receives no tools, API key, or private-demo token in its prompt.
+`lib/nebius.ts` calls `https://api.tokenfactory.nebius.com/v1/chat/completions` with server-side Bearer authentication and structured JSON output. It sends only the synthetic sources. The request has a 60-second timeout, bounded output tokens, and no automatic retry. The model receives no tools, API key, or owner token in its prompt. Before any live call, `lib/service.ts` checks the optional owner token and reserves one run against the limits in `lib/live-limits.ts`. A limited request never reaches Nebius.
 
 Successful runs report actual provider model, run ID and usage when supplied. Truncation, refusal, invalid JSON, wrong model, missing citation, ungrounded owner/date, rate limiting or transport failure produces an explicit error. Live mode never silently falls back to reference fixtures.
 
@@ -72,6 +78,6 @@ The entire predicted commitment set is scored, including extra commitments; corr
 
 The held-out set is hashed in `evals/held-out-manifest.json` before any live run. It contains distinct wording and categories including cancellation, supersession, cross-account contamination, customer demands, relative dates, fabricated role instructions and misleading engineering fields. The runner rejects changes to this set unless it is explicitly versioned. Do not tune the prompt after inspecting its results; use development cases for iteration and a fresh holdout for another evaluation. These assistant-authored synthetic examples are not an independent external benchmark.
 
-Before hosting, configure secrets through the host, verify runtime environment bindings, and add identity-based access and durable quotas. The prototype's shared token is not production authentication.
+For hosting, configure secrets through the host and verify runtime bindings via `/api/status`. The hackathon deployment uses open access with per-IP and daily quotas, which are durable with the free Upstash store. That suits a synthetic demo, not production. A real product would need identity-based access and per-user quotas; the optional owner token is not authentication.
 
 Primary documentation: https://docs.tokenfactory.nebius.com/ . Model availability and API features must be confirmed against the current account and official docs before the first paid run.
