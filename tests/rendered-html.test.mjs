@@ -23,6 +23,9 @@ test("production build renders the product, provenance and safety controls", asy
   assert.match(html, /Replayed reference trace · no AI calls/);
   assert.match(html, /WHY THE EVIDENCE DISAGREES/);
   assert.match(html, /Template draft\./);
+  assert.match(html, /Bring your own/);
+  assert.match(html, /Take the tour/);
+  assert.match(html, /Built, but not available/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Starter Project|Your site is taking shape/);
   assert.match(html, /name="robots" content="noindex, nofollow"/);
 });

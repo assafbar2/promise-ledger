@@ -25,7 +25,7 @@ test("Vercel production entry renders Promise Ledger and its controls", async ()
   const response = await request("/");
   assert.equal(response.status, 200);
   const html = await response.text();
-  for (const label of ["Promise Ledger", "Run evidence check", "Reference mode", "Synthetic demo", "Audit log export", "AGENT PIPELINE", "Replayed reference trace"]) {
+  for (const label of ["Promise Ledger", "Run evidence check", "Reference mode", "Synthetic demo", "Audit log export", "AGENT PIPELINE", "Replayed reference trace", "Accounts", "Bring your own", "Take the tour"]) {
     assert.ok(html.includes(label), `Missing ${label}`);
   }
   assert.match(html, /name="robots" content="noindex, nofollow"/);
@@ -73,6 +73,22 @@ test("Vercel entry streams the reference pipeline as NDJSON with a replayed trac
   assert.equal(result.analysis.usage, null);
   const live = await request("/api/pipeline", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "live", scenario: "blocked" }) });
   assert.equal(live.status, 503, "live pipeline fails closed without credentials, before streaming");
+});
+
+test("Vercel entry serves every sample account and a no-AI bring-your-own extraction", async () => {
+  const post = (body) => request("/api/analyze", { method: "POST", headers: { "Content-Type": "application/json", Origin: "https://promise-ledger.example" }, body: JSON.stringify(body) });
+  for (const [account, name] of [["harbor-health", "Harbor Health"], ["ridgeway-freight", "Ridgeway Freight"], ["lumen-cu", "Lumen Credit Union"]]) {
+    const response = await post({ mode: "reference", scenario: "blocked", account });
+    assert.equal(response.status, 200, account);
+    assert.equal((await response.json()).account.name, name);
+  }
+  const text = "Jordan Lee: I will make group booking import available to Acme by 2026-09-30.\naccount=acme; feature=group-import; built=true; enabled=false; verified=false";
+  const extract = await post({ mode: "reference", byo: { phase: "extract", workspace: "Acme", sources: [{ id: "U-01", type: "notes", title: "Notes", observedAt: new Date().toISOString(), text }] } });
+  assert.equal(extract.status, 200);
+  const proposal = await extract.json();
+  assert.equal(proposal.extractor, "pattern");
+  assert.deepEqual(proposal.facts.map((fact) => fact.featureId), ["group-import"]);
+  assert.equal(proposal.continuation, null);
 });
 
 test("Vercel entry applies the open live-mode gate from runtime environment", async (context) => {
