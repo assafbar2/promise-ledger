@@ -1,14 +1,19 @@
 import type { Metadata } from "next";
-import { ArrowRight, ArrowUpRight, Bug, Check, CircleAlert, ClipboardPaste, FileCheck2, Gauge, Github, Globe, Layers3, LockKeyhole, Quote, Scale, ShieldCheck, Sparkles, X } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, ArrowUpRight, Bug, Check, CircleAlert, ClipboardPaste, FileCheck2, Gauge, Globe, Layers3, LockKeyhole, Quote, Scale, ShieldCheck, Sparkles, X } from "lucide-react";
 import { ThemeToggle } from "@/app/components/theme-toggle";
 import { SAMPLE_ACCOUNTS } from "@/lib/accounts";
-import "./landing.css";
+import "@/app/landing.css";
 
 export const metadata: Metadata = {
   title: { absolute: "Promise Ledger — Promises made. Truth checked." },
 };
 
 const REPO = "https://github.com/assafbar2/promise-ledger";
+
+function GithubMark({ size = 16 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" /></svg>;
+}
 
 const STEPS = [
   { n: "01", name: "Triage", model: "Nemotron 3 Nano", body: "Labels every source and routes conversations to extraction. Delivery records go straight to the rules." },
@@ -47,7 +52,7 @@ export default function Landing() {
     <div className="lp">
       <a className="skip-link" href="#main">Skip to content</a>
       <header className="lp-nav">
-        <a href="/" className="lp-brand" aria-label="Promise Ledger home"><span className="lp-brand-mark"><Layers3 size={19} strokeWidth={1.9} aria-hidden="true" /></span>promise<span>ledger</span></a>
+        <Link href="/" className="lp-brand" aria-label="Promise Ledger home"><span className="lp-brand-mark"><Layers3 size={19} strokeWidth={1.9} aria-hidden="true" /></span><span className="lp-brand-word">promise<span>ledger</span></span></Link>
         <nav aria-label="Page sections">
           <a href="#problem">Problem</a>
           <a href="#how">How it works</a>
@@ -55,9 +60,9 @@ export default function Landing() {
           <a href="#nemotron">Nemotron on Nebius</a>
         </nav>
         <div className="lp-nav-actions">
-          <a className="lp-icon-link" href={REPO} aria-label="Source code on GitHub"><Github size={16} aria-hidden="true" /></a>
+          <a className="lp-icon-link" href={REPO} aria-label="Source code on GitHub"><GithubMark /></a>
           <ThemeToggle className="lp-icon-link" />
-          <a className="lp-button primary small" href="/app">Try it live<ArrowRight size={15} aria-hidden="true" /></a>
+          <Link className="lp-button primary small" href="/app">Try it live<ArrowRight size={15} aria-hidden="true" /></Link>
         </div>
       </header>
 
@@ -68,11 +73,11 @@ export default function Landing() {
             <h1 id="hero-title">Promises made. <em>Truth checked.</em></h1>
             <p className="lp-lead">Engineering closed the ticket. Can the customer actually use it? Promise Ledger checks every customer promise against customer-specific evidence, shows the gap, and drafts an honest update for you to approve.</p>
             <div className="lp-cta">
-              <a className="lp-button primary" href="/app"><Sparkles size={16} aria-hidden="true" />Try it live</a>
+              <Link className="lp-button primary" href="/app"><Sparkles size={16} aria-hidden="true" />Try it live</Link>
               <a className="lp-button secondary" href="#how">See how it works<ArrowRight size={15} aria-hidden="true" /></a>
             </div>
             <p className="lp-hero-note">No sign-up. Four fictional sample accounts. Live runs are rate-limited; the reference replay is always free.</p>
-            <p className="lp-powered"><Gauge size={15} aria-hidden="true" />Powered by <strong>NVIDIA Nemotron</strong> on <strong>Nebius Token Factory</strong></p>
+            <p className="lp-powered"><Gauge size={15} aria-hidden="true" /><span>Powered by <strong>NVIDIA Nemotron</strong> on <strong>Nebius Token Factory</strong></span></p>
           </div>
           <EvidenceCard />
         </section>
@@ -172,19 +177,19 @@ export default function Landing() {
             </div>
           </div>
           <div className="lp-final">
-            <a className="lp-button primary" href="/app"><Sparkles size={16} aria-hidden="true" />Try it live</a>
-            <a className="lp-button secondary" href={REPO}><Github size={15} aria-hidden="true" />Read the source</a>
+            <Link className="lp-button primary" href="/app"><Sparkles size={16} aria-hidden="true" />Try it live</Link>
+            <a className="lp-button secondary" href={REPO}><GithubMark size={15} />Read the source</a>
           </div>
         </section>
       </main>
 
       <footer className="lp-footer">
-        <span className="lp-brand small"><span className="lp-brand-mark"><Layers3 size={15} strokeWidth={1.9} aria-hidden="true" /></span>promise<span>ledger</span></span>
+        <span className="lp-brand small"><span className="lp-brand-mark"><Layers3 size={15} strokeWidth={1.9} aria-hidden="true" /></span><span className="lp-brand-word">promise<span>ledger</span></span></span>
         <span>Built for the Nebius × NVIDIA Global AI Hackathon · MIT licensed</span>
         <nav aria-label="Footer">
-          <a href="/app">Open the app</a>
+          <Link href="/app">Open the app</Link>
           <a href={REPO}>GitHub<ArrowUpRight size={12} aria-hidden="true" /></a>
-          <a href="/changelog">Fictional vendor changelog</a>
+          <Link href="/changelog">Fictional vendor changelog</Link>
         </nav>
       </footer>
     </div>
