@@ -22,7 +22,7 @@ React workbench -> POST /api/pipeline {mode, scenario}     (NDJSON event stream;
 | `app/page.tsx` | Ledger, sources, review queue, session log, exports; reads the event stream |
 | `app/components/agent-trace.tsx` | Live agent view: step cards, streamed quotes, verdicts and guardrail results |
 | `app/components/narrative.tsx` | Claims with exact-quote disclosures, origin label, internal nudge |
-| `app/components/evidence-provenance.tsx`, `public-claim.tsx` | Provider outcomes in the agent view, source provenance, the public-claim card and draft warning |
+| `app/components/public-claim.tsx` | The public-claim card in the evidence trail and the draft warning |
 | `app/changelog/page.tsx` | Synthetic public changelog of the fictional vendor, fetched by Tavily at runtime |
 | `lib/schema.ts` | Request/output schemas and shared types, including `Narrative`, `StepSummary`, `ProviderSignal` |
 | `lib/evidence/` | Evidence-provider interface, registry, the built-in synthetic pack and the Tavily public-claim provider |

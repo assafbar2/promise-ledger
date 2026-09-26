@@ -111,13 +111,7 @@
 @media(max-width:980px){.trace-body{grid-template-columns:1fr}.claim-list>li>p{font-size:12px}.narrative-origin,.claim-list summary{font-size:10px}.step-role,.step-detail,.step-metrics,.step-model{font-size:10px}}
 @media(max-width:680px){.agent-trace{padding:16px}.pipeline-steps{grid-template-columns:1fr}.trace-stats{flex-wrap:wrap}.quote-feed li{grid-template-columns:auto minmax(0,1fr);}.quote-feed q{grid-column:1/-1}}
 
-/* Evidence providers and public claims */
-.provider-strip{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
-.provider-strip li{display:flex;align-items:center;gap:5px;font-size:9px;line-height:1.5;color:#4f6a47;background:#f3f6ef;border:1px solid var(--line);border-radius:5px;padding:4px 8px}
-.provider-strip li strong{font-weight:600;color:var(--ink)}
-.provider-strip li span{color:var(--muted)}
-.provider-strip li.provider-failed{background:#fbf3ec;border-color:#efdccb;color:#9b4b31}
-.provider-strip li.provider-failed span{color:#9b4b31}
+/* Public claims */
 .public-claim{border:1px solid #dfe5eb;background:#f4f6f9;border-radius:5px;padding:12px;margin:0 0 20px}
 .public-claim.conflict{border-color:#eadbc3;background:#fbf6ec}
 .public-claim-label{display:flex;align-items:center;gap:5px;font-size:6.5px;letter-spacing:1.3px;color:#8094a2;font-weight:650}
@@ -128,8 +122,7 @@
 .public-claim blockquote{margin:8px 0 0;padding-left:9px;border-left:2px solid #d5dde5;font-size:10px;line-height:1.6;color:#5d6b75}
 .public-claim.conflict blockquote{border-left-color:#e3cfa9}
 .public-claim-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;font-size:8px;color:var(--muted)}
-.public-claim-meta a,.public-claim-footer a{color:var(--green);text-decoration:underline}
+.public-claim-meta a{color:var(--green);text-decoration:underline}
 .public-claim-warning,.draft-editor>p.public-claim-warning{display:flex;align-items:flex-start;gap:6px;font-size:9px;line-height:1.6;color:#8a5a23;background:#fbf6ec;border:1px solid #eadbc3;border-radius:5px;padding:8px 10px;margin:8px 0}
 .public-claim-warning svg{flex-shrink:0;margin-top:2px}
-.source-card footer.public-claim-footer{align-items:flex-start;color:#8094a2;line-height:1.5}
 .timeline-icon.publicclaim{background:#edf0f4;border-color:#dfe5eb;color:#8094a2}

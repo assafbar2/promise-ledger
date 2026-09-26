@@ -10,7 +10,7 @@ export function PublicClaimCard({ note, source, onOpenSource }: { note: PublicCl
       <blockquote>“{note.quote}”</blockquote>
       <p className="public-claim-meta">
         <button className="cite-chip" onClick={() => onOpenSource(note.sourceId)} aria-label={`Open source ${note.sourceId}`}>{note.sourceId}</button>
-        <span>{recorded ? "Reference fixture of the public page · no Tavily call" : "Fetched live by Tavily Extract · exact quote from the returned text"}</span>
+        <span>{recorded ? "Reference fixture of the public page · no Tavily call" : `Fetched live by Tavily Extract${source?.provenance?.requestId ? ` · request ${source.provenance.requestId.slice(0, 8)}` : ""} · exact quote from the returned text`}</span>
         {note.url && <a href={note.url} target="_blank" rel="noopener noreferrer">View page</a>}
       </p>
     </div>

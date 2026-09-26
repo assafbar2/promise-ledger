@@ -37,7 +37,7 @@ function northstarAuditExport(url: URL) {
 }
 
 test("Sentry is registered after the synthetic pack, optional and untrusted", () => {
-  assert.deepEqual(EVIDENCE_PROVIDERS.map((provider) => provider.id), ["synthetic-pack", "sentry-runtime"]);
+  assert.deepEqual(EVIDENCE_PROVIDERS.map((provider) => provider.id), ["synthetic-pack", "sentry-runtime", "tavily-public-claim"]);
   assert.deepEqual({ trust: sentryRuntimeProvider.trust, required: sentryRuntimeProvider.required, kinds: sentryRuntimeProvider.kinds }, { trust: "untrusted", required: false, kinds: ["Runtime"] });
 });
 
@@ -56,7 +56,7 @@ test("reference scenarios blocked, enabled and stale are unchanged and make no S
   assert.deepEqual(result.map((analysis) => auditExport(analysis).verdict), ["blocked", "verified", "unknown"]);
   for (const analysis of result) {
     assert.ok(analysis.sources.every((source) => source.kind !== "Runtime"));
-    assert.deepEqual(analysis.pipeline.providers.map((provider) => provider.id), ["synthetic-pack"]);
+    assert.deepEqual(analysis.pipeline.providers.map((provider) => provider.id), ["synthetic-pack", "tavily-public-claim"]);
     assert.ok(analysis.commitments.every((commitment) => commitment.runtime === undefined));
   }
 });
@@ -72,7 +72,7 @@ test("reference crashing scenario: recorded Sentry evidence lowers verified to n
   assert.equal(runtime.length, 1);
   assert.ok(runtime[0].provenance?.recorded && runtime[0].provenance.fetchedAt === new Date(RECORDED_RUNTIME.capturedAt).toISOString());
   assert.ok(commitment.runtime?.evidence.every((evidence) => runtime.some((source) => source.id === evidence.sourceId && source.text.includes(evidence.quote))));
-  assert.deepEqual(analysis.pipeline.providers.map(({ id, status, recorded, signalCount }) => [id, status, recorded, signalCount]), [["synthetic-pack", "ok", false, 0], ["sentry-runtime", "ok", true, 1]]);
+  assert.deepEqual(analysis.pipeline.providers.map(({ id, status, recorded, signalCount }) => [id, status, recorded, signalCount]), [["synthetic-pack", "ok", false, 0], ["sentry-runtime", "ok", true, 1], ["tavily-public-claim", "ok", true, 2]]);
   assert.deepEqual(analysis.commitments.filter((item) => item.featureId !== "audit-export").map((item) => [item.featureId, item.verdict]), [["eu-residency", "on-track"], ["saml", "verified"], ["usage-report", "overdue"], ["scim", "verify"], ["dashboard", "discussed"]]);
   assert.match(commitment.narrative?.draftText ?? "", /not yet verified as delivered\. Enabled for Northstar, but failing at runtime/);
 });
