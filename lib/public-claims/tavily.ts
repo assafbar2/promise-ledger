@@ -5,7 +5,8 @@ type Env = Record<string, string | undefined>;
 
 export const TAVILY_EXTRACT_URL = "https://api.tavily.com/extract";
 export const DEFAULT_PUBLIC_HOST = "promise-ledger-chi.vercel.app";
-export const TAVILY_DEFAULTS = { dailyLimit: 20, fetchTimeoutMs: 10000, providerTimeoutSeconds: 8, maxUrls: 5 } as const;
+// The fetch deadline sits under the evidence registry's 10 s provider timeout so Tavily errors stay explicit.
+export const TAVILY_DEFAULTS = { dailyLimit: 20, fetchTimeoutMs: 8000, providerTimeoutSeconds: 6, maxUrls: 5 } as const;
 // Tavily joins reranked chunks with this separator; quotes must never span it.
 export const CHUNK_SEPARATOR = " [...] ";
 

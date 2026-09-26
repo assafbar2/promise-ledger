@@ -56,7 +56,7 @@ test("live mode fails explicitly without credentials and never substitutes a dem
   } finally { if (saved !== undefined) process.env.NEBIUS_API_KEY = saved; }
 });
 
-const LIVE_ENV = ["NEBIUS_API_KEY", "NEBIUS_MODEL", "NEBIUS_TRIAGE_MODEL", "NEBIUS_NARRATIVE_MODEL", "NEBIUS_STREAM", "LIVE_RUN_BUDGET_USD", "DEMO_ACCESS_TOKEN", "LIVE_RUNS_PER_IP_PER_HOUR", "LIVE_RUNS_PER_DAY", "LIVE_TOKEN_RUNS_PER_DAY", "KV_REST_API_URL", "KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"];
+const LIVE_ENV = ["NEBIUS_API_KEY", "NEBIUS_MODEL", "NEBIUS_TRIAGE_MODEL", "NEBIUS_NARRATIVE_MODEL", "NEBIUS_STREAM", "LIVE_RUN_BUDGET_USD", "DEMO_ACCESS_TOKEN", "LIVE_RUNS_PER_IP_PER_HOUR", "LIVE_RUNS_PER_DAY", "LIVE_TOKEN_RUNS_PER_DAY", "KV_REST_API_URL", "KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "TAVILY_API_KEY", "TAVILY_ALLOWED_DOMAINS", "TAVILY_CLAIM_URLS", "TAVILY_DAILY_LIMIT"];
 const OWNER_TOKEN = "test-access-token-at-least-24-chars";
 
 function withLiveServer(context: TestContext, env: Record<string, string> = {}, replies: Partial<Record<Step, Reply>> = {}) {

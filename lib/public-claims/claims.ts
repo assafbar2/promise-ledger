@@ -1,4 +1,4 @@
-import type { Evidence, ProductFact } from "../schema";
+import type { Evidence, ProviderSignal, PublicClaimNote, ReconciledCommitment, Source } from "../schema";
 import { CHUNK_SEPARATOR } from "./tavily";
 
 export const PUBLIC_CLAIM_MAX_AGE_MS = 24 * 3600 * 1000;
@@ -19,7 +19,6 @@ const HEDGED = /\b(?:not|no longer|beta|preview|planned|coming soon|will be|expe
 const ISO_DATE = /\b\d{4}-\d{2}-\d{2}\b/g;
 
 export type PublicClaim = { featureId: string; sourceId: string; url: string; quote: string; date: string | null };
-export type PublicClaimConflict = { featureId: string; quote: string; date: string | null; url: string; customerEnabled: boolean | null; message: string };
 
 export function normalizeWhitespace(value: string) {
   return value.replace(/\s+/g, " ").trim();
@@ -91,16 +90,31 @@ export function claimFresh(fetchedAt: string, now: string) {
 }
 
 /**
- * A public GA claim never changes a verdict. It raises a conflict when the customer-specific fact
- * does not show the feature enabled, so the update must not tell the customer it is available.
+ * A public GA claim never changes a verdict. Beside each committed promise it either agrees with
+ * current customer evidence, or raises "publicly GA ≠ usable by this customer" when the feature is
+ * disabled, missing, stale or otherwise unconfirmed for this account.
  */
-export function publicClaimConflicts(claims: readonly PublicClaim[], facts: readonly ProductFact[], accountName: string): PublicClaimConflict[] {
-  return claims.flatMap((claim) => {
-    const fact = facts.find((candidate) => candidate.featureId === claim.featureId);
-    const customerEnabled = fact?.enabled ?? null;
-    if (customerEnabled === true) return [];
-    const publicly = claim.date ? `generally available since ${claim.date}` : "generally available";
-    const customer = customerEnabled === false ? `disabled for ${accountName}` : `not confirmed as enabled for ${accountName}`;
-    return [{ featureId: claim.featureId, quote: claim.quote, date: claim.date, url: claim.url, customerEnabled, message: `Publicly GA ≠ usable by this customer: the public changelog says ${publicly}, but the feature is ${customer}.` }];
-  });
+export function publicClaimNotes(signals: readonly ProviderSignal[], sources: readonly Source[], commitments: readonly ReconciledCommitment[], accountName: string): Map<string, PublicClaimNote> {
+  const notes = new Map<string, PublicClaimNote>();
+  for (const commitment of commitments) {
+    if (commitment.intent !== "committed") continue;
+    const signal = signals.find((candidate) => candidate.kind === "publicClaimGA" && candidate.featureId === commitment.featureId);
+    const source = signal && sources.find((candidate) => candidate.id === signal.evidence.sourceId && candidate.kind === "PublicClaim");
+    if (!signal || !source || !quoteGrounded(signal.evidence.quote, source.text)) continue;
+    const date = signal.evidence.quote.match(ISO_DATE)?.[0] ?? null;
+    const publicly = `The public changelog says ${commitment.title.toLowerCase()} is generally available${date ? ` since ${date}` : ""}`;
+    const usable = commitment.fact?.enabled === true && commitment.verdict !== "unknown";
+    const customer = commitment.fact?.enabled === false && commitment.verdict !== "unknown" ? `it is disabled for ${accountName}` : `current evidence does not confirm ${accountName} can use it`;
+    notes.set(commitment.id, {
+      sourceId: source.id,
+      url: source.url ?? null,
+      quote: signal.evidence.quote,
+      date,
+      conflict: !usable,
+      message: usable
+        ? `${publicly}, and ${accountName}'s own evidence shows it enabled. Customer evidence, not the public claim, decided this verdict.`
+        : `Publicly GA ≠ usable by this customer. ${publicly}, but ${customer}. Do not tell ${accountName} it is live.`,
+    });
+  }
+  return notes;
 }

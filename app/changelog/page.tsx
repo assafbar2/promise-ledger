@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PUBLIC_CHANGELOG, PUBLIC_CHANGELOG_INTRO, PUBLIC_VENDOR } from "../../lib/public-claims/changelog";
+import { PUBLIC_CHANGELOG, PUBLIC_CHANGELOG_INTRO, PUBLIC_VENDOR, releasedOn } from "../../lib/public-claims/changelog";
 
 export const metadata: Metadata = {
   title: `${PUBLIC_VENDOR} changelog (fictional)`,
@@ -15,7 +15,7 @@ export default function ChangelogPage() {
       {PUBLIC_CHANGELOG.map((entry) => (
         <section key={entry.release} className="mt-8 border-t border-slate-200 pt-6">
           <h2 className="text-lg font-medium">{entry.heading}</h2>
-          <p className="text-xs text-slate-500">Released <time dateTime={entry.date}>{new Date(`${entry.date}T00:00:00Z`).toLocaleDateString("en-US", { dateStyle: "long", timeZone: "UTC" })}</time></p>
+          <p className="text-xs text-slate-500">Released <time dateTime={entry.date}>{releasedOn(entry.date)}</time></p>
           {entry.sentences.map((sentence) => <p key={sentence} className="mt-2">{sentence}</p>)}
         </section>
       ))}

@@ -3,10 +3,12 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import ChangelogPage from "../app/changelog/page.tsx";
-import { ACCOUNT, createScenario, FEATURE_IDS } from "../lib/fixtures.ts";
-import { PUBLIC_CHANGELOG, PUBLIC_CHANGELOG_INTRO } from "../lib/public-claims/changelog.ts";
+import { ACCOUNT, AS_OF, createScenario, FEATURE_IDS, referenceCommitments } from "../lib/fixtures.ts";
+import { changelogText, PUBLIC_CHANGELOG, PUBLIC_CHANGELOG_INTRO } from "../lib/public-claims/changelog.ts";
 import { checkPublicClaims } from "../lib/public-claims/check.ts";
-import { findPublicClaims, PUBLIC_FEATURE_NAMES, publicClaimConflicts, quoteGrounded, sourceText } from "../lib/public-claims/claims.ts";
+import { findPublicClaims, normalizeText, PUBLIC_FEATURE_NAMES, publicClaimNotes, quoteGrounded, sourceText } from "../lib/public-claims/claims.ts";
+import { reconcile } from "../lib/reconcile.ts";
+import type { ProviderSignal, Scenario, Source } from "../lib/schema.ts";
 import { resetPublicClaimMemory } from "../lib/public-claims/store.ts";
 import { allowedUrl, hostAllowed, TAVILY_DEFAULTS, tavilyConfig, tavilyExtract, TavilyError } from "../lib/public-claims/tavily.ts";
 
@@ -43,6 +45,7 @@ test("the hosted changelog page renders every synthetic sentence and labels the 
   const text = pageText();
   for (const sentence of [...PUBLIC_CHANGELOG_INTRO, ...PUBLIC_CHANGELOG.flatMap((entry) => entry.sentences)]) assert.ok(text.includes(sentence), sentence);
   assert.match(text, /fictional vendor/);
+  assert.equal(normalizeText(changelogText()), normalizeText(text), "the reference fixture matches the hosted page text");
 });
 
 test("allowlist matches exact hosts and wildcard subdomains only, over plain HTTPS", () => {
@@ -153,15 +156,40 @@ test("source text is bounded without cutting a chunk in half", () => {
   assert.equal(text, `${"a".repeat(30)} [...] ${"b".repeat(30)}`);
 });
 
-test("a public GA claim raises a conflict when this customer is not enabled, and never when enabled", () => {
-  const claims = findPublicClaims({ text: sourceText([pageText()]), sourceId: "PUB-01", url: PAGE, featureIds: FEATURE_IDS });
-  const blocked = publicClaimConflicts(claims, createScenario("blocked").facts, ACCOUNT.name);
-  assert.deepEqual(blocked.map(({ featureId, customerEnabled }) => ({ featureId, customerEnabled })), [{ featureId: "audit-export", customerEnabled: false }]);
-  assert.match(blocked[0].message, /^Publicly GA ≠ usable by this customer: .*2026-09-12.*disabled for Northstar/);
-  assert.deepEqual(publicClaimConflicts(claims, createScenario("enabled").facts, ACCOUNT.name), []);
-  const unknown = publicClaimConflicts(claims, [], ACCOUNT.name);
-  assert.deepEqual(unknown.map((conflict) => conflict.customerEnabled), [null, null]);
-  assert.match(unknown[0].message, /not confirmed as enabled for Northstar/);
+function notesFor(scenario: Scenario, signals?: ProviderSignal[]) {
+  const text = sourceText([pageText()]);
+  const source: Source = { id: "PUB-01", accountId: ACCOUNT.id, kind: "PublicClaim", title: "Public page", author: "Public web", observedAt: NOW, text, url: PAGE };
+  const claimSignals = signals ?? findPublicClaims({ text, sourceId: source.id, url: PAGE, featureIds: FEATURE_IDS }).map((claim): ProviderSignal => ({ kind: "publicClaimGA", featureId: claim.featureId, evidence: { sourceId: claim.sourceId, quote: claim.quote } }));
+  const { facts } = createScenario(scenario);
+  const commitments = referenceCommitments.map((commitment) => reconcile(commitment, facts, ACCOUNT.id, AS_OF));
+  return { notes: publicClaimNotes(claimSignals, [source], commitments, ACCOUNT.name), commitments };
+}
+
+test("a public GA claim flags customers who cannot use the feature, and never changes a verdict", () => {
+  const blocked = notesFor("blocked");
+  assert.deepEqual([...blocked.notes.keys()], ["PL-101", "PL-103"]);
+  const audit = blocked.notes.get("PL-101")!;
+  assert.equal(audit.conflict, true);
+  assert.equal(audit.date, "2026-09-12");
+  assert.equal(audit.quote, "Audit log export is generally available (2026-09-12).");
+  assert.match(audit.message, /^Publicly GA ≠ usable by this customer\. .*since 2026-09-12, but it is disabled for Northstar\. Do not tell Northstar it is live\.$/);
+  assert.equal(blocked.notes.get("PL-103")!.conflict, false, "SAML is enabled and verified for Northstar");
+  assert.equal(blocked.commitments.find((commitment) => commitment.id === "PL-101")!.verdict, "blocked");
+
+  const enabled = notesFor("enabled").notes.get("PL-101")!;
+  assert.equal(enabled.conflict, false);
+  assert.match(enabled.message, /Customer evidence, not the public claim, decided this verdict/);
+
+  const stale = notesFor("stale").notes.get("PL-101")!;
+  assert.equal(stale.conflict, true, "stale customer evidence cannot confirm access");
+  assert.match(stale.message, /current evidence does not confirm Northstar can use it/);
+});
+
+test("public-claim notes ignore signals whose quote is not in a PublicClaim source", () => {
+  const forged: ProviderSignal = { kind: "publicClaimGA", featureId: "audit-export", evidence: { sourceId: "PUB-01", quote: "Audit log export is generally available for Northstar." } };
+  assert.equal(notesFor("blocked", [forged]).notes.size, 0);
+  const wrongSource: ProviderSignal = { kind: "publicClaimGA", featureId: "audit-export", evidence: { sourceId: "SRC-02", quote: "Audit log export is generally available (2026-09-12)." } };
+  assert.equal(notesFor("blocked", [wrongSource]).notes.size, 0);
 });
 
 test("without a key the check is disabled and makes no calls", async () => {

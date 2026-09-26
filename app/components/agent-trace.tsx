@@ -5,6 +5,7 @@ import { modelInfo } from "@/lib/pipeline/models";
 import type { TraceState } from "@/lib/pipeline/trace-state";
 import type { StepStatus, StepSummary } from "@/lib/schema";
 import { VERDICTS } from "@/lib/verdicts";
+import { ProviderStrip } from "./evidence-provenance";
 
 const STATUS: Record<StepStatus, { label: string; icon: typeof Check }> = {
   queued: { label: "Queued", icon: CircleDashed },
@@ -85,6 +86,7 @@ export function AgentTrace({ trace, expanded, onToggle, onOpenSource }: { trace:
       <ol className="pipeline-steps" aria-label="Pipeline steps">
         {trace.steps.map((step, index) => <StepCard key={step.id} step={step} index={index} live={trace.progress[step.id]} />)}
       </ol>
+      <ProviderStrip providers={trace.providers} />
       {trace.error && <p className="trace-error" role="alert"><CircleAlert size={14} aria-hidden="true" />{trace.error}</p>}
       {expanded && <div className="trace-body" id="agent-trace-body">
         <div className="trace-column">

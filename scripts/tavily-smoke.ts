@@ -5,7 +5,10 @@ import { ACCOUNT, FEATURE_IDS } from "../lib/fixtures";
 import { checkPublicClaims } from "../lib/public-claims/check";
 import { tavilyConfig } from "../lib/public-claims/tavily";
 
-const args = new Map(process.argv.slice(2).map((arg) => arg.replace(/^--/, "").split(/=(.*)/s, 2) as [string, string]));
+const args = new Map(process.argv.slice(2).map((arg): [string, string] => {
+  const [name, ...value] = arg.replace(/^--/, "").split("=");
+  return [name, value.join("=")];
+}));
 
 async function keyUsage(apiKey: string) {
   const response = await fetch("https://api.tavily.com/usage", { headers: { Authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(10000) });

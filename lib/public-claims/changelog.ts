@@ -12,6 +12,19 @@ export const PUBLIC_CHANGELOG_INTRO = [
   "Availability for an individual workspace depends on its plan and entitlements.",
 ];
 
+export function releasedOn(date: string) {
+  return new Date(`${date}T00:00:00Z`).toLocaleDateString("en-US", { dateStyle: "long", timeZone: "UTC" });
+}
+
+/** The page's visible text, one block per line, as Tavily Extract returns it in `text` format. */
+export function changelogText() {
+  return [
+    `${PUBLIC_VENDOR} changelog`,
+    ...PUBLIC_CHANGELOG_INTRO,
+    ...PUBLIC_CHANGELOG.flatMap((entry) => [entry.heading, `Released ${releasedOn(entry.date)}`, ...entry.sentences]),
+  ].join("\n");
+}
+
 export const PUBLIC_CHANGELOG: ChangelogEntry[] = [
   {
     release: "2.14",

@@ -2,6 +2,7 @@ import { collectEvidence, EvidenceError } from "../evidence/registry";
 import type { EvidenceProvider } from "../evidence/types";
 import { ACCOUNT, AS_OF, FEATURE_IDS, referenceCommitments } from "../fixtures";
 import { chatCompletion, extractionMessages, extractWithNebius, InferenceError, NEBIUS_MAX_OUTPUT_TOKENS, type InferenceTrace, type StreamProgress } from "../nebius";
+import { publicClaimNotes } from "../public-claims/claims";
 import { reconcile, validateExtraction } from "../reconcile";
 import type { Analysis, Commitment, Narrative, PipelineCheck, ReconciledCommitment, Scenario, StepId, StepSummary, Usage } from "../schema";
 import { RunBudget, utf8Bytes } from "./budget";
@@ -210,6 +211,8 @@ export async function runPipeline(options: PipelineOptions): Promise<Analysis> {
   const rulesStarted = performance.now();
   const reconciled: ReconciledCommitment[] = commitments.map((commitment) => reconcile(commitment, facts, ACCOUNT.id, AS_OF, evidence));
   for (const commitment of reconciled) emit({ type: "verdict", commitmentId: commitment.id, title: commitment.title, verdict: commitment.verdict });
+  const publicClaims = publicClaimNotes(evidence.signals, sources, reconciled, ACCOUNT.name);
+  for (const [commitmentId, note] of publicClaims) if (note.conflict) check({ stepId: "rules", ok: true, commitmentId, label: `${commitmentId}: public GA claim ≠ customer access. Flagged for review; verdict unchanged` });
   const gaps = reconciled.filter((commitment) => ["blocked", "overdue", "verify", "unknown"].includes(commitment.verdict)).length;
   update("rules", { status: "done", latencyMs: Math.max(1, Math.round(performance.now() - rulesStarted)), detail: `${reconciled.length} verdicts from customer-specific facts; ${gaps} need attention. No model can change these.` });
 
@@ -280,7 +283,7 @@ export async function runPipeline(options: PipelineOptions): Promise<Analysis> {
     runId: live ? extractionTrace?.runId ?? runId : runId,
     asOf: AS_OF,
     scenario: options.scenario,
-    commitments: reconciled.map((commitment) => ({ ...commitment, narrative: narratives.get(commitment.id) ?? null })),
+    commitments: reconciled.map((commitment) => ({ ...commitment, narrative: narratives.get(commitment.id) ?? null, publicClaim: publicClaims.get(commitment.id) ?? null })),
     sources,
     elapsedMs: Math.round(elapsed()),
     usage,
