@@ -15,7 +15,7 @@ import { resetLiveLimitMemory } from "../lib/live-limits.ts";
 import { utf8Bytes, worstCaseUsd } from "../lib/pipeline/budget.ts";
 import type { PipelineEvent } from "../lib/pipeline/events.ts";
 import { PIPELINE_MODEL_DEFAULTS, RUN_BUDGET_DEFAULT_USD, STEP_LIMITS } from "../lib/pipeline/models.ts";
-import { NARRATIVE_PROMPT } from "../lib/pipeline/narrative.ts";
+import { NARRATIVE_PROMPT, narrativeSources } from "../lib/pipeline/narrative.ts";
 import { executePipeline, runByoExtraction } from "../lib/pipeline/run.ts";
 import { triageInput, triagePrompt } from "../lib/pipeline/triage.ts";
 import type { Analysis, ByoProposal, Source } from "../lib/schema.ts";
@@ -159,6 +159,14 @@ test("the decide step re-checks every quote, rejects duplicates, and freshness u
   assert.equal(verdicts(later.analysis)["opera-sync"], "unknown", "evidence older than 72 hours cannot prove delivery");
 });
 
+test("a customer message naming the commitment's title is citable in its brief (seen live on September 26)", async () => {
+  const all = sources();
+  const extract = patternExtract(all);
+  const opera = extract.commitments.find((commitment) => commitment.featureId === "opera-sync")!;
+  const allowed = narrativeSources([{ ...opera, verdict: "verified", reason: "", nextAction: "", fact: null }], all, []);
+  assert.ok(allowed.get(opera.id)!.some((source) => source.id === "U-03"), "“Opera PMS sync passed Pinecrest's acceptance test” is evidence for Opera PMS sync");
+});
+
 test("model output is validated item by item: ungrounded facts and commitments are dropped and reported", () => {
   const all = sources();
   const output = {
@@ -182,7 +190,7 @@ test("model output is validated item by item: ungrounded facts and commitments a
 
 test("continuation tokens are signed, expire and cannot be forged", async () => {
   const secret = continuationSecret({ NEBIUS_API_KEY: "unit-test-key" })!;
-  const payload: ContinuationPayload = { v: 1, runId: "run-1", exp: Math.floor(Date.parse(NOW) / 1000) + 60, digest: "d".repeat(64), model: "nvidia/x-nemotron", costUsd: 0.003, reservedUsd: 0.012, steps: [], checks: [] };
+  const payload: ContinuationPayload = { v: 1, runId: "run-1", exp: Math.floor(Date.parse(NOW) / 1000) + 60, digest: "d".repeat(64), model: "nvidia/x-nemotron", costUsd: 0.003, reservedUsd: 0.012, elapsedMs: 20000, steps: [], checks: [] };
   const token = await signContinuation(payload, secret);
   assert.deepEqual(await verifyContinuation(token, secret, Date.parse(NOW)), payload);
   assert.equal(await verifyContinuation(token, secret, Date.parse(NOW) + 61_000), null, "expired");

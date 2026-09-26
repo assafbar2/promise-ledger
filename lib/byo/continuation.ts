@@ -14,6 +14,7 @@ export type ContinuationPayload = {
   model: string | null;
   costUsd: number;
   reservedUsd: number;
+  elapsedMs: number;
   steps: StepSummary[];
   checks: PipelineCheck[];
 };

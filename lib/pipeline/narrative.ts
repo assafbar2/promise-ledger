@@ -32,8 +32,8 @@ export function narrativeSources(commitments: ReconciledCommitment[], sources: S
   for (const commitment of commitments) {
     const ids = new Set([...commitment.evidence, ...(commitment.fact?.evidence ?? []), ...(commitment.runtime?.evidence ?? [])].map((evidence) => evidence.sourceId));
     for (const label of labels) if (label.role === "customer-signal" && label.features.includes(commitment.featureId)) ids.add(label.sourceId);
-    const phrase = commitment.featureId.replace(/-/g, " ");
-    for (const source of sources) if (CUSTOMER_KINDS.includes(source.kind) && source.text.toLowerCase().includes(phrase)) ids.add(source.id);
+    const phrases = [commitment.featureId.replace(/-/g, " "), commitment.title.toLowerCase()];
+    for (const source of sources) if (CUSTOMER_KINDS.includes(source.kind) && phrases.some((phrase) => source.text.toLowerCase().includes(phrase))) ids.add(source.id);
     allowed.set(commitment.id, sources.filter((source) => ids.has(source.id)));
   }
   return allowed;

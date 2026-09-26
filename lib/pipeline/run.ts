@@ -311,7 +311,7 @@ export async function executePipeline(options: PipelineOptions): Promise<Pipelin
     const secret = continuationSecret(env);
     if (live && totals && secret) {
       const exp = Math.floor(Date.parse(now) / 1000) + BYO_LIMITS.continuationTtlSeconds;
-      const payload: ContinuationPayload = { v: 1, runId: extractionTrace?.runId ?? runId, exp, digest: await sourcesDigest(byoInputs!, account.name), model: extractionTrace?.model ?? null, costUsd: totals.costUsd, reservedUsd: totals.reservedUsd, steps: compactSteps([steps.triage, steps.extraction]), checks };
+      const payload: ContinuationPayload = { v: 1, runId: extractionTrace?.runId ?? runId, exp, digest: await sourcesDigest(byoInputs!, account.name), model: extractionTrace?.model ?? null, costUsd: totals.costUsd, reservedUsd: totals.reservedUsd, elapsedMs: Math.round(elapsed()), steps: compactSteps([steps.triage, steps.extraction]), checks };
       continuation = { token: await signContinuation(payload, secret), expiresAt: new Date(exp * 1000).toISOString() };
     }
     const proposal: ByoProposal = {
@@ -414,7 +414,7 @@ export async function executePipeline(options: PipelineOptions): Promise<Pipelin
     ...(deciding ? { byo: { extractor: deciding.extractor, confirmedFacts: facts.length, correctedFacts: deciding.facts.filter((fact) => fact.corrected.length > 0).length, excludedCommitments: deciding.excludedCommitments } } : {}),
     commitments: reconciled.map((commitment) => ({ ...commitment, narrative: narratives.get(commitment.id) ?? null })),
     sources,
-    elapsedMs: Math.round(elapsed()),
+    elapsedMs: Math.round(elapsed()) + (prior?.elapsedMs ?? 0),
     usage: live ? sumUsage(stepList) : null,
     pipeline: { replay: !live, steps: stepList, checks, providers: evidence.providers, budgetUsd, reservedUsd: totals ? round(totals.reservedUsd + (prior?.reservedUsd ?? 0)) : null, costUsd: totals ? round(totals.costUsd + (prior?.costUsd ?? 0)) : null },
   };
