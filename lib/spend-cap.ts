@@ -46,14 +46,17 @@ export type SpendReservation = { key: string; micro: number; providersMicro: num
 export type SpendDecision = { allowed: true; reservation: SpendReservation } | { allowed: false; reason: "cap" | "unavailable" };
 
 /**
- * Reserves one live run's worst case against the lifetime cap before any paid call. Without a
- * reachable durable store nothing can be proven about earlier spend, so live mode stays closed.
+ * Reserves a live request's worst case against the lifetime cap before any paid call: by default
+ * one full run plus evidence providers. A bring-your-own decide step passes only the Nebius budget
+ * its extraction left, and no providers, since the extraction already reserved and settled those.
+ * Without a reachable durable store nothing can be proven about earlier spend, so live mode stays closed.
  */
-export async function reserveLiveSpend({ fetcher = fetch, env = process.env }: { fetcher?: typeof fetch; env?: Env } = {}): Promise<SpendDecision> {
+export async function reserveLiveSpend({ fetcher = fetch, env = process.env, nebiusUsd, providers = true }: { fetcher?: typeof fetch; env?: Env; nebiusUsd?: number; providers?: boolean } = {}): Promise<SpendDecision> {
   const settings = spendCapSettings(env);
   const config = limitStoreConfig(env);
   if (!config) return { allowed: false, reason: "unavailable" };
-  const micro = Math.ceil(settings.runReserveUsd * MICRO);
+  const providersMicro = providers ? Math.ceil(settings.providersUsd * MICRO) : 0;
+  const micro = Math.ceil((nebiusUsd ?? runBudgetUsd(env)) * MICRO) + providersMicro;
   const capMicro = Math.floor(settings.capUsd * MICRO);
   if (micro > capMicro) return { allowed: false, reason: "cap" };
   let total: number;
@@ -62,7 +65,7 @@ export async function reserveLiveSpend({ fetcher = fetch, env = process.env }: {
     try { await command(config, ["DECRBY", settings.key, String(micro)], fetcher); } catch { /* an unreleased reservation only lowers the remaining cap */ }
     return { allowed: false, reason: "cap" };
   }
-  return { allowed: true, reservation: { key: settings.key, micro, providersMicro: Math.ceil(settings.providersUsd * MICRO), config } };
+  return { allowed: true, reservation: { key: settings.key, micro, providersMicro, config } };
 }
 
 /**

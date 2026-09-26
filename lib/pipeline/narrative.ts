@@ -32,8 +32,8 @@ export function narrativeSources(commitments: ReconciledCommitment[], sources: S
   for (const commitment of commitments) {
     const ids = new Set([...commitment.evidence, ...(commitment.fact?.evidence ?? []), ...(commitment.runtime?.evidence ?? [])].map((evidence) => evidence.sourceId));
     for (const label of labels) if (label.role === "customer-signal" && label.features.includes(commitment.featureId)) ids.add(label.sourceId);
-    const phrase = commitment.featureId.replace(/-/g, " ");
-    for (const source of sources) if (CUSTOMER_KINDS.includes(source.kind) && source.text.toLowerCase().includes(phrase)) ids.add(source.id);
+    const phrases = [commitment.featureId.replace(/-/g, " "), commitment.title.toLowerCase()];
+    for (const source of sources) if (CUSTOMER_KINDS.includes(source.kind) && phrases.some((phrase) => source.text.toLowerCase().includes(phrase))) ids.add(source.id);
     // Public claims are shown beside the verdict, never used to write the customer update.
     allowed.set(commitment.id, sources.filter((source) => ids.has(source.id) && source.kind !== "PublicClaim"));
   }
@@ -72,7 +72,7 @@ export function briefNarrative(commitment: ReconciledCommitment, brief: Brief, m
 }
 
 /** Deterministic narrative built only from the verdict policy and the exact evidence records. */
-export function templateNarrative(commitment: ReconciledCommitment, fallbackReason: string | null): Narrative {
+export function templateNarrative(commitment: ReconciledCommitment, fallbackReason: string | null, accountName = "Northstar"): Narrative {
   const promise = commitment.evidence.slice(0, 1);
   const factEvidence = commitment.fact?.evidence.slice(0, 2) ?? [];
   const facts = factEvidence.length > 0 ? factEvidence : promise;
@@ -83,7 +83,7 @@ export function templateNarrative(commitment: ReconciledCommitment, fallbackReas
     explanation: [{ text: promiseText, citations: promise }, { text: commitment.reason, citations: facts }],
     customerUpdate: [{ text: draftSummary(commitment), citations: facts }],
     ownerNudge: [{ text: `${commitment.owner ? `${commitment.owner}, ` : ""}${commitment.nextAction.charAt(0).toLowerCase()}${commitment.nextAction.slice(1)}`, citations: promise }],
-    draftText: draftUpdate(commitment),
+    draftText: draftUpdate(commitment, accountName),
     fallbackReason,
   };
 }

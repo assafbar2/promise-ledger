@@ -1,6 +1,6 @@
 import type { Evidence, EvidenceProviderReport, ProductFact, ProviderSignal, Source } from "../schema";
 import { EvidenceError } from "./errors";
-import { EVIDENCE_PROVIDERS } from "./providers";
+import { providersFor } from "./providers";
 import type { EvidenceContext, EvidenceProvider } from "./types";
 
 export { EvidenceError };
@@ -39,7 +39,7 @@ function withTimeout<T>(work: (signal: AbortSignal) => Promise<T>, timeoutMs: nu
  * model or rule sees it: unique, account-scoped, bounded sources; facts only from curated
  * providers; every fact and signal citing an exact quote from that provider's own sources.
  */
-export async function collectEvidence(context: Omit<EvidenceContext, "signal"> & { signal?: AbortSignal }, providers: readonly EvidenceProvider[] = EVIDENCE_PROVIDERS): Promise<CollectedEvidence> {
+export async function collectEvidence(context: Omit<EvidenceContext, "signal"> & { signal?: AbortSignal }, providers: readonly EvidenceProvider[] = providersFor(context.accountId)): Promise<CollectedEvidence> {
   const sources: Source[] = [];
   const facts: ProductFact[] = [];
   const signals: ProviderSignal[] = [];
