@@ -7,8 +7,20 @@ async function request(route, options) {
   return worker.fetch(new Request(`http://localhost${route}`, options), { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } }, { waitUntil() {}, passThroughOnException() {} });
 }
 
-test("production build renders the product, provenance and safety controls", async () => {
+test("production build renders the landing page with a one-click entry into the app", async () => {
   const response = await request("/");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  for (const text of ["Promises made", "Truth checked", "Try it live", 'href="/app"', "Nemotron 3 Nano", "Nemotron 3 Super", "Nemotron 3 Ultra", "Nebius Token Factory", "Tavily", "fictional", "Harbor Health"]) assert.ok(html.includes(text), `Missing ${text}`);
+  assert.doesNotMatch(html, /Sentry/);
+  assert.match(html, /property="og:image" content="https:\/\/promise-ledger-chi\.vercel\.app\/og\.png"/);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
+  assert.match(html, /rel="icon" href="[^"]*\/favicon\.svg"/);
+  assert.match(html, /name="robots" content="noindex, nofollow"/);
+});
+
+test("production build renders the product, provenance and safety controls", async () => {
+  const response = await request("/app");
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /Promise Ledger/);
