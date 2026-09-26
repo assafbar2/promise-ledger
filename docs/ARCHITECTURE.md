@@ -5,7 +5,7 @@ The application has two build targets: the retained Sites/Cloudflare Worker flow
 ```text
 React workbench -> POST /api/analyze {mode, scenario}
   -> strict request and same-origin checks
-  -> live-only private access token gate
+  -> live only: optional owner token, per-IP hourly + shared daily limits (Upstash or memory)
   -> server-owned synthetic source pack
   -> reference labels OR NVIDIA Nemotron extraction on Nebius
   -> strict schema + exact account-scoped source validation
@@ -22,7 +22,8 @@ React workbench -> POST /api/analyze {mode, scenario}
 | `lib/fixtures.ts` | Synthetic account, source pack, facts and scenarios |
 | `lib/nebius.ts` | Server-side provider call and failure handling |
 | `lib/reconcile.ts` | Grounding checks, delivery policy and template drafts |
-| `lib/service.ts` | Input validation, access gate and analysis assembly |
+| `lib/service.ts` | Input validation, live access gate and analysis assembly |
+| `lib/live-limits.ts` | Live-run rate limits: per-IP hourly, shared daily, owner-token tier; Upstash REST or in-memory counters |
 | `evals/`, `scripts/evaluate.ts` | Rule tests and separate live extraction evaluation |
 
 ## Essential role of AI
@@ -53,4 +54,4 @@ Product facts are curated server-side fixtures, not keyword matches or LLM asser
 
 Reviews and audit events are React memory only. There is no database write, localStorage retention, email sender or CRM mutation. Bundled Sites/Vinext worker infrastructure is preserved; starter D1 examples are unused. The app exposes two narrow routes: status and analysis.
 
-No hosting action completed: private Sites publishing tools were unavailable. A successful Worker build is not a live deployment. Before public exposure, add identity-aware access, durable rate limits, retention policy, persistent reviewer attribution and security remediation.
+No hosting action completed: private Sites publishing tools were unavailable. A successful Worker build is not a live deployment. Open live mode on the synthetic demo relies on the limits in `lib/live-limits.ts`, which are durable when the free Upstash store is configured; see [deployment](DEPLOYMENT.md#open-live-mode--limits). Real-data use would still need identity-aware access, retention policy, persistent reviewer attribution and security remediation.

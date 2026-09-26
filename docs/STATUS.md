@@ -1,12 +1,27 @@
 # Promise Ledger — handoff
 
+## Update — September 26, 2026: open, rate-limited live mode
+
+Owner decisions: judges must be able to use **live Nemotron mode with no token**, protected by rate limits; the existing Nebius key is **not rotated**; the zero-cash policy still applies.
+
+Implemented on branch `cursor/open-rate-limited-live-mode-d733` ([PR #1](https://github.com/assafbar2/promise-ledger/pull/1)), not yet merged or deployed:
+
+- Live mode no longer requires `DEMO_ACCESS_TOKEN`. The token is now an optional owner bypass with its own daily cap.
+- The UI selects live mode by default when the server reports open live access. Reference mode stays one click away and is offered automatically whenever a live run is limited or fails.
+- Anonymous live runs are limited to 5 per connection per hour and 30 per UTC day overall. With Upstash Redis on the free plan the counters are durable; without it they are in-memory per instance. The WAF rule is a recommended edge backstop. See [limits and owner setup](DEPLOYMENT.md#open-live-mode--limits).
+- Tests: `npm run check` passes (91 unit and service tests, 3 Worker tests) and `npm run test:vercel` passes 5 tests, including the compiled live gate.
+
+**Still required before judges see live mode:** the owner completes the [setup steps](DEPLOYMENT.md#owner-setup-for-open-live-mode): Nebius stop-usage check, Upstash free database, the Vercel variables `NEBIUS_API_KEY`, `NEBIUS_MODEL`, `KV_REST_API_URL` and `KV_REST_API_TOKEN` (optionally `DEMO_ACCESS_TOKEN`, `LIVE_RUNS_PER_DAY`, `LIVE_RUNS_PER_IP_PER_HOUR`, `LIVE_TOKEN_RUNS_PER_DAY`), the WAF rule, a redeploy, and verification. Credit through December 15 is still unfunded: the $1 trial ends around October 18.
+
+**Accepted risk (no rotation):** the key was pasted into chat on September 19. Because it will not be rotated, anyone who obtained it could spend its credits outside this app, and the app's limits cannot prevent that. Nebius **Stop usage after trial** keeps cash spend at $0 either way. Store the key only as a Sensitive Production variable on Vercel.
+
 ## Bottom line — September 20, 2026
 
 **The workbench, Vercel build, and recording script are ready. The hackathon entry is not yet submission-ready.**
 
 The owner authorized cleanup, consolidation, private-source push, and Vercel deployment under **Promise Ledger**. The consolidated release is pushed to private `main` and deployed as `promise-ledger` on the verified Hobby account. **https://promise-ledger-chi.vercel.app** passed anonymous HTTP checks: homepage, six assets, all three reference scenarios, and API safety checks. See [deployment and access](DEPLOYMENT.md) and the [saved smoke report](DEPLOYMENT-SMOKE-2026-09-20.json). No paid upgrade, add-on, or other-project billing change was made.
 
-The hosted release is reference-only: no provider credentials are configured. It must not be described as live AI. The exposed Nebius key remains local and ignored; never upload it.
+The hosted release is reference-only: no provider credentials are configured. It must not be described as live AI. As of September 20 the Nebius key was local and ignored. After September 26 it may be added only as a Sensitive Production variable in the Vercel dashboard, per the owner setup; never commit it or paste it anywhere else.
 
 ## Implemented and checked
 
@@ -40,10 +55,10 @@ Combined median latency was 3.614 seconds; estimated credit consumption was $0.0
 
 ## Next, in order
 
-1. **Safe live access:** obtain approval to rotate the exposed credential. Reverify free credit, rates, and **Stop usage after trial** before any inference. Existing credit verification is stale; the console had not reconciled the first run. The CLI's $0.50 invocation guard does not protect the app endpoint or establish an account-wide cap.
+1. **Safe live access:** superseded September 26. The key is not rotated by owner decision, and open live mode is rate-limited in code; see the update above. Still reverify free credit, rates, and **Stop usage after trial** before enabling it. Existing credit verification is stale; the console had not reconciled the first run. The CLI's $0.50 invocation guard does not protect the app endpoint; the app's own per-IP and daily limits do.
 2. **Recording rehearsal:** verify both complete six-document live scenarios and approval/export interactions on the build being filmed. Save genuine UI-run provenance. Never substitute reference footage for live AI.
 3. **Produce the video:** record actual app footage and narration, synchronize to the [final script](DEMO-SCRIPT.md), caption it, and keep the exported video under three minutes. Get authorization before the public upload.
-4. **Complete judge access:** establish no-cost live testing through December 15, 2026, at noon Pacific. Vercel is not required by the event, and a video alone is insufficient. Current Nebius trial credit does not cover the judging period.
+4. **Complete judge access:** the tokenless, rate-limited live mode is built. Enable it with the [owner setup](DEPLOYMENT.md#owner-setup-for-open-live-mode) and keep it funded at no cost through December 15, 2026, at noon Pacific. Vercel is not required by the event, and a video alone is insufficient. Current Nebius trial credit does not cover the judging period.
 5. **Finish submission:** obtain public-repository authorization, publish licensed source and setup instructions, add honest technology feedback, submit on Devpost, and verify confirmation before October 30, 2026, at 10 a.m. Pacific.
 
 Devpost registration is confirmed. Separate Builder Program enrollment and extra $25 credit are not confirmed; their forms still need owner-supplied company/job details and submission approval. Do not invent those details.

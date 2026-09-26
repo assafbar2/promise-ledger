@@ -69,7 +69,7 @@ Not another confident summary. A check before you say “delivered.”
 | 00:00 | Product name, Northstar workspace, ledger | Start inside the real product. No logo animation or long intro. Keep “Synthetic demo” visible. |
 | 00:12 | Gap banner | Overlay: **A closed ticket ≠ a kept promise.** Let the sentence land. |
 | 00:18 | Audit-export row and **Inspect the gap** | Briefly show the engineering completion and disabled entitlement. Do not simulate an actual email being sent. |
-| 00:38 | **Run evidence check** | Select **Nebius + NVIDIA Nemotron** and enter the separate demo token before the take. Keep the token and settings off camera. The initial reference label must not be relabeled as live. |
+| 00:38 | **Run evidence check** | Show the toolbar label **Engine: live Nemotron · rate-limited**, the default once live is configured; no token is needed. For retakes, enter the optional owner token under Demo controls before the take so per-IP limits don't interrupt, and keep that field off camera. The initial reference results must not be relabeled as live. |
 | 00:48 | Successful result and provenance | Show **Live Nemotron run**, actual model/run details and usage only after a real response. If the wait is shortened, overlay **Inference wait shortened**; don't present edit duration as latency. |
 | 01:02 | **Audit log export** → **Evidence trail** | Hold readable quotations on screen. Highlight built=true, enabled=false, verified=false in sequence. Use a gentle crop, not frantic scrolling. |
 | 01:25 | **Prepare customer update** | Keep the draft readable. Overlay **Template draft · human review · no automatic sending**. |
@@ -89,11 +89,12 @@ Not another confident summary. A check before you say “delivered.”
 
 ## Capture gates — complete before recording the live scenes
 
-- [ ] Rotate the exposed provider credential with owner approval; never reuse it on a public deployment.
-- [ ] Reverify free credit, prices, and **Stop usage after trial**. No top-up, paid rollover, or paid service is authorized. The evaluation CLI budget does not protect the app's live endpoint.
-- [ ] Configure a distinct demo-access token and perform both complete six-document live UI runs successfully. Save their actual provenance; the separate 40-case evaluation is not proof these UI scenes work.
+- [x] Key rotation: not required. Owner decision, September 26, 2026: the existing key stays, as an accepted risk recorded in [security](../SECURITY.md).
+- [ ] Reverify free credit, prices, and **Stop usage after trial**. No top-up, paid rollover, or paid service is authorized. The evaluation CLI budget does not protect the app's live endpoint; the app's rate limits do.
+- [ ] Complete the [owner setup](DEPLOYMENT.md#owner-setup-for-open-live-mode) on the build being filmed. `/api/status` must show `liveConfigured: true` and `liveAccess.open: true`.
+- [ ] Perform both complete six-document live UI runs successfully, and save their actual provenance. The separate 40-case evaluation is not proof these UI scenes work. Five anonymous runs per hour allow few retakes; set an optional owner token (`DEMO_ACCESS_TOKEN`) for recording sessions.
 - [ ] Rehearse approve → export → edit-clears-approval and new-analysis-clears-review against the exact build being filmed.
-- [ ] Remove provider credentials, demo tokens, account menus, and private material from every recorded frame. Enter the demo token off camera; never enter the provider key in the browser.
+- [ ] Remove provider credentials, owner tokens, account menus, and private material from every recorded frame. Enter any owner token off camera; never enter the provider key in the browser.
 - [ ] Keep the fixed synthetic snapshot, fictional customer, template drafts, session-only approvals, and lack of outbound sending truthful. Do not claim live CRM integration, real customers, retention gains, production accuracy, or measured time savings.
 - [ ] Time the exported video, review the captions, and verify it plays publicly on YouTube while signed out. Upload and final submission require owner authorization.
 

@@ -33,7 +33,7 @@ Open the exact local URL printed by the server. No credentials are needed for th
 
 ## Working features
 
-Try the hosted reference demo: **https://promise-ledger-chi.vercel.app**. The Vercel project is **promise-ledger**, on the owner's verified Hobby account; the homepage and all three reference scenarios passed anonymous HTTP checks on September 20. See [deployment and access](docs/DEPLOYMENT.md). The repository remains private. Live extraction stays disabled on Vercel until a rotated server-side key, separate access token, and verified free-credit protection are in place.
+Try the hosted reference demo: **https://promise-ledger-chi.vercel.app**. The Vercel project is **promise-ledger**, on the owner's verified Hobby account; the homepage and all three reference scenarios passed anonymous HTTP checks on September 20. See [deployment and access](docs/DEPLOYMENT.md). The repository remains private. The code now supports **open live mode**: anyone can run live Nemotron extraction with no token, limited to 5 runs per connection per hour and 30 per UTC day overall, and reference mode stays available as a fallback. It turns on once the owner sets the Vercel variables in the [owner setup](docs/DEPLOYMENT.md#owner-setup-for-open-live-mode) and redeploys. Until then the hosted app is reference-only. By owner decision on September 26 the existing Nebius key is not rotated; the accepted risk is recorded in [security](SECURITY.md).
 
 - Searchable, filterable commitment ledger with owners, dates and seven conservative verdicts.
 - Exact source quotations and separate customer-specific built, enabled and verified checks.
@@ -41,12 +41,15 @@ Try the hosted reference demo: **https://promise-ledger-chi.vercel.app**. The Ve
 - Editable customer drafts, explicit local review and export.
 - Source library and exportable session activity.
 - Source validation and server-side Nebius integration with explicit failure handling.
+- Open, rate-limited live mode: per-IP hourly and shared daily caps, durable with free Upstash Redis, and friendly limit messages with one-click reference fallback.
 
 Northstar and everyone in its evidence pack are fictional. The snapshot is fixed to September 13, 2026. Reviews and activity live in memory: refreshing clears them, so export first. No real CRM, support or telemetry service is connected.
 
 ## NVIDIA Nemotron on Nebius
 
-Follow [live setup](docs/NEBIUS.md). Provide a real Nebius key, an available NVIDIA Nemotron model ID and a separate private-demo access token in ignored `.env.local`. Restart the server and select live mode. Never put the Nebius API key in the browser.
+Follow [live setup](docs/NEBIUS.md). Provide a real Nebius key and an available NVIDIA Nemotron model ID in ignored `.env.local`, then restart the server. Live mode becomes the default with no token, within the rate limits. `DEMO_ACCESS_TOKEN` is optional and gives the owner higher limits. Never put the Nebius API key in the browser.
+
+On Vercel, the owner sets these variables, names only: `NEBIUS_API_KEY` and `NEBIUS_MODEL` (required); `KV_REST_API_URL` and `KV_REST_API_TOKEN` (created by the free Upstash integration, recommended); `DEMO_ACCESS_TOKEN`, `LIVE_RUNS_PER_DAY`, `LIVE_RUNS_PER_IP_PER_HOUR` and `LIVE_TOKEN_RUNS_PER_DAY` (optional). See [owner setup](docs/DEPLOYMENT.md#owner-setup-for-open-live-mode) for the exact steps, including the Vercel WAF rule.
 
 The model extracts commitments; a separate policy determines delivery from customer-specific facts. Successful live responses expose real model/run provenance. Failures do not silently substitute a reference fixture.
 
@@ -82,7 +85,7 @@ npm run check
 
 ## Next for submission
 
-1. Rotate the exposed provider credential with owner approval, reverify free credit, and rehearse the complete six-document live flow. Dependency cleanup is complete; the remaining work is focused on recording and safe AI access, not a production CRM.
+1. Complete the [owner setup](docs/DEPLOYMENT.md#owner-setup-for-open-live-mode) for open live mode. No key rotation is needed, by owner decision on September 26. Reverify free credit, and rehearse the complete six-document live flow. Dependency cleanup is complete; the remaining work is focused on recording and safe AI access, not a production CRM.
 2. Provide a working demo or runnable test-build URL and clear testing instructions. A hosted browser demo is our preferred convenience, not the only permitted format; Vercel is not required. Maintain free judge access through December 15, 2026, at 12 p.m. Pacific, using only verified free resources.
 3. Record the [walkthrough script](docs/DEMO-SCRIPT.md), publish the video publicly on YouTube, and finish the project description and honest technology feedback.
 4. With owner approval, publish the current licensed source and setup instructions, then complete and verify the Devpost submission before October 30, 2026, at 10 a.m. Pacific.
