@@ -208,7 +208,7 @@ export function runtimeEvidence(result: RuntimeFetch, recorded: boolean): { sour
       accountId: issue.accountId,
       kind: "Runtime",
       title: `${issue.shortId} · ${issue.featureId} runtime errors`.slice(0, 140),
-      author: `Sentry · ${issue.projectSlug}`,
+      author: `Error monitoring · ${issue.projectSlug}`,
       observedAt: issue.lastSeen,
       text,
       url: issue.permalink,

@@ -14,7 +14,7 @@ export const RECORDED_RUNTIME = recording as RuntimeRecording;
  */
 export const sentryRuntimeProvider: EvidenceProvider = {
   id: "sentry-runtime",
-  label: "Sentry runtime errors",
+  label: "Runtime errors · error-monitoring provider",
   trust: "untrusted",
   kinds: ["Runtime"],
   required: false,

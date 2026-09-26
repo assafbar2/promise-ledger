@@ -17,7 +17,7 @@ export function SourceOrigin({ source }: { source: Source }) {
   return (
     <div className="source-origin">
       {provenance?.fetchedAt && <span className={`origin-pill ${provenance.recorded ? "recorded" : "live"}`}>{provenance.recorded ? <History size={11} /> : <Radio size={11} />}{provenance.recorded ? `${source.kind === "PublicClaim" ? "Recorded Tavily response" : "Recorded response"} · captured ${utc(provenance.fetchedAt)}` : `Fetched live · ${utc(provenance.fetchedAt)}`}</span>}
-      {source.url && <a href={source.url} target="_blank" rel="noopener noreferrer">{source.kind === "Runtime" ? "Sentry issue · owner sign-in" : "Open original"}<ArrowUpRight size={11} /></a>}
+      {source.url && <a href={source.url} target="_blank" rel="noopener noreferrer">{source.kind === "Runtime" ? "Open issue" : "Open original"}<ArrowUpRight size={11} /></a>}
     </div>
   );
 }
@@ -46,7 +46,7 @@ export function RuntimeAlert({ finding, sources }: { finding: RuntimeFinding; so
     <div className="runtime-alert" role="note">
       <span><Bug size={13} />FAILING AT RUNTIME</span>
       <p><strong>{finding.count} {finding.count === 1 ? "error event" : "error events"}</strong> for this customer and feature{finding.issues > 1 ? ` across ${finding.issues} issues` : ""}, {finding.issues > 1 ? "at least " : ""}{finding.users} {finding.users === 1 ? "user" : "users"} affected. Last seen {utc(finding.lastSeen)}.</p>
-      <small>{recorded ? "Recorded Sentry response." : "Live from Sentry."} Runtime errors can lower a verdict. A quiet error feed never proves delivery.</small>
+      <small>{recorded ? "Recorded error-monitoring response." : "Live from error monitoring."} Runtime errors can lower a verdict. A quiet error feed never proves delivery.</small>
     </div>
   );
 }
