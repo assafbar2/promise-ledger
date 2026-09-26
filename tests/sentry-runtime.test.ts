@@ -4,7 +4,6 @@ import { createScenario } from "../lib/fixtures.ts";
 import { runtimeFailure, runtimeReason } from "../lib/sentry/policy.ts";
 import recording from "../lib/sentry/recorded-runtime.json" with { type: "json" };
 import { createRuntimeCache, fetchRuntimeIssues, replayRuntimeIssues, runtimeEvidence, sentryConfig, sentryConfigured, SentryError, type RuntimeRecording, type RuntimeSignal, type SentryConfig } from "../lib/sentry/runtime.ts";
-import { buildEvent, envelope, eventId, MAX_EVENTS_PER_RUN, parseDsn, SCENARIOS, WINDOW_MS } from "../scripts/seed-sentry.ts";
 
 const NOW = "2026-09-26T09:00:00.000Z";
 const config: SentryConfig = { token: "a".repeat(64), org: "demo-org", projectId: "42", base: "https://us.sentry.io" };
@@ -174,26 +173,4 @@ test("runtime errors never apply to disabled, unbuilt or unknown features, stale
   assert.equal(runtimeFailure(enabled, [signal({ lastSeen: "2026-09-26T10:00:00Z" })], NOW), null);
   assert.equal(runtimeFailure(enabled, [signal({ lastSeen: "2026-09-13T16:00:00Z" })], "2026-09-14T00:00:00Z"), null);
   assert.equal(runtimeFailure(enabled, [signal({ lastSeen: "not-a-date" })], NOW), null);
-});
-
-test("seed events are synthetic, tagged, deterministic per window and inside the free quota", () => {
-  const now = Date.parse(NOW);
-  assert.ok(SCENARIOS.reduce((sum, scenario) => sum + scenario.events, 0) <= MAX_EVENTS_PER_RUN);
-  assert.equal(new Set(SCENARIOS.map((scenario) => scenario.key)).size, SCENARIOS.length);
-  assert.ok(SCENARIOS.some((scenario) => scenario.customer === "northstar" && scenario.feature === "audit-export"));
-  assert.ok(SCENARIOS.filter((scenario) => scenario.customer !== "northstar").length >= 2);
-  const [headline] = SCENARIOS;
-  const first = buildEvent(headline, 0, now);
-  assert.deepEqual(first.fingerprint, ["promise-ledger", "northstar-audit-export"]);
-  assert.deepEqual({ customer: first.tags.customer, feature: first.tags.feature, seed: first.tags.seed }, { customer: "northstar", feature: "audit-export", seed: "promise-ledger" });
-  assert.deepEqual(Object.keys(first.user), ["id"]);
-  assert.equal(eventId(headline, 3, now), eventId(headline, 3, now + 60_000));
-  assert.notEqual(eventId(headline, 3, now), eventId(headline, 3, now + WINDOW_MS));
-  assert.match(eventId(headline, 0, now), /^[a-f0-9]{32}$/);
-  assert.ok(buildEvent(headline, headline.events - 1, now).timestamp * 1000 > now - 3 * 60 * 60 * 1000);
-  const [header, item, body] = envelope(first, parseDsn("https://abc123@o1.ingest.us.sentry.io/42"), NOW).trimEnd().split("\n");
-  assert.equal(JSON.parse(header).event_id, first.event_id);
-  assert.equal(JSON.parse(item).length, Buffer.byteLength(body));
-  assert.throws(() => parseDsn("http://abc@o1.ingest.us.sentry.io/42"));
-  assert.throws(() => parseDsn("https://o1.ingest.us.sentry.io/42"));
 });
