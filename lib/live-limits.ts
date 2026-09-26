@@ -8,7 +8,7 @@ export type LimitDecision =
 type Env = Record<string, string | undefined>;
 type Check = { key: string; ttlSeconds: number; limit: number; reason: "ip" | "daily"; retryAfterSeconds: number; bounded: boolean };
 
-export const LIVE_LIMIT_DEFAULTS = { perIpPerHour: 5, perDay: 50, tokenPerDay: 100 } as const;
+export const LIVE_LIMIT_DEFAULTS = { perIpPerHour: 5, perDay: 30, tokenPerDay: 40 } as const;
 const MAX_TRACKED_CLIENTS = 5000;
 const STORE_TIMEOUT_MS = 2500;
 const KEY_PREFIX = "promise-ledger:live:v1";

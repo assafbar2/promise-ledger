@@ -124,11 +124,13 @@ export default function Home() {
         body: JSON.stringify({ mode: runMode, scenario }),
         signal: AbortSignal.timeout(70000),
       });
-      const result = await response.json();
+      const result: unknown = await response.json().catch(() => null);
       if (!response.ok) {
-        setOfferReference(runMode === "live" && typeof result === "object" && result !== null && "fallback" in result && result.fallback === "reference");
-        throw new Error(typeof result === "object" && result !== null && "error" in result && typeof result.error === "string" ? result.error : "The evidence check failed.");
+        const details = typeof result === "object" && result !== null ? result as Record<string, unknown> : {};
+        setOfferReference(runMode === "live" && (details.fallback === "reference" || response.status === 429));
+        throw new Error(typeof details.error === "string" ? details.error : response.status === 429 ? "Too many requests from your connection right now. Wait a minute and try again." : "The evidence check failed.");
       }
+      if (result === null) throw new Error("The evidence check returned an unreadable response.");
       const next = result as Analysis;
       setAnalysis(next);
       setSelectedId(next.commitments.find((commitment) => commitment.featureId === "audit-export")?.id ?? next.commitments[0]?.id ?? "");

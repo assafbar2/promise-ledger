@@ -87,7 +87,7 @@ test("configured live inference is open without a token and reports its limits",
   const providerCalls = withLiveServer(context);
   const status = capabilities();
   assert.equal(status.liveConfigured, true);
-  assert.deepEqual(status.liveAccess, { open: true, perIpPerHour: 5, perDay: 50, durableLimits: false, ownerToken: false });
+  assert.deepEqual(status.liveAccess, { open: true, perIpPerHour: 5, perDay: 30, durableLimits: false, ownerToken: false });
   const response = await live("198.51.100.20");
   assert.equal(response.status, 200);
   const result = await response.json() as Analysis;
