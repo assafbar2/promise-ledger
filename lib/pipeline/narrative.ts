@@ -71,7 +71,7 @@ export function briefNarrative(commitment: ReconciledCommitment, brief: Brief, m
 }
 
 /** Deterministic narrative built only from the verdict policy and the exact evidence records. */
-export function templateNarrative(commitment: ReconciledCommitment, fallbackReason: string | null): Narrative {
+export function templateNarrative(commitment: ReconciledCommitment, fallbackReason: string | null, accountName = "Northstar"): Narrative {
   const promise = commitment.evidence.slice(0, 1);
   const factEvidence = commitment.fact?.evidence.slice(0, 2) ?? [];
   const facts = factEvidence.length > 0 ? factEvidence : promise;
@@ -82,7 +82,7 @@ export function templateNarrative(commitment: ReconciledCommitment, fallbackReas
     explanation: [{ text: promiseText, citations: promise }, { text: commitment.reason, citations: facts }],
     customerUpdate: [{ text: draftSummary(commitment), citations: facts }],
     ownerNudge: [{ text: `${commitment.owner ? `${commitment.owner}, ` : ""}${commitment.nextAction.charAt(0).toLowerCase()}${commitment.nextAction.slice(1)}`, citations: promise }],
-    draftText: draftUpdate(commitment),
+    draftText: draftUpdate(commitment, accountName),
     fallbackReason,
   };
 }

@@ -22,6 +22,8 @@ export const extractionSchema = z.object({
 export const requestSchema = z.object({
   mode: z.enum(["reference", "live"]),
   scenario: z.enum(["blocked", "enabled", "stale", "crashing"]),
+  /** Sample account ID; defaults to Northstar. User-supplied evidence uses the `byo` request instead. */
+  account: z.string().regex(/^[a-z0-9-]{1,40}$/).optional(),
 }).strict();
 
 export type Evidence = z.infer<typeof evidenceSchema>;
@@ -57,7 +59,12 @@ export type ProductFact = {
   verified: boolean | null;
   observedAt: string;
   evidence: Evidence[];
+  /** Present when a fact came from untrusted text: proposed by an extractor, then confirmed by a person. */
+  confirmation?: FactConfirmation;
 };
+export type FactConfirmation = { by: "user"; proposedBy: "nemotron" | "pattern"; corrected: ("featureId" | "built" | "enabled" | "verified" | "observedAt")[] };
+/** A model- or pattern-proposed availability fact. It reaches the rules only after a person confirms it. */
+export type ProposedFact = Omit<ProductFact, "accountId" | "confirmation"> & { id: string };
 export type Verdict = "blocked" | "overdue" | "verify" | "on-track" | "verified" | "discussed" | "unknown";
 /** Fresh runtime errors for an enabled feature, aggregated from cited Runtime sources. */
 export type RuntimeFinding = { count: number; users: number; issues: number; lastSeen: string; evidence: Evidence[] };
@@ -84,7 +91,8 @@ export type AnalyzedCommitment = ReconciledCommitment & { narrative: Narrative |
 export type Usage = { promptTokens: number; completionTokens: number };
 export type StepId = "triage" | "extraction" | "rules" | "narrative";
 export type StepStatus = "queued" | "running" | "done" | "fallback" | "skipped" | "failed";
-export type StepEngine = "nemotron" | "fixture" | "rules" | "template";
+/** `pattern`: the no-AI extractor for user-supplied text; `confirmed`: facts a person confirmed earlier, reused without a model call. */
+export type StepEngine = "nemotron" | "fixture" | "rules" | "template" | "pattern" | "confirmed";
 export type StepSummary = {
   id: StepId;
   label: string;
@@ -120,15 +128,42 @@ export type PipelineSummary = {
   costUsd: number | null;
 };
 
+export type AnalysisAccount = { id: string; name: string; kind: "sample" | "byo" };
+export type ByoSummary = { extractor: "nemotron" | "pattern"; confirmedFacts: number; correctedFacts: number; excludedCommitments: number };
+
 export type Analysis = {
   mode: "reference" | "live";
   model: string | null;
   runId: string;
   asOf: string;
   scenario: Scenario;
+  account: AnalysisAccount;
+  byo?: ByoSummary;
   commitments: AnalyzedCommitment[];
   sources: Source[];
   elapsedMs: number;
   usage: Usage | null;
   pipeline: PipelineSummary;
+};
+
+/**
+ * Result of the extract step for user-supplied evidence: proposed commitments and availability
+ * facts with exact quotes, awaiting human confirmation. No verdict exists yet.
+ */
+export type ByoProposal = {
+  runId: string;
+  mode: "reference" | "live";
+  extractor: "nemotron" | "pattern";
+  model: string | null;
+  account: AnalysisAccount;
+  asOf: string;
+  sources: Source[];
+  commitments: Commitment[];
+  facts: ProposedFact[];
+  flagged: { sourceId: string; reason: string }[];
+  dropped: string[];
+  elapsedMs: number;
+  usage: Usage | null;
+  pipeline: PipelineSummary;
+  continuation: { token: string; expiresAt: string } | null;
 };

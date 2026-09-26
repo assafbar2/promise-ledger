@@ -33,7 +33,10 @@ const NUMERIC_DATE = /\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g;
 const RELATIVE_TIME = /\b(?:today|tonight|tomorrow|yesterday|(?:next|this|coming)\s+(?:week|month|quarter|sprint|year|monday|tuesday|wednesday|thursday|friday|saturday|sunday)|end\s+of\s+(?:the\s+)?(?:day|week|month|quarter|year)|eod|eow|eom|eoq|asap|soon|shortly|(?:within|in)\s+(?:a\s+few|a|an|one|two|three|\d+)\s+(?:hours?|days?|weeks?|months?)|monday|tuesday|wednesday|thursday|friday|saturday|sunday|q[1-4])\b/gi;
 const NEW_PROMISE = /\b(?:guarantee[sd]?|(?:we|i)\s+promise|(?:we|i)\s+(?:can\s+)?commit|will\s+(?:be\s+)?(?:delivered|deliver|shipped|ship|enabled|enable|released|release|launched|launch|fixed|fix|resolved|resolve|available|live|ready|done|completed?|rolled\s+out|roll\s+out)|(?:we'll|we\s+will)\s+have\s+(?:it|this|that))\b/i;
 const DELIVERY_CLAIM = /\b(?:(?:has|have)\s+been\s+(?:delivered|shipped|rolled\s+out)|(?:is|are)\s+(?:now\s+)?(?:live|delivered)\b|successfully\s+(?:delivered|shipped)|(?:fully|now)\s+delivered|delivery\s+(?:is\s+)?(?:complete|confirmed|verified)|verified\s+(?:as\s+)?delivered|you\s+can\s+now\s+use|ready\s+for\s+you\s+to\s+use)/i;
-const ENABLED_CLAIM = /\b(?:(?:has|have)\s+been\s+(?:enabled|turned\s+on|activated)|(?:is|are)\s+(?:now\s+)?(?:enabled|available|turned\s+on|activated)\s+(?:for|in|to)\s+(?:you|your|northstar))/i;
+function enabledClaim(accountName: string) {
+  const name = accountName.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+  return new RegExp(String.raw`\b(?:(?:has|have)\s+been\s+(?:enabled|turned\s+on|activated)|(?:is|are)\s+(?:now\s+)?(?:enabled|available|turned\s+on|activated)\s+(?:for|in|to)\s+(?:you|your|this\s+customer${name ? `|${name}` : ""}))`, "i");
+}
 const LINK_OR_CONTACT = /https?:\/\/|www\.|[\w.+-]+@[\w-]+\.[a-z]{2,}/i;
 const PLACEHOLDER = /\[[A-Z][^\]]{0,40}\]|\{\{|<[a-z]+>/;
 
@@ -52,7 +55,7 @@ function monthDayInQuotes(month: string, day: string, quotes: string) {
 }
 
 /** Returns the first rule a claim breaks, or null. Pure and deterministic. */
-export function claimViolation(claim: Claim, section: Section, commitment: ReconciledCommitment): string | null {
+export function claimViolation(claim: Claim, section: Section, commitment: ReconciledCommitment, accountName = "Northstar"): string | null {
   const text = claim.text;
   const quotes = norm(claim.citations.map((citation) => citation.quote).join("\n"));
   for (const match of text.matchAll(ISO_DATE)) if (!inQuotes(match[0], quotes)) return `introduces the date "${match[0]}", which its citations do not contain`;
@@ -69,7 +72,7 @@ export function claimViolation(claim: Claim, section: Section, commitment: Recon
     if (claimMatch) return `claims delivery ("${claimMatch[0]}") although the verdict is not verified`;
   }
   if (commitment.fact?.enabled !== true) {
-    const enabled = text.match(ENABLED_CLAIM);
+    const enabled = text.match(enabledClaim(accountName));
     if (enabled) return `claims customer access ("${enabled[0]}") although it is not enabled`;
   }
   if (LINK_OR_CONTACT.test(text)) return "adds a link or contact address";
@@ -85,7 +88,7 @@ export type BriefDecision = { commitmentId: string; brief: Brief | null; reason:
  * rejected); every claim must cite exact quotes from the evidence supplied for that commitment;
  * new dates, timeframes and promises are rejected. A failing brief falls back to the template.
  */
-export function validateBriefs(input: unknown, commitments: ReconciledCommitment[], allowedSources: Map<string, Source[]>): BriefDecision[] {
+export function validateBriefs(input: unknown, commitments: ReconciledCommitment[], allowedSources: Map<string, Source[]>, accountName = "Northstar"): BriefDecision[] {
   const { briefs } = narrativeOutputSchema.parse(input);
   const decisions = new Map<string, BriefDecision>();
   for (const raw of briefs) {
@@ -109,7 +112,7 @@ export function validateBriefs(input: unknown, commitments: ReconciledCommitment
             : source ? `cites a quote that is not exact text from ${named}`
               : `cites ${named}, which is not part of this commitment's evidence`;
         }
-        reason ??= claimViolation(claim, section, commitment);
+        reason ??= claimViolation(claim, section, commitment, accountName);
       }
     }
     if (reason) reject(reason, citations);

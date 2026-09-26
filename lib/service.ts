@@ -1,9 +1,15 @@
-import { liveLimitSettings, limitStoreConfig, ownerTokenMatches, reserveLiveRun, type LimitDecision, type LiveTier } from "./live-limits";
+import { accountPack } from "./accounts";
+import { continuationSecret, verifyContinuation, type ContinuationPayload } from "./byo/continuation";
+import { byoExtractionMessages } from "./byo/extraction";
+import { BYO_LIMITS } from "./byo/limits";
+import { pipelineRequestSchema, type PipelineRequest } from "./byo/schema";
+import { ByoInputError, checkByoSources, normalizeByoSource, sourcesDigest, toSource, workspaceName } from "./byo/sources";
+import { claimOnce, liveLimitSettings, limitStoreConfig, ownerTokenMatches, reserveLiveRun, type LimitDecision, type LiveTier } from "./live-limits";
 import { configuration } from "./nebius";
+import { utf8Bytes } from "./pipeline/budget";
 import type { PipelineEvent } from "./pipeline/events";
-import { modelInfo, pipelineModels, runBudgetUsd } from "./pipeline/models";
-import { PipelineError, runPipeline } from "./pipeline/run";
-import { requestSchema, type Scenario } from "./schema";
+import { modelInfo, pipelineModels, runBudgetUsd, STEP_LIMITS } from "./pipeline/models";
+import { executePipeline, PipelineError } from "./pipeline/run";
 
 export function capabilities() {
   const { apiKey, model, accessToken } = configuration();
@@ -41,25 +47,74 @@ function limitMessage(decision: Extract<LimitDecision, { allowed: false }>, tier
 }
 
 const HEADERS = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
+const MAX_REQUEST_CHARS = 2048;
+const MAX_BYO_REQUEST_CHARS = 96_000;
 
 function fail(error: string, status: number, extra: Record<string, unknown> = {}, extraHeaders: Record<string, string> = {}) {
   return Response.json({ error, ...extra }, { status, headers: { ...HEADERS, ...extraHeaders } });
 }
 
+type Admission = { ok: true; body: PipelineRequest; continuation: ContinuationPayload | null } | { ok: false; response: Response };
+
+/** Checks user-supplied evidence before any run is reserved, so an oversized paste never costs a live run. */
+async function checkByo(body: PipelineRequest): Promise<Response | null> {
+  if (!body.byo) return null;
+  const inputs = body.byo.sources.map(normalizeByoSource);
+  try { checkByoSources(inputs); } catch (error) {
+    if (error instanceof ByoInputError) return fail(error.message, 413, { code: "byo_too_large" });
+    throw error;
+  }
+  const sources = inputs.map((input) => toSource(input, new Date().toISOString()));
+  const { system, user } = byoExtractionMessages(sources);
+  if (utf8Bytes(system, user) > STEP_LIMITS.extraction.maxInputBytes) return fail("Your sources are too large for one extraction once encoded. Remove or shorten a source.", 413, { code: "byo_too_large" });
+  return null;
+}
+
+async function checkContinuation(body: PipelineRequest): Promise<{ payload: ContinuationPayload } | { response: Response }> {
+  const expired = (error: string, code: string) => ({ response: fail(error, 409, { code, fallback: "reference" }) });
+  const secret = continuationSecret(process.env);
+  const payload = secret && body.continuation ? await verifyContinuation(body.continuation, secret) : null;
+  if (!payload) return expired("This confirmation has expired or is not valid. Re-run the rules without AI, or extract again.", "continuation_invalid");
+  const inputs = body.byo!.sources.map(normalizeByoSource);
+  if (await sourcesDigest(inputs, workspaceName(body.byo!.workspace)) !== payload.digest) return expired("Your sources changed after extraction, so the confirmation no longer applies. Extract again, or re-run the rules without AI.", "continuation_mismatch");
+  const claim = await claimOnce({ id: `${payload.runId}:${payload.exp}`, ttlSeconds: BYO_LIMITS.continuationTtlSeconds + 120 });
+  if (claim === "used") return expired("This extraction's live explain step was already used. Re-run the rules without AI, or extract again.", "continuation_used");
+  if (claim === "unavailable") return { response: fail("Live mode is paused because its usage limits can't be verified right now. Reference mode is still available.", 503, { code: "live_limit_unavailable", fallback: "reference" }) };
+  return { payload };
+}
+
 /**
  * Validates the request and, for live mode, applies the owner token and reserves exactly one
- * live run. A whole pipeline (triage, extraction, narrative) counts as that one run.
+ * live run. A whole pipeline (triage, extraction, narrative) counts as that one run; for
+ * bring-your-own evidence the decide step presents the extraction's signed continuation instead.
  */
-async function admit(request: Request): Promise<{ ok: true; mode: "reference" | "live"; scenario: Scenario } | { ok: false; response: Response }> {
+async function admit(request: Request): Promise<Admission> {
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return { ok: false, response: fail("Cross-origin requests are not allowed.", 403) };
   if (!request.headers.get("content-type")?.startsWith("application/json")) return { ok: false, response: fail("Send a JSON request.", 415) };
   const text = await request.text();
-  if (text.length > 2048) return { ok: false, response: fail("Request is too large.", 413) };
-  let body;
-  try { body = requestSchema.parse(JSON.parse(text)); } catch { return { ok: false, response: fail("Choose a valid mode and demo scenario.", 400) }; }
+  if (text.length > MAX_BYO_REQUEST_CHARS) return { ok: false, response: fail("Request is too large.", 413) };
+  let raw: unknown;
+  try { raw = JSON.parse(text); } catch { return { ok: false, response: fail("Choose a valid mode and demo scenario.", 400) }; }
+  const hasByo = typeof raw === "object" && raw !== null && !Array.isArray(raw) && "byo" in raw;
+  if (!hasByo && text.length > MAX_REQUEST_CHARS) return { ok: false, response: fail("Request is too large.", 413) };
+  const parsed = pipelineRequestSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, response: fail(hasByo ? "That evidence request is not valid. Check each source's type, title, date and text." : "Choose a valid mode and demo scenario.", 400) };
+  const body = parsed.data;
+  const pack = body.byo ? null : accountPack(body.account);
+  if (!body.byo && !pack) return { ok: false, response: fail("Choose one of the sample accounts.", 400) };
+  if (pack && !pack.scenarios.includes(body.scenario)) return { ok: false, response: fail(`${pack.name} does not have that demo scenario.`, 400) };
+  const tooLarge = await checkByo(body);
+  if (tooLarge) return { ok: false, response: tooLarge };
+  let continuation: ContinuationPayload | null = null;
   if (body.mode === "live") {
     if (!capabilities().liveConfigured) return { ok: false, response: fail("Live inference is not configured. The reference demo remains available.", 503, { code: "live_not_configured", fallback: "reference" }) };
+    if (body.byo?.phase === "decide") {
+      const checked = await checkContinuation(body);
+      if ("response" in checked) return { ok: false, response: checked.response };
+      continuation = checked.payload;
+      return { ok: true, body, continuation };
+    }
     const authorization = request.headers.get("authorization");
     let tier: LiveTier = "public";
     if (authorization) {
@@ -72,7 +127,7 @@ async function admit(request: Request): Promise<{ ok: true; mode: "reference" | 
       return { ok: false, response: fail(limitMessage(decision, tier), status, { code: `live_limit_${decision.reason}`, retryAfterSeconds: decision.retryAfterSeconds, fallback: "reference" }, { "Retry-After": String(decision.retryAfterSeconds) }) };
     }
   }
-  return { ok: true, mode: body.mode, scenario: body.scenario };
+  return { ok: true, body, continuation };
 }
 
 function failure(error: unknown, mode: "reference" | "live") {
@@ -81,20 +136,25 @@ function failure(error: unknown, mode: "reference" | "live") {
   return { error: "Analysis could not be validated. No results were accepted.", code: "internal", status: 500, ...fallback };
 }
 
-/** JSON endpoint: runs the full pipeline and returns the final analysis, including its trace. */
+function pipelineOptions(admission: Extract<Admission, { ok: true }>, request: Request) {
+  const { body, continuation } = admission;
+  return { mode: body.mode, scenario: body.scenario, account: body.account, byo: body.byo, continuation, signal: request.signal };
+}
+
+/** JSON endpoint: runs the full pipeline and returns the final analysis (or, for an extract step, the proposal). */
 export async function analyzeRequest(request: Request): Promise<Response> {
   const admission = await admit(request);
   if (!admission.ok) return admission.response;
   try {
-    const analysis = await runPipeline({ mode: admission.mode, scenario: admission.scenario, signal: request.signal });
-    return Response.json(analysis, { headers: HEADERS });
+    const outcome = await executePipeline(pipelineOptions(admission, request));
+    return Response.json(outcome.kind === "analysis" ? outcome.analysis : outcome.proposal, { headers: HEADERS });
   } catch (error) {
-    const { status, code, ...body } = failure(error, admission.mode);
-    return fail(body.error, status, admission.mode === "live" ? { fallback: "reference", code } : { code });
+    const { status, code, ...body } = failure(error, admission.body.mode);
+    return fail(body.error, status, admission.body.mode === "live" ? { fallback: "reference", code } : { code });
   }
 }
 
-/** Streaming endpoint: newline-delimited PipelineEvents, ending with `result` or `error`. */
+/** Streaming endpoint: newline-delimited PipelineEvents, ending with `result`, `proposal` or `error`. */
 export async function pipelineRequest(request: Request): Promise<Response> {
   const admission = await admit(request);
   if (!admission.ok) return admission.response;
@@ -107,9 +167,9 @@ export async function pipelineRequest(request: Request): Promise<Response> {
         try { controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`)); } catch { open = false; }
       };
       try {
-        await runPipeline({ mode: admission.mode, scenario: admission.scenario, signal: request.signal, emit: send });
+        await executePipeline({ ...pipelineOptions(admission, request), emit: send });
       } catch (error) {
-        send({ type: "error", ...failure(error, admission.mode) });
+        send({ type: "error", ...failure(error, admission.body.mode) });
       } finally {
         open = false;
         try { controller.close(); } catch { /* client already gone */ }

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ACCOUNT, FEATURE_IDS } from "./fixtures";
 import { validateExtraction } from "./reconcile";
 import type { Source } from "./schema";
-import { EXTRACTION_PROMPT } from "./extraction-prompt";
+import { EXTRACTION_PROMPT, extractionPrompt } from "./extraction-prompt";
 
 export const NEBIUS_MAX_OUTPUT_TOKENS = 6000;
 export const NEBIUS_CHAT_URL = "https://api.tokenfactory.nebius.com/v1/chat/completions";
@@ -185,20 +185,22 @@ export async function chatCompletion(request: ChatRequest): Promise<{ content: s
   return { content, trace: { ...trace } };
 }
 
-export type ExtractionOptions = Partial<Pick<ChatRequest, "model" | "maxTokens" | "timeoutMs" | "stream" | "signal" | "onProgress">>;
+export type ExtractionOptions = Partial<Pick<ChatRequest, "model" | "maxTokens" | "timeoutMs" | "stream" | "signal" | "onProgress">> & { accountId?: string; featureIds?: readonly string[] };
 
-export function extractionMessages(sources: Source[]) {
-  return { system: EXTRACTION_PROMPT, user: JSON.stringify({ untrustedSources: sources }) };
+export function extractionMessages(sources: Source[], system: string = EXTRACTION_PROMPT) {
+  return { system, user: JSON.stringify({ untrustedSources: sources }) };
 }
 
 export async function extractWithNebius(sources: Source[], fetcher: typeof fetch = fetch, options: ExtractionOptions = {}) {
   const { apiKey, model: configured } = configuration();
   const model = options.model ?? configured;
   if (!apiKey || !NEMOTRON.test(model)) throw new InferenceError("Configure a Nebius key and an NVIDIA Nemotron model ID first.", 503, "configuration");
-  const { system, user } = extractionMessages(sources);
+  const accountId = options.accountId ?? ACCOUNT.id;
+  const featureIds = options.featureIds ?? FEATURE_IDS;
+  const { system, user } = extractionMessages(sources, extractionPrompt(accountId, featureIds));
   const { content, trace } = await chatCompletion({ model, system, user, maxTokens: options.maxTokens ?? NEBIUS_MAX_OUTPUT_TOKENS, timeoutMs: options.timeoutMs ?? 60000, stream: options.stream, signal: options.signal, onProgress: options.onProgress, fetcher });
   try {
-    const commitments = validateExtraction(JSON.parse(content), sources, ACCOUNT.id, FEATURE_IDS);
+    const commitments = validateExtraction(JSON.parse(content), sources, accountId, [...featureIds]);
     return { commitments, model: trace.model, runId: trace.runId as string, usage: trace.usage, trace };
   } catch { throw new InferenceError("Model output failed source validation. No ungrounded commitments were accepted.", 502, "grounding", trace); }
 }

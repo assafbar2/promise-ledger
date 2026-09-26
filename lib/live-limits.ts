@@ -75,6 +75,7 @@ const memory = { clients: new Map<string, { count: number; expiresAt: number }>(
 export function resetLiveLimitMemory() {
   memory.clients.clear();
   memory.totals.clear();
+  claimed.clear();
 }
 
 function memoryIncrement(check: Check, now: number) {
@@ -102,6 +103,36 @@ async function storeIncrement(config: { url: string; token: string }, check: Che
   const value = Array.isArray(body) && typeof body[1] === "object" && body[1] !== null && "result" in body[1] ? body[1].result : undefined;
   if (typeof value !== "number" || !Number.isInteger(value)) throw new Error("Limit store returned an unexpected response");
   return value;
+}
+
+const claimed = new Map<string, number>();
+
+/**
+ * Marks a one-time token as used. Durable (Upstash `SET NX EX`) when the store is configured;
+ * otherwise per-instance memory. An unreachable store fails closed.
+ */
+export async function claimOnce({ id, ttlSeconds, now = Date.now(), fetcher = fetch, env = process.env }: { id: string; ttlSeconds: number; now?: number; fetcher?: typeof fetch; env?: Env }): Promise<"claimed" | "used" | "unavailable"> {
+  const key = `${KEY_PREFIX}:once:${id}`;
+  for (const [entry, expiresAt] of claimed) if (expiresAt <= now) claimed.delete(entry);
+  if (claimed.has(key)) return "used";
+  const config = limitStoreConfig(env);
+  if (config) {
+    try {
+      const response = await fetcher(`${config.url}/pipeline`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${config.token}`, "Content-Type": "application/json" },
+        body: JSON.stringify([["SET", key, "1", "EX", String(ttlSeconds), "NX"]]),
+        signal: AbortSignal.timeout(STORE_TIMEOUT_MS),
+      });
+      if (!response.ok) return "unavailable";
+      const body: unknown = await response.json();
+      const result = Array.isArray(body) && typeof body[0] === "object" && body[0] !== null && "result" in body[0] ? body[0].result : undefined;
+      if (result !== "OK") return result === null ? "used" : "unavailable";
+    } catch { return "unavailable"; }
+  }
+  if (claimed.size >= MAX_TRACKED_CLIENTS) claimed.delete(claimed.keys().next().value as string);
+  claimed.set(key, now + ttlSeconds * 1000);
+  return "claimed";
 }
 
 export async function reserveLiveRun({ request, tier, now = Date.now(), fetcher = fetch, env = process.env }: { request: Request; tier: LiveTier; now?: number; fetcher?: typeof fetch; env?: Env }): Promise<LimitDecision> {
