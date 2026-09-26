@@ -1,13 +1,11 @@
 import type { Evidence, EvidenceProviderReport, ProductFact, ProviderSignal, Source } from "../schema";
+import { EvidenceError } from "./errors";
 import { providersFor } from "./providers";
 import type { EvidenceContext, EvidenceProvider } from "./types";
 
+export { EvidenceError };
 export const EVIDENCE_LIMITS = { maxSources: 40, maxSourceChars: 8000, maxTitleChars: 140, maxSignals: 40 } as const;
 const SOURCE_ID = /^[A-Za-z0-9_-]{1,40}$/;
-
-export class EvidenceError extends Error {
-  constructor(message: string, public providerId: string) { super(message); }
-}
 
 export type CollectedEvidence = { sources: Source[]; facts: ProductFact[]; signals: ProviderSignal[]; providers: EvidenceProviderReport[] };
 

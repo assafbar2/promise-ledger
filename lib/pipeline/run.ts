@@ -11,6 +11,7 @@ import { collectEvidence, EvidenceError } from "../evidence/registry";
 import type { EvidenceProvider } from "../evidence/types";
 import { extractionPrompt } from "../extraction-prompt";
 import { chatCompletion, extractionMessages, extractWithNebius, InferenceError, NEBIUS_MAX_OUTPUT_TOKENS, type InferenceTrace, type StreamProgress } from "../nebius";
+import { publicClaimNotes } from "../public-claims/claims";
 import { reconcile, validateExtraction } from "../reconcile";
 import type { Analysis, AnalysisAccount, ByoProposal, Commitment, Narrative, PipelineCheck, ProductFact, ReconciledCommitment, Scenario, Source, StepId, StepSummary, Usage } from "../schema";
 import { RunBudget, utf8Bytes } from "./budget";
@@ -340,6 +341,8 @@ export async function executePipeline(options: PipelineOptions): Promise<Pipelin
   const rulesStarted = performance.now();
   const reconciled: ReconciledCommitment[] = commitments.map((commitment) => reconcile(commitment, facts, account.id, asOf, evidence, account.name));
   for (const commitment of reconciled) emit({ type: "verdict", commitmentId: commitment.id, title: commitment.title, verdict: commitment.verdict });
+  const publicClaims = publicClaimNotes(evidence.signals, sources, reconciled, account.name);
+  for (const [commitmentId, note] of publicClaims) if (note.conflict) check({ stepId: "rules", ok: true, commitmentId, label: `${commitmentId}: public GA claim ≠ customer access. Flagged for review; verdict unchanged` });
   const gaps = reconciled.filter((commitment) => ["blocked", "overdue", "verify", "unknown"].includes(commitment.verdict)).length;
   update("rules", { status: "done", latencyMs: Math.max(1, Math.round(performance.now() - rulesStarted)), detail: `${reconciled.length} verdicts from ${deciding ? "the facts you confirmed" : "customer-specific facts"}; ${gaps} need attention. No model can change these.` });
 
@@ -412,7 +415,7 @@ export async function executePipeline(options: PipelineOptions): Promise<Pipelin
     scenario: options.scenario,
     account,
     ...(deciding ? { byo: { extractor: deciding.extractor, confirmedFacts: facts.length, correctedFacts: deciding.facts.filter((fact) => fact.corrected.length > 0).length, excludedCommitments: deciding.excludedCommitments } } : {}),
-    commitments: reconciled.map((commitment) => ({ ...commitment, narrative: narratives.get(commitment.id) ?? null })),
+    commitments: reconciled.map((commitment) => ({ ...commitment, narrative: narratives.get(commitment.id) ?? null, publicClaim: publicClaims.get(commitment.id) ?? null })),
     sources,
     elapsedMs: Math.round(elapsed()) + (prior?.elapsedMs ?? 0),
     usage: live ? sumUsage(stepList) : null,

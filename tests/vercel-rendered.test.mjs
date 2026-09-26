@@ -91,6 +91,21 @@ test("Vercel entry serves every sample account and a no-AI bring-your-own extrac
   assert.equal(proposal.continuation, null);
 });
 
+test("Vercel entry serves the public changelog and shows its claim beside the blocked verdict", async () => {
+  const page = await request("/changelog");
+  assert.equal(page.status, 200);
+  const html = await page.text();
+  assert.ok(html.includes("Audit log export is generally available (2026-09-12)."));
+  assert.match(html, /fictional vendor/);
+  const response = await request("/api/pipeline", { method: "POST", headers: { "Content-Type": "application/json", Origin: "https://promise-ledger.example" }, body: JSON.stringify({ mode: "reference", scenario: "blocked" }) });
+  const { analysis } = (await response.text()).trim().split("\n").map((line) => JSON.parse(line)).at(-1);
+  assert.ok(analysis.sources.some((source) => source.id === "PUB-01" && source.kind === "PublicClaim" && source.provenance.recorded === true));
+  const audit = analysis.commitments.find((commitment) => commitment.featureId === "audit-export");
+  assert.equal(audit.verdict, "blocked");
+  assert.equal(audit.publicClaim.conflict, true);
+  assert.deepEqual(analysis.pipeline.providers.map((provider) => [provider.id, provider.status]), [["synthetic-pack", "ok"], ["tavily-public-claim", "ok"]]);
+});
+
 test("Vercel entry applies the open live-mode gate from runtime environment", async (context) => {
   process.env.NEBIUS_API_KEY = "vercel-test-not-a-real-key";
   process.env.NEBIUS_MODEL = "nvidia/test-Nemotron";

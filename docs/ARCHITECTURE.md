@@ -6,10 +6,10 @@ The application has two build targets: the retained Sites/Cloudflare Worker flow
 React workbench -> POST /api/pipeline {mode, scenario}     (NDJSON event stream; /api/analyze returns the same result as JSON)
   -> strict request and same-origin checks
   -> live only: optional owner token, ONE per-IP hourly + shared daily reservation for the whole pipeline
-  -> evidence providers (built-in synthetic pack today) -> validated sources, curated facts, signals
+  -> evidence providers: synthetic pack (curated facts) + Tavily public-claim check (untrusted) -> validated sources, facts, signals
   -> 1 Triage   Nemotron 3 Nano   classify + route sources          optional; falls back to "all sources"
   -> 2 Extract  Nemotron 3 Super  commitments with exact quotes     required; failure stops the run
-  -> 3 Decide   deterministic rules on curated facts -> verdicts    no model
+  -> 3 Decide   deterministic rules on curated facts -> verdicts    no model; public GA claims are attached beside them
   -> 4 Explain  Nemotron 3 Ultra  explanation, customer update, owner nudge per commitment
                 -> server-side guardrails per brief -> accepted, or the labelled template draft
   -> evidence brief -> editable draft -> local review -> export
@@ -22,8 +22,11 @@ React workbench -> POST /api/pipeline {mode, scenario}     (NDJSON event stream;
 | `app/page.tsx` | Ledger, sources, review queue, session log, exports; reads the event stream |
 | `app/components/agent-trace.tsx` | Live agent view: step cards, streamed quotes, verdicts and guardrail results |
 | `app/components/narrative.tsx` | Claims with exact-quote disclosures, origin label, internal nudge |
+| `app/components/public-claim.tsx` | The public-claim card in the evidence trail and the draft warning |
+| `app/changelog/page.tsx` | Synthetic public changelog of the fictional vendor, fetched by Tavily at runtime |
 | `lib/schema.ts` | Request/output schemas and shared types, including `Narrative`, `StepSummary`, `ProviderSignal` |
-| `lib/evidence/` | Evidence-provider interface, registry and the built-in synthetic pack |
+| `lib/evidence/` | Evidence-provider interface, registry, the built-in synthetic pack and the Tavily public-claim provider |
+| `lib/public-claims/` | Tavily Extract client, allowlist, 6-hour cache and daily cap, deterministic GA-claim grounding, public-claim notes |
 | `lib/pipeline/run.ts` | Orchestrator: steps, budget, deadline, fallbacks, events |
 | `lib/pipeline/triage.ts`, `narrative.ts` | Prompts, input builders, routing and template narratives |
 | `lib/pipeline/guardrails.ts` | Validation of model-written briefs |
@@ -86,7 +89,7 @@ The registry (`collectEvidence`) validates everything before any model or rule s
 
 `Source` carries optional `providerId`, `url` and `provenance` (`requestId`, `fetchedAt`, `httpStatus`, `credits`, `recorded`).
 
-**Adding a provider** (Tavily public-claim check, Sentry runtime errors, user-pasted evidence): add one file under `lib/evidence/providers/`, register it in `index.ts`, and add its env names to `.env.example`. Nothing in the pipeline changes. Untrusted sources become citable in extraction and narrative automatically. Triage labels `PublicClaim` and `Runtime` sources as delivery evidence and `UserSupplied` as customer signals. Signals (`publicClaimGA`, `runtimeErrors`) are typed and validated. `reconcile()` reads `runtimeErrors` (rule 5 below; see [Sentry runtime evidence](SENTRY.md)); any other signal needs its own reviewed rule. The provider research is in the project's integration plan.
+**Adding a provider** (Tavily public-claim check, Sentry runtime errors, user-pasted evidence): add one file under `lib/evidence/providers/`, register it in `index.ts`, and add its env names to `.env.example`. Nothing in the pipeline changes. Untrusted sources become citable in extraction and narrative automatically. Triage labels `PublicClaim` and `Runtime` sources as delivery evidence and `UserSupplied` as customer signals. Signals (`publicClaimGA`, `runtimeErrors`) are typed and validated. `reconcile()` reads `runtimeErrors` (rule 5 below; see [Sentry runtime evidence](SENTRY.md)). `publicClaimGA` is read after the verdicts, never by `reconcile()` (see [public claims](#public-claims-beside-the-verdict)). Any other signal needs its own reviewed rule. The provider research is in the project's integration plan.
 
 ## Ordered verdict policy
 
@@ -100,6 +103,10 @@ The registry (`collectEvidence`) validates everything before any model or rule s
 8. A past UTC deadline without verified delivery means overdue.
 9. Built + enabled without acceptance means needs verification.
 10. Other work before the deadline means in progress, not guaranteed success.
+
+### Public claims beside the verdict
+
+The `tavily-public-claim` provider fetches the vendor's public changelog with Tavily Extract in live runs, or replays a recorded Tavily response in reference runs. It is untrusted, so it cannot supply facts. After the rules decide, `publicClaimNotes()` attaches a note to each committed promise whose feature the page calls generally available. The note is a **conflict** ("Publicly GA ≠ usable by this customer … Do not tell Northstar it is live.") unless the account's own evidence shows the feature enabled and the verdict is not *evidence needed*. Conflicts add a guardrail check; verdicts are identical with or without the provider. Public-claim sources are excluded from the narrative model's inputs. Details: [public-claim check](TAVILY.md).
 
 The demo clock is fixed at September 13, 2026, 17:00 UTC. Real connectors must replace it with current, validated observations. A newer successful acceptance snapshot may supersede an earlier support complaint; the older source remains inspectable.
 

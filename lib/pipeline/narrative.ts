@@ -34,7 +34,8 @@ export function narrativeSources(commitments: ReconciledCommitment[], sources: S
     for (const label of labels) if (label.role === "customer-signal" && label.features.includes(commitment.featureId)) ids.add(label.sourceId);
     const phrases = [commitment.featureId.replace(/-/g, " "), commitment.title.toLowerCase()];
     for (const source of sources) if (CUSTOMER_KINDS.includes(source.kind) && phrases.some((phrase) => source.text.toLowerCase().includes(phrase))) ids.add(source.id);
-    allowed.set(commitment.id, sources.filter((source) => ids.has(source.id)));
+    // Public claims are shown beside the verdict, never used to write the customer update.
+    allowed.set(commitment.id, sources.filter((source) => ids.has(source.id) && source.kind !== "PublicClaim"));
   }
   return allowed;
 }

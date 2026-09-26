@@ -2,12 +2,14 @@ import { BYO_ACCOUNT } from "../../byo/sources";
 import type { EvidenceProvider } from "../types";
 import { sentryRuntimeProvider } from "./sentry-runtime";
 import { syntheticPackProvider } from "./synthetic-pack";
+import { tavilyPublicClaimProvider } from "./tavily-public-claim";
 import { userSuppliedProvider } from "./user-supplied";
 
 // Register new providers here, one line each, in the order their sources should appear.
 export const EVIDENCE_PROVIDERS: readonly EvidenceProvider[] = [
   syntheticPackProvider,
   sentryRuntimeProvider,
+  tavilyPublicClaimProvider,
   userSuppliedProvider,
 ];
 

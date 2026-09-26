@@ -54,3 +54,18 @@ The input bound assumes each token encodes at least one UTF-8 byte, plus 512 tok
 **Measured on September 26:** four full live runs with the shipped settings cost an estimated $0.0084–$0.0095 each, in 16–20 seconds. The input to the three calls totalled about 3,400–3,900 tokens, and the output 3,300–4,700 tokens. See [the live pipeline check](evaluation/PIPELINE-LIVE-2026-09-26.md).
 
 **Daily exposure at the current defaults**, 30 public plus 40 owner-token runs: worst case 70 × $0.05 = **$3.47 per day**; typical 70 × $0.0095 ≈ **$0.67 per day**. Set `LIVE_RUNS_PER_DAY` to at most *verified remaining free credit ÷ (days of judge access left × $0.05)*. With about $50 of credit and 80 days left, that's about 12 runs per day in the worst case. Typical runs cost about a fifth of the ceiling, so actual consumption is much lower. Setting `NEBIUS_NARRATIVE_MODEL=off` removes Ultra: the ceiling drops to $0.012 and template drafts are shown instead. The provider's **Stop usage after trial** setting remains the $0 guarantee. These figures are estimates at catalog rates, not invoices.
+
+## Tavily public-claim check
+
+Added September 26, 2026. The check uses a free **Researcher** plan development key: 1,000 credits a month, no card, **pay-as-you-go off**. Without pay-as-you-go, Tavily answers HTTP 432 at the limit instead of charging, and the app then reports "Public claim not checked". Only public, server-chosen URLs are sent to Tavily, never customer data. Tavily's research and generated-answer features, which cost more credits, are never used.
+
+| Guard | Setting |
+| --- | --- |
+| Call type | Basic Extract: 1 credit per 5 successful URLs; failed URLs are free |
+| When it runs | Live runs only, after the access gate and the per-IP and daily live-run limits. Reference mode never calls Tavily. |
+| Cache | 6 hours per URL, in Upstash when configured, otherwise per instance |
+| Global cap | `TAVILY_DAILY_LIMIT`, default **20** Extract calls per UTC day. It fails closed if a configured store is unreachable, and `0` turns the check off. |
+| Worst case | 20 calls × 1 credit × 31 days ≈ **620 credits a month**, under the free 1,000. With Upstash and one URL, about 4 calls a day. |
+| Provider backstop | Recommended: set a per-key credit limit in the Tavily dashboard (for example 800 a month) so Tavily itself stops before the free quota is gone |
+
+**Measured on September 26:** one real single-URL Extract call reported 0 credits. `/usage` showed 0 of 1,000 used for both the key and the plan, with no pay-as-you-go limit set. Development of this feature used 0 of its 30-credit allowance.
