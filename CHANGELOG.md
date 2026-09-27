@@ -1,6 +1,15 @@
 # Changelog
 
-## Unreleased — September 26, 2026
+## Unreleased — September 27, 2026
+
+### Pipeline evaluation
+
+- **`npm run eval:pipeline`** evaluates the whole Nano → Super → rules → Ultra pipeline per case, on the development set plus the Northstar demo pack and on the frozen held-out set. It scores exact-set extraction and Ultra brief acceptance, and records Nano's routing. Results from September 27: 9/9 development and 31/32 held-out exact matches, 26/26 briefs accepted, 203 calls, about $0.178. See [the report](docs/evaluation/PIPELINE-EVAL-2026-09-27.md).
+- The evaluation budget guard takes verified per-model prices (`NEBIUS_EVAL_PRICES`), a per-case reservation plan, and a guarded `fetch` that reconciles JSON and streamed usage.
+- Extraction prompt `commitment-extraction-v3`: a tentative idea that shares a source with firm commitments is kept as its own tentative record. Tuned on development inputs only.
+- `npm run eval` no longer rewrites `docs/evaluation/reference-report.json` on a clean checkout. `eval:live` and `eval:pipeline` write blocked and partial runs to the ignored `outputs/evaluation/runs/`, and only a complete run updates `*-latest.json`.
+- Known issue: `NEBIUS_STREAM=false` makes Nano triage fall back to all sources, because Token Factory returns its non-streamed answer in `message.reasoning`.
+
 
 ### Bring-your-own evidence, sample accounts, workspaces and tour
 

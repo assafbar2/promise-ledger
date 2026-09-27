@@ -2,7 +2,7 @@
 
 ## Honest current state
 
-As of September 19, 2026, the first real evaluation is complete on `nvidia/nemotron-3-super-120b-a12b`: 7/8 development and 32/32 frozen held-out exact matches, with all 40 actual traces saved and no provider/validation errors. These synthetic cases do not establish general model quality. See `evaluation/LIVE-RESULTS-2026-09-19.md`. The approved `promise-ledger-evaluation` key is stored in ignored `.env.local` with mode 0600; the demo-access token is separate. The profile was submitted with zero data retention selected, and the owner completed billing verification.
+As of September 19, 2026, the first real evaluation is complete on `nvidia/nemotron-3-super-120b-a12b`: 7/8 development and 32/32 frozen held-out exact matches, with all 40 actual traces saved and no provider/validation errors. These synthetic cases do not establish general model quality. See `evaluation/LIVE-RESULTS-2026-09-19.md`. On September 27, 2026 the full three-model pipeline was evaluated on the same development set, plus the Northstar demo pack, and on the frozen held-out set: 9/9 and 31/32 exact matches, one grounding rejection, and 26/26 Ultra briefs accepted by the guardrails, for an estimated $0.178 across all 203 calls of that work. See `evaluation/PIPELINE-EVAL-2026-09-27.md`. The approved `promise-ledger-evaluation` key is stored in ignored `.env.local` with mode 0600; the demo-access token is separate. The profile was submitted with zero data retention selected, and the owner completed billing verification.
 
 The owner later pasted the provider key into chat, so it must be treated as exposed. **Owner decision, September 26, 2026: the key will not be rotated.** The accepted risk is that anyone who saw it could spend its free credits outside this app, and the app's rate limits cannot stop that. **Stop usage after trial** keeps cash spend at $0. One-time display does not mean one-time use or establish an expiry; the actual expiry is unverified. Never copy the secret into reports, source, browser inputs or commits. On Vercel it belongs only in a Sensitive Production environment variable; see [owner setup](DEPLOYMENT.md#owner-setup-for-open-live-mode).
 
@@ -31,7 +31,7 @@ Optional variables, all with safe defaults:
 | `NEBIUS_STREAM` | on | `false` turns provider streaming off; the UI still streams step events |
 | `LIVE_RUN_BUDGET_USD` | `0.05` | Per-run worst-case cap (at most 0.50); optional steps that don't fit are skipped and labelled |
 
-To check the pipeline against the real API without the UI, run `npm run smoke:live -- --scenario=blocked --confirm`. It makes up to three billed calls, never retries, and writes nothing into the repository. It is separate from `eval:live` and does not touch the September 19 reports.
+To check the pipeline against the real API without the UI, run `npm run smoke:live -- --scenario=blocked --confirm`. It makes up to three billed calls, never retries, and writes nothing into the repository. It is separate from `eval:live` and `eval:pipeline` and does not touch their reports.
 
 ## Setup
 
@@ -44,15 +44,16 @@ Record these non-secret values in the ignored local environment only after verif
 | Variable | Required evidence |
 | --- | --- |
 | `NEBIUS_EVAL_NO_PAID_ROLLOVER` | `true` only after checking the provider's saved stop-usage preference |
-| `NEBIUS_EVAL_PRICE_MODEL` | Exact model ID matching `NEBIUS_MODEL` |
+| `NEBIUS_EVAL_PRICE_MODEL` | Exact model ID matching `NEBIUS_MODEL` (single-model `eval:live`) |
 | `NEBIUS_EVAL_BUDGET_USD` | Positive invocation budget, at most `0.50` and 90% of available free credit |
 | `NEBIUS_EVAL_FREE_CREDIT_USD` | Actual remaining free credit, not an advertised or pending award |
 | `NEBIUS_EVAL_INPUT_USD_PER_MILLION` | Current uncached input-token price for this model |
 | `NEBIUS_EVAL_OUTPUT_USD_PER_MILLION` | Current output-token price for this model |
 | `NEBIUS_EVAL_CONTEXT_TOKENS` | Verified full context limit, or an explicitly documented conservative upper bound |
+| `NEBIUS_EVAL_PRICES` | Instead of the four single-model price variables: a JSON object keyed by exact model ID, each `{"inputUsdPerMillion","outputUsdPerMillion","contextTokens"}`. Required by `eval:pipeline` for all three pipeline models; it takes precedence when set. |
 | `NEBIUS_EVAL_VERIFIED_AT` | ISO timestamp of those checks, no older than 15 minutes |
 
-The guard reserves the full context plus the adapter's capped output before each request, then reconciles against provider token usage. Missing or inconsistent usage, unexpected models, exceeded bounds and stale verification stop subsequent requests. The same budget is shared by both suites. Reports record conservative cost accounting and its assumptions; these are not billed invoices. This is a per-invocation evaluation safeguard, not an account-wide or lifetime cap. Reverify balance for every new invocation and after credit redemption. The web app relies on the provider's saved stop-usage protection; this local runner guard does not wrap the app's live endpoint.
+`eval:live` reserves the full context plus the adapter's capped output before each request. `eval:pipeline` checks before every case that the budget covers the pipeline's per-run worst case ($0.049577). It guards every call through `fetch`: each call reserves its UTF-8 input bound (capped at the verified context) plus its own `max_tokens`, and settles from the reported usage, including the final usage chunk of a stream. Both then reconcile against provider token usage. Missing or inconsistent usage, unexpected models, exceeded bounds and stale verification stop subsequent requests. The same budget is shared by both suites. Reports record conservative cost accounting and its assumptions; these are not billed invoices. This is a per-invocation evaluation safeguard, not an account-wide or lifetime cap. Reverify balance for every new invocation and after credit redemption. The web app relies on the provider's saved stop-usage protection; this local runner guard does not wrap the app's live endpoint.
 
 Devpost hackathon registration is complete per the owner's September 19, 2026 confirmation; it does not establish Token Factory API access. The optional Builder Program at https://dev.nebius.com/builders is separate, and enrollment remains unconfirmed.
 
@@ -87,7 +88,7 @@ The model ID was verified through authenticated model listing and all 40 live re
 
 ## Request contract
 
-`lib/nebius.ts` calls `https://api.tokenfactory.nebius.com/v1/chat/completions` with server-side Bearer authentication and structured JSON output. It sends only the synthetic sources. Every call has bounded output tokens, a timeout that fits the run's 70-second deadline, and no automatic retry. In the app, calls stream (`stream: true`, `stream_options.include_usage`); the evaluation CLI keeps the non-streaming September 19 contract. The model receives no tools, API key, or owner token in its prompt. Before any live call, `lib/service.ts` checks the optional owner token and reserves one run against the limits in `lib/live-limits.ts`. That single reservation covers the whole three-call pipeline. A limited request never reaches Nebius.
+`lib/nebius.ts` calls `https://api.tokenfactory.nebius.com/v1/chat/completions` with server-side Bearer authentication and structured JSON output. It sends only the synthetic sources. Every call has bounded output tokens, a timeout that fits the run's 70-second deadline, and no automatic retry. In the app, calls stream (`stream: true`, `stream_options.include_usage`). `eval:live` keeps the non-streaming September 19 contract, and `eval:pipeline` streams like the app. Known issue: with `NEBIUS_STREAM=false`, Token Factory returns Nano's answer (at `reasoning_effort: "none"`) in `message.reasoning` with null content, so triage always falls back to sending every source to extraction. Keep streaming on. The model receives no tools, API key, or owner token in its prompt. Before any live call, `lib/service.ts` checks the optional owner token and reserves one run against the limits in `lib/live-limits.ts`. That single reservation covers the whole three-call pipeline. A limited request never reaches Nebius.
 
 Successful runs report actual provider model, run ID and usage when supplied. Truncation, refusal, invalid JSON, wrong model, missing citation, ungrounded owner/date, rate limiting or transport failure produces an explicit error. Live mode never silently falls back to reference fixtures.
 
@@ -98,11 +99,13 @@ npm run eval
 npm run eval:live
 npm run eval:development
 npm run eval:held-out
+npm run eval:pipeline
+npm run eval:pipeline -- --suite=development --scratch
 ```
 
-`eval` measures 18 deterministic rule cases, not AI accuracy. `eval:live` runs both the eight-case development set and the separate, frozen 32-case held-out set. The two additional commands run one set only. Real inference requires a provider key and consumes API credits. Calls are sequential, bounded to one request per case, and never automatically retried. Authentication, rate-limit or transport failures stop the remaining calls.
+`eval` measures 18 deterministic rule cases, not AI accuracy. `eval:live` runs both the eight-case development set and the separate, frozen 32-case held-out set. The two additional commands run one set only. `eval:pipeline` runs the full pipeline per case (Nano triage, Super extraction, rules, Ultra briefs) on the development set plus the Northstar demo pack, then on the frozen held-out set. Each case adds one fixed curated availability snapshot so the rules and Ultra have facts, and the case is scored on the final commitment set and on how many Ultra briefs pass the guardrails. `--suite=` selects one set, and `--scratch` keeps a development iteration out of the committed reports. Real inference requires a provider key and consumes API credits. Calls are sequential, bounded to one request per case, and never automatically retried. Authentication, rate-limit or transport failures stop the remaining calls.
 
-Each run writes timestamped reports under `docs/evaluation/runs/` and convenience `development-latest.json` / `held-out-latest.json` files. Reports checkpoint after every case and retain actual provider model, run ID, request-header ID when supplied, elapsed time, token usage and sanitized errors. Invalid model responses keep their usage/trace rather than disappearing. Missing credentials produce explicitly blocked reports with zero executed cases, null accuracy and no invented latency or IDs.
+Every run checkpoints to the ignored `outputs/evaluation/runs/<timestamp>/`. Only a **complete** run, where every planned case executed, is copied to `docs/evaluation/runs/<timestamp>/` and replaces `development-latest.json` / `held-out-latest.json`, or the `pipeline-*-latest.json` pair. Blocked, partial and `--scratch` runs never touch committed reports. Reports checkpoint after every case and retain actual provider model, run ID, request-header ID when supplied, elapsed time, token usage and sanitized errors. Invalid model responses keep their usage/trace rather than disappearing. Missing credentials produce explicitly blocked reports with zero executed cases, null accuracy and no invented latency or IDs.
 
 The entire predicted commitment set is scored, including extra commitments; correctly guessing one feature cannot conceal false positives. Overall exact match includes executed errors. Feature/field metrics are separately labeled as applying only to accepted outputs. Synthetic sets do not establish real-world accuracy.
 

@@ -61,6 +61,8 @@ September 19: all **40 actual requests** completed using `nvidia/nemotron-3-supe
 
 Combined median latency was 3.614 seconds; estimated credit consumption was $0.025144, not a finalized invoice. These are small assistant-authored synthetic examples, not independent production-quality evidence. Preserve the tentative-item mismatch and do not tune against the observed held-out set.
 
+September 27: the full three-model pipeline (Nano triage, Super extraction with prompt `commitment-extraction-v3`, rules, Ultra briefs) was evaluated once on development and then once on the frozen held-out set. Development, including the Northstar demo pack: **9/9 exact matches**. Held-out: **31/32**, with one grounding rejection (`hold-18`). Ultra: **26/26 briefs** passed the guardrails. All work took 203 calls and cost an estimated $0.178. Prompt v3 was tuned on development inputs only. See [the pipeline evaluation](evaluation/PIPELINE-EVAL-2026-09-27.md). The held-out set has now been observed twice, so a new, preferably independently authored, holdout is needed before any further claim.
+
 ## Next, in order
 
 1. **Safe live access:** superseded September 26. The key is not rotated by owner decision, and open live mode is rate-limited in code; see the update above. Still reverify free credit, rates, and **Stop usage after trial** before enabling it. Existing credit verification is stale; the console had not reconciled the first run. The CLI's $0.50 invocation guard does not protect the app endpoint; the app's own per-IP and daily limits do.

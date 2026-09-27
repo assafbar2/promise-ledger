@@ -23,7 +23,7 @@ A visible **three-model NVIDIA Nemotron pipeline**, served by **Nebius Token Fac
 
 Every model-written claim must cite exact source text, and server-side guardrails reject new dates, new promises and verdict changes. The live agent view streams each step's model, latency, tokens, estimated cost and cited quotes as they happen. Nebius Token Factory supplies the inference API, so there is no GPU server to operate; every call runs server-side and the key never reaches the browser.
 
-Measured on synthetic data in September 2026: full live runs took 16–20 seconds at an estimated $0.008–$0.010 each against a $0.05 per-run ceiling ([pipeline check](docs/evaluation/PIPELINE-LIVE-2026-09-26.md)), and the Super extraction step scored 7/8 development and 32/32 frozen held-out exact matches ([evaluation](docs/evaluation/LIVE-RESULTS-2026-09-19.md)). Those are a smoke test and a small assistant-authored evaluation, not a real-world accuracy claim.
+Measured on synthetic data in September 2026: full live runs took 16–20 seconds at an estimated $0.008–$0.010 each against a $0.05 per-run ceiling ([pipeline check](docs/evaluation/PIPELINE-LIVE-2026-09-26.md)), the Super extraction step alone scored 7/8 development and 32/32 frozen held-out exact matches on September 19 ([evaluation](docs/evaluation/LIVE-RESULTS-2026-09-19.md)), and on September 27 the full Nano → Super → rules → Ultra pipeline scored 9/9 development and 31/32 held-out exact matches, with 26/26 Ultra briefs passing the guardrails ([pipeline evaluation](docs/evaluation/PIPELINE-EVAL-2026-09-27.md)). Those are a smoke test and small assistant-authored evaluations, not a real-world accuracy claim.
 
 ## Try it
 
@@ -123,15 +123,18 @@ npm run test:vercel
 npm run check
 # Optional, billed: one live pipeline run (up to three Nemotron calls), no retries
 npm run smoke:live -- --scenario=blocked --confirm
+# Optional, billed and budget-guarded: extraction-only or full-pipeline evaluation
+npm run eval:live
+npm run eval:pipeline
 ```
 
-`test:render` builds and checks the Worker output, landing page, workbench and API routes. `test:vercel` does the same for the Vercel output, including the social card and icons. `eval` measures 18 deterministic rule cases, not model quality. `eval:live` runs eight development examples and a separate frozen 32-case held-out set, recording actual latency, usage, IDs and failures. It requires a Nebius key and consumes API credits. The held-out cases are assistant-authored synthetic examples, not an independent external benchmark. Without credentials the runner writes a blocked report, never a fabricated score.
+`test:render` builds and checks the Worker output, landing page, workbench and API routes. `test:vercel` does the same for the Vercel output, including the social card and icons. `eval` measures 18 deterministic rule cases, not model quality. It writes its run to the ignored `outputs/` directory and rewrites the committed `docs/evaluation/reference-report.json` only when a result changes, so a clean checkout stays clean. `eval:live` runs Super extraction on eight development examples and a separate frozen 32-case held-out set. `eval:pipeline` runs the whole three-model pipeline on the same sets plus the Northstar demo pack, and scores extraction exact match and Ultra brief acceptance. Both record actual latency, usage, IDs and failures, require a Nebius key, consume API credits and go through the [evaluation budget guard](docs/COST_POLICY.md#local-evaluation-guard). The held-out cases are assistant-authored synthetic examples, not an independent external benchmark. Without credentials, or when the guard blocks, the runner writes a blocked report to `outputs/evaluation/runs/` and never a fabricated score. Only a complete run updates the committed `*-latest.json` reports.
 
 ## Status — September 26, 2026
 
 - **Hosted:** [promise-ledger-chi.vercel.app](https://promise-ledger-chi.vercel.app) on Vercel, with the live three-model pipeline open to everyone under rate limits, the Tavily public-claim check, Sentry runtime evidence in the crashing scenario, bring-your-own evidence and four sample accounts. See [deployment and access](docs/DEPLOYMENT.md).
 - **Source:** public at [`assafbar2/promise-ledger`](https://github.com/assafbar2/promise-ledger), MIT licensed.
-- **Checks:** 233 unit and service tests, the Worker production tests and the Vercel production tests pass, with type checking, lint and both builds.
+- **Checks:** 261 unit and service tests, the Worker production tests and the Vercel production tests pass, with type checking, lint and both builds.
 - **Open:** the demo video and final Devpost submission; see [current status](docs/STATUS.md) and the [hackathon checklist](docs/HACKATHON.md). By owner decision on September 26 the existing Nebius key is not rotated; the accepted risk is recorded in [security](SECURITY.md).
 
 ## Documentation
