@@ -6,10 +6,11 @@ import { pipelineRequestSchema, type PipelineRequest } from "./byo/schema";
 import { ByoInputError, checkByoSources, normalizeByoSource, sourcesDigest, toSource, workspaceName } from "./byo/sources";
 import { claimOnce, liveLimitSettings, limitStoreConfig, ownerTokenMatches, reserveLiveRun, type LimitDecision, type LiveTier } from "./live-limits";
 import { configuration } from "./nebius";
-import { utf8Bytes } from "./pipeline/budget";
+import { RunBudget, utf8Bytes } from "./pipeline/budget";
 import type { PipelineEvent } from "./pipeline/events";
 import { modelInfo, pipelineModels, runBudgetUsd, STEP_LIMITS } from "./pipeline/models";
-import { executePipeline, PipelineError } from "./pipeline/run";
+import { executePipeline, liveRunLimitUsd, PipelineError } from "./pipeline/run";
+import { liveSpendStatus, reserveLiveSpend, settleLiveSpend, type SpendReservation } from "./spend-cap";
 
 export function capabilities() {
   const { apiKey, model, accessToken } = configuration();
@@ -25,6 +26,17 @@ export function capabilities() {
     pipeline: liveConfigured ? { triage: describe(models.triage.model), extraction: describe(model), narrative: describe(models.narrative.model), runBudgetUsd: runBudgetUsd() } : null,
   };
 }
+
+/** `/api/status`: capabilities plus the non-secret lifetime spend ledger. */
+export async function status() {
+  const base = capabilities();
+  return { ...base, spend: base.liveConfigured ? await liveSpendStatus() : null };
+}
+
+const SPEND_MESSAGES = {
+  cap: "Live runs have used this demo's free-credit allowance, so live mode is now off for good. The reference replay runs the same evidence checks and rules with no AI call.",
+  unavailable: "Live mode is off because this server can't verify its total AI spend right now. The reference replay runs the same evidence checks and rules with no AI call.",
+};
 
 function waitText(seconds: number) {
   const minutes = Math.max(1, Math.ceil(seconds / 60));
@@ -54,7 +66,7 @@ function fail(error: string, status: number, extra: Record<string, unknown> = {}
   return Response.json({ error, ...extra }, { status, headers: { ...HEADERS, ...extraHeaders } });
 }
 
-type Admission = { ok: true; body: PipelineRequest; continuation: ContinuationPayload | null } | { ok: false; response: Response };
+type Admission = { ok: true; body: PipelineRequest; continuation: ContinuationPayload | null; spend?: SpendReservation } | { ok: false; response: Response };
 
 /** Checks user-supplied evidence before any run is reserved, so an oversized paste never costs a live run. */
 async function checkByo(body: PipelineRequest): Promise<Response | null> {
@@ -87,6 +99,9 @@ async function checkContinuation(body: PipelineRequest): Promise<{ payload: Cont
  * Validates the request and, for live mode, applies the owner token and reserves exactly one
  * live run. A whole pipeline (triage, extraction, narrative) counts as that one run; for
  * bring-your-own evidence the decide step presents the extraction's signed continuation instead.
+ * Every live request also reserves its worst case against the lifetime spend cap: a full run, or
+ * for a decide step only the per-run budget its extraction left, so the two phases never exceed
+ * one run's reservation together.
  */
 async function admit(request: Request): Promise<Admission> {
   const origin = request.headers.get("origin");
@@ -113,7 +128,9 @@ async function admit(request: Request): Promise<Admission> {
       const checked = await checkContinuation(body);
       if ("response" in checked) return { ok: false, response: checked.response };
       continuation = checked.payload;
-      return { ok: true, body, continuation };
+      const spend = await reserveLiveSpend({ nebiusUsd: liveRunLimitUsd(process.env, continuation), providers: false });
+      if (!spend.allowed) return { ok: false, response: spendFailure(spend.reason) };
+      return { ok: true, body, continuation, spend: spend.reservation };
     }
     const authorization = request.headers.get("authorization");
     let tier: LiveTier = "public";
@@ -126,8 +143,15 @@ async function admit(request: Request): Promise<Admission> {
       const status = decision.reason === "ip" || decision.reason === "daily" ? 429 : 503;
       return { ok: false, response: fail(limitMessage(decision, tier), status, { code: `live_limit_${decision.reason}`, retryAfterSeconds: decision.retryAfterSeconds, fallback: "reference" }, { "Retry-After": String(decision.retryAfterSeconds) }) };
     }
+    const spend = await reserveLiveSpend();
+    if (!spend.allowed) return { ok: false, response: spendFailure(spend.reason) };
+    return { ok: true, body, continuation, spend: spend.reservation };
   }
   return { ok: true, body, continuation };
+}
+
+function spendFailure(reason: "cap" | "unavailable") {
+  return fail(SPEND_MESSAGES[reason], 503, { code: `live_spend_${reason}`, fallback: "reference" });
 }
 
 function failure(error: unknown, mode: "reference" | "live") {
@@ -136,9 +160,15 @@ function failure(error: unknown, mode: "reference" | "live") {
   return { error: "Analysis could not be validated. No results were accepted.", code: "internal", status: 500, ...fallback };
 }
 
-function pipelineOptions(admission: Extract<Admission, { ok: true }>, request: Request) {
-  const { body, continuation } = admission;
-  return { mode: body.mode, scenario: body.scenario, account: body.account, byo: body.byo, continuation, signal: request.signal };
+/** Runs the pipeline, then settles any spend reservation to the request's estimated cost, even on failure. */
+async function execute(admission: Extract<Admission, { ok: true }>, request: Request, emit?: (event: PipelineEvent) => void) {
+  const { body, continuation, spend } = admission;
+  const budget = spend ? new RunBudget(liveRunLimitUsd(process.env, continuation)) : undefined;
+  try {
+    return await executePipeline({ mode: body.mode, scenario: body.scenario, account: body.account, byo: body.byo, continuation, signal: request.signal, emit, budget });
+  } finally {
+    if (spend && budget) await settleLiveSpend(spend, budget.totals().costUsd);
+  }
 }
 
 /** JSON endpoint: runs the full pipeline and returns the final analysis (or, for an extract step, the proposal). */
@@ -146,7 +176,7 @@ export async function analyzeRequest(request: Request): Promise<Response> {
   const admission = await admit(request);
   if (!admission.ok) return admission.response;
   try {
-    const outcome = await executePipeline(pipelineOptions(admission, request));
+    const outcome = await execute(admission, request);
     return Response.json(outcome.kind === "analysis" ? outcome.analysis : outcome.proposal, { headers: HEADERS });
   } catch (error) {
     const { status, code, ...body } = failure(error, admission.body.mode);
@@ -167,7 +197,7 @@ export async function pipelineRequest(request: Request): Promise<Response> {
         try { controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`)); } catch { open = false; }
       };
       try {
-        await executePipeline({ ...pipelineOptions(admission, request), emit: send });
+        await execute(admission, request, send);
       } catch (error) {
         send({ type: "error", ...failure(error, admission.body.mode) });
       } finally {

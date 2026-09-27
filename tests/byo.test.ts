@@ -21,6 +21,7 @@ import { triageInput, triagePrompt } from "../lib/pipeline/triage.ts";
 import type { Analysis, ByoProposal, Source } from "../lib/schema.ts";
 import { analyzeRequest, pipelineRequest } from "../lib/service.ts";
 import { nebiusMock, type Reply, type Step } from "./helpers/nebius-mock.ts";
+import { upstashMock } from "./helpers/upstash-mock.ts";
 
 const NOW = "2026-09-26T12:00:00.000Z";
 const example = exampleEvidence(Date.parse(NOW));
@@ -203,9 +204,10 @@ test("continuation tokens are signed, expire and cannot be forged", async () => 
 });
 
 // Live, end to end through the service with a mocked Token Factory. The server uses the real clock.
+const SPEND_KEY = "promise-ledger:spend:v1:1";
 const current = exampleEvidence();
 
-const LIVE_ENV = ["NEBIUS_API_KEY", "NEBIUS_MODEL", "NEBIUS_TRIAGE_MODEL", "NEBIUS_NARRATIVE_MODEL", "NEBIUS_STREAM", "LIVE_RUN_BUDGET_USD", "DEMO_ACCESS_TOKEN", "LIVE_RUNS_PER_IP_PER_HOUR", "LIVE_RUNS_PER_DAY", "LIVE_TOKEN_RUNS_PER_DAY", "KV_REST_API_URL", "KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"];
+const LIVE_ENV = ["NEBIUS_API_KEY", "NEBIUS_MODEL", "NEBIUS_TRIAGE_MODEL", "NEBIUS_NARRATIVE_MODEL", "NEBIUS_STREAM", "LIVE_RUN_BUDGET_USD", "DEMO_ACCESS_TOKEN", "LIVE_RUNS_PER_IP_PER_HOUR", "LIVE_RUNS_PER_DAY", "LIVE_TOKEN_RUNS_PER_DAY", "KV_REST_API_URL", "KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "LIVE_SPEND_CAP_USD", "LIVE_SPEND_LEDGER"];
 
 function liveExtraction(all: Source[]) {
   const pattern = patternExtract(all);
@@ -216,20 +218,27 @@ function withLive(context: TestContext, env: Record<string, string> = {}, replie
   const saved = Object.fromEntries(LIVE_ENV.map((name) => [name, process.env[name]]));
   const savedFetch = globalThis.fetch;
   for (const name of LIVE_ENV) delete process.env[name];
-  Object.assign(process.env, { NEBIUS_API_KEY: "test-not-a-real-key", NEBIUS_MODEL: "nvidia/test-Nemotron", ...env });
+  const store = upstashMock();
+  let peak = 0;
+  Object.assign(process.env, { NEBIUS_API_KEY: "test-not-a-real-key", NEBIUS_MODEL: "nvidia/test-Nemotron", ...store.env, ...env });
   const all = sources(current.sources);
   const triage = JSON.stringify({ sources: all.map((source) => ({ sourceId: source.id, role: source.id === "U-04" ? "delivery-evidence" : source.id === "U-01" ? "commitment" : "customer-signal", features: [], injectionSuspected: source.id === "U-02" })) });
   const briefCite = (id: string) => [{ sourceId: "U-01", quote: all[0].text.split("\n").find((line) => line.includes(id))! }];
   const narrative = JSON.stringify({ briefs: ["C-1", "C-2", "C-3", "C-4"].map((commitmentId, index) => ({ commitmentId, explanation: [{ text: "The promise and the telemetry are recorded in different places.", citations: briefCite(["group booking", "Opera", "Okta", "housekeeping"][index]) }], customerUpdate: [{ text: "We are checking your workspace before we confirm anything about this item.", citations: briefCite(["group booking", "Opera", "Okta", "housekeeping"][index]) }], ownerNudge: [{ text: "Please confirm the customer-specific status.", citations: briefCite(["group booking", "Opera", "Okta", "housekeeping"][index]) }] })) });
   const mock = nebiusMock({ triage: { content: triage }, extraction: { content: liveExtraction(all) }, narrative: { content: narrative }, ...replies });
-  globalThis.fetch = (url, init) => mock.fetcher(url, init);
+  globalThis.fetch = async (url, init) => {
+    if (!String(url).startsWith(store.url)) return mock.fetcher(url, init);
+    const response = await store.fetcher(url, init);
+    peak = Math.max(peak, Number(store.data.get(SPEND_KEY) ?? 0));
+    return response;
+  };
   resetLiveLimitMemory();
   context.after(() => {
     globalThis.fetch = savedFetch;
     for (const name of LIVE_ENV) if (saved[name] === undefined) delete process.env[name]; else process.env[name] = saved[name];
     resetLiveLimitMemory();
   });
-  return mock.calls;
+  return Object.assign(mock.calls, { store, peak: () => peak });
 }
 
 function post(body: unknown, ip = "198.51.100.90") {
@@ -343,4 +352,45 @@ test("BYO request validation: strict fields, account/byo exclusivity and the sma
   const proposal = await reference.json() as ByoProposal;
   assert.equal(proposal.extractor, "pattern");
   assert.equal(proposal.account.name, "Pinecrest Hotels");
+});
+
+test("live BYO spend: extract reserves one run, decide reserves only what is left, and the ledger ends at the run's cost", async (context) => {
+  const calls = withLive(context);
+  const spendIncrements = () => calls.store.commands.filter(([name, key]) => name === "INCRBY" && key === SPEND_KEY).map(([, , by]) => Number(by));
+  const extract = await analyzeRequest(post({ mode: "live", byo: { phase: "extract", workspace: current.workspace, sources: current.sources } }));
+  const proposal = await extract.json() as ByoProposal;
+  const extractMicro = Math.round(proposal.pipeline.costUsd! * 1_000_000);
+  assert.equal(spendIncrements()[0], 50_000, "the extract step reserves the full run before any model call");
+  assert.equal(calls.store.data.get(SPEND_KEY), extractMicro, "and settles to the extraction's cost");
+  const review = initialReview(proposal);
+  for (const edit of Object.values(review.facts)) edit.confirmed = true;
+  const byo = decideRequest(current.workspace, current.sources, proposal, review);
+  const decide = await analyzeRequest(post({ mode: "live", byo, continuation: proposal.continuation!.token }));
+  assert.equal(decide.status, 200);
+  const analysis = await decide.json() as Analysis;
+  const decideReserve = spendIncrements()[2];
+  assert.ok(Math.abs(decideReserve - (50_000 - extractMicro)) <= 1, "the decide step reserves only the budget its extraction left");
+  assert.ok(calls.peak() <= 50_001, "both phases together never hold more than one run's worst case");
+  assert.equal(calls.store.data.get(SPEND_KEY), Math.round(analysis.pipeline.costUsd! * 1_000_000), "the ledger ends at the whole run's cost");
+  const ledgerCommands = () => calls.store.commands.filter(([, key]) => key === SPEND_KEY).length;
+  const before = ledgerCommands();
+  assert.equal((await analyzeRequest(post({ mode: "live", byo, continuation: proposal.continuation!.token }))).status, 409);
+  assert.equal(ledgerCommands(), before, "a replayed continuation never touches the spend ledger");
+});
+
+test("live BYO spend: a decide step cannot escape the lifetime cap", async (context) => {
+  const calls = withLive(context, { LIVE_SPEND_CAP_USD: "1" });
+  const extract = await analyzeRequest(post({ mode: "live", byo: { phase: "extract", workspace: current.workspace, sources: current.sources } }));
+  const proposal = await extract.json() as ByoProposal;
+  calls.store.data.set(SPEND_KEY, 999_999);
+  const review = initialReview(proposal);
+  for (const edit of Object.values(review.facts)) edit.confirmed = true;
+  const byo = decideRequest(current.workspace, current.sources, proposal, review);
+  const decide = await analyzeRequest(post({ mode: "live", byo, continuation: proposal.continuation!.token }));
+  assert.equal(decide.status, 503);
+  const body = await decide.json() as { code: string; fallback: string };
+  assert.deepEqual([body.code, body.fallback], ["live_spend_cap", "reference"]);
+  assert.deepEqual(calls.map((call) => call.step), ["triage", "extraction"], "no Ultra call once the cap is reached");
+  assert.equal(calls.store.data.get(SPEND_KEY), 999_999, "the refused reservation is released");
+  assert.equal((await analyzeRequest(post({ mode: "reference", byo }))).status, 200, "re-running the rules without AI still works");
 });

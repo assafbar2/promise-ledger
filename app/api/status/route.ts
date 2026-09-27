@@ -1,5 +1,5 @@
-import { capabilities } from "@/lib/service";
+import { status } from "@/lib/service";
 
-export function GET() {
-  return Response.json(capabilities(), { headers: { "Cache-Control": "no-store" } });
+export async function GET() {
+  return Response.json(await status(), { headers: { "Cache-Control": "no-store" } });
 }

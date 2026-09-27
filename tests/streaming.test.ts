@@ -9,6 +9,7 @@ import { plannedSteps } from "../lib/pipeline/steps.ts";
 import { idleTrace, replayDelayMs, traceReducer } from "../lib/pipeline/trace-state.ts";
 import { pipelineRequest } from "../lib/service.ts";
 import { nebiusMock } from "./helpers/nebius-mock.ts";
+import { upstashMock } from "./helpers/upstash-mock.ts";
 
 const sources = createScenario("blocked").sources;
 
@@ -103,9 +104,10 @@ test("/api/pipeline streams a live run as ordered NDJSON and counts it as one ra
   const saved = Object.fromEntries(names.map((name) => [name, process.env[name]]));
   const savedFetch = globalThis.fetch;
   for (const name of names) delete process.env[name];
-  Object.assign(process.env, { NEBIUS_API_KEY: "stream-test-key", NEBIUS_MODEL: "nvidia/test-Nemotron", LIVE_RUNS_PER_IP_PER_HOUR: "1" });
+  const store = upstashMock();
+  Object.assign(process.env, { NEBIUS_API_KEY: "stream-test-key", NEBIUS_MODEL: "nvidia/test-Nemotron", LIVE_RUNS_PER_IP_PER_HOUR: "1", ...store.env });
   const mock = nebiusMock();
-  globalThis.fetch = mock.fetcher;
+  globalThis.fetch = async (url, init) => String(url).startsWith(store.url) ? store.fetcher(url, init) : mock.fetcher(url, init);
   resetLiveLimitMemory();
   context.after(() => {
     globalThis.fetch = savedFetch;
@@ -125,6 +127,8 @@ test("/api/pipeline streams a live run as ordered NDJSON and counts it as one ra
   assert.ok(types.indexOf("quote") < types.lastIndexOf("verdict"), "extraction quotes arrive before verdicts");
   assert.ok(events.some((event) => event.type === "check" && event.check.stepId === "narrative"));
   assert.equal(mock.calls.length, 3);
+  const result = events.at(-1);
+  assert.equal(store.data.get("promise-ledger:spend:v1:1"), result?.type === "result" ? Math.round((result.analysis.pipeline.costUsd ?? 1) * 1_000_000) : -1, "the spend ledger is settled before the stream closes");
   assert.doesNotMatch(JSON.stringify(events), /stream-test-key/);
   const limited = await pipelineRequest(request());
   assert.equal(limited.status, 429, "the second run in the hour is limited, although the first made three model calls");
@@ -132,15 +136,19 @@ test("/api/pipeline streams a live run as ordered NDJSON and counts it as one ra
 });
 
 test("/api/pipeline reports a failed live extraction as a final error event with reference fallback", async (context) => {
-  const saved = { key: process.env.NEBIUS_API_KEY, model: process.env.NEBIUS_MODEL };
+  const saved = { key: process.env.NEBIUS_API_KEY, model: process.env.NEBIUS_MODEL, kvUrl: process.env.KV_REST_API_URL, kvToken: process.env.KV_REST_API_TOKEN };
   const savedFetch = globalThis.fetch;
-  Object.assign(process.env, { NEBIUS_API_KEY: "stream-test-key", NEBIUS_MODEL: "nvidia/test-Nemotron" });
-  globalThis.fetch = nebiusMock({ extraction: { status: 500 } }).fetcher;
+  const store = upstashMock();
+  Object.assign(process.env, { NEBIUS_API_KEY: "stream-test-key", NEBIUS_MODEL: "nvidia/test-Nemotron", ...store.env });
+  const nebius = nebiusMock({ extraction: { status: 500 } }).fetcher;
+  globalThis.fetch = async (url, init) => String(url).startsWith(store.url) ? store.fetcher(url, init) : nebius(url, init);
   resetLiveLimitMemory();
   context.after(() => {
     globalThis.fetch = savedFetch;
     if (saved.key === undefined) delete process.env.NEBIUS_API_KEY; else process.env.NEBIUS_API_KEY = saved.key;
     if (saved.model === undefined) delete process.env.NEBIUS_MODEL; else process.env.NEBIUS_MODEL = saved.model;
+    if (saved.kvUrl === undefined) delete process.env.KV_REST_API_URL; else process.env.KV_REST_API_URL = saved.kvUrl;
+    if (saved.kvToken === undefined) delete process.env.KV_REST_API_TOKEN; else process.env.KV_REST_API_TOKEN = saved.kvToken;
     resetLiveLimitMemory();
   });
   const response = await pipelineRequest(new Request("http://localhost/api/pipeline", { method: "POST", headers: { "Content-Type": "application/json", "x-real-ip": "203.0.113.10" }, body: JSON.stringify({ mode: "live", scenario: "blocked" }) }));

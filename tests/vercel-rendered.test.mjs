@@ -46,7 +46,7 @@ test("Vercel production entry renders Promise Ledger and its controls", async ()
 test("Vercel reference API supports all three scenarios without credentials", async () => {
   const status = await request("/api/status");
   assert.equal(status.status, 200);
-  assert.deepEqual(await status.json(), { liveConfigured: false, model: null, syntheticOnly: true, liveAccess: null, pipeline: null });
+  assert.deepEqual(await status.json(), { liveConfigured: false, model: null, syntheticOnly: true, liveAccess: null, pipeline: null, spend: null });
   for (const [scenario, verdict] of [["blocked", "blocked"], ["enabled", "verified"], ["stale", "unknown"]]) {
     const response = await request("/api/analyze", {
       method: "POST",
@@ -132,6 +132,11 @@ test("Vercel entry applies the open live-mode gate from runtime environment", as
   assert.equal(body.fallback, "reference");
   assert.doesNotMatch(JSON.stringify(body), /vercel-test-not-a-real-key/);
   assert.equal((await live({ Authorization: "Bearer a-token-that-was-never-configured" })).status, 401);
+  assert.deepEqual(status.spend, { capUsd: 30, spentUsd: null, remainingUsd: null, runReserveUsd: 0.05, ledger: "1", durable: false, available: false });
+  delete process.env.LIVE_RUNS_PER_DAY;
+  const unverified = await live();
+  assert.equal(unverified.status, 503, "without a durable spend ledger live mode stays closed");
+  assert.equal((await unverified.json()).code, "live_spend_unavailable");
 });
 
 test("Vercel entry fails closed for live inference and cross-origin requests", async () => {
