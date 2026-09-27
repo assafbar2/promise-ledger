@@ -1,7 +1,7 @@
 import { draftSummary, draftUpdate } from "../reconcile";
 import type { Claim, Narrative, ReconciledCommitment, Source } from "../schema";
 import { VERDICTS } from "../verdicts";
-import type { Brief } from "./guardrails";
+import { citableText, type Brief } from "./guardrails";
 import type { TriageLabel } from "./triage";
 
 export const NARRATIVE_PROMPT_VERSION = "evidence-narrative-v1";
@@ -57,9 +57,9 @@ export function narrativeInput(commitments: ReconciledCommitment[], allowed: Map
       recommendedNextAction: commitment.nextAction,
       checks: { built: commitment.fact?.built ?? null, enabled: commitment.fact?.enabled ?? null, customerVerified: commitment.fact?.verified ?? null },
       evidenceSourceIds: (allowed.get(commitment.id) ?? []).map((source) => source.id),
-      validatedQuotes: [...commitment.evidence, ...(commitment.fact?.evidence ?? []), ...(commitment.runtime?.evidence ?? [])].map(({ sourceId, quote }) => ({ sourceId, quote })),
+      validatedQuotes: [...commitment.evidence, ...(commitment.fact?.evidence ?? []), ...(commitment.runtime?.evidence ?? [])].map(({ sourceId, quote }) => ({ sourceId, quote: citableText(quote) })),
     })),
-    untrustedSources: [...used.values()].map(({ id, kind, title, observedAt, text }) => ({ sourceId: id, kind, title, observedAt, text })),
+    untrustedSources: [...used.values()].map(({ id, kind, title, observedAt, text }) => ({ sourceId: id, kind, title, observedAt, text: citableText(text) })),
   });
 }
 

@@ -17,7 +17,7 @@ const usageSchema = z.object({
 const responseSchema = z.object({
   id: z.string(),
   model: z.string(),
-  choices: z.array(z.object({ finish_reason: z.string(), message: z.object({ content: z.string().nullable(), refusal: z.string().nullable().optional() }) })).min(1),
+  choices: z.array(z.object({ finish_reason: z.string(), message: z.object({ content: z.string().nullable(), refusal: z.string().nullable().optional(), reasoning: z.string().nullish(), reasoning_content: z.string().nullish() }) })).min(1),
   usage: usageSchema.optional(),
 });
 
@@ -171,7 +171,10 @@ export async function chatCompletion(request: ChatRequest): Promise<{ content: s
       trace.runId = parsed.id;
       trace.usage = toUsage(parsed.usage);
       trace.reasoningTokens = parsed.usage?.completion_tokens_details?.reasoning_tokens ?? null;
-      content = parsed.choices[0].message.content;
+      const message = parsed.choices[0].message;
+      // Token Factory's non-streaming reasoning parser returns the whole answer as `reasoning`, with
+      // null content, when reasoning is off (Nano, September 27). Only then is it the answer.
+      content = message.content || (request.reasoningEffort === "none" ? message.reasoning ?? message.reasoning_content ?? null : null);
       finishReason = parsed.choices[0].finish_reason;
       refusal = parsed.choices[0].message.refusal;
     }

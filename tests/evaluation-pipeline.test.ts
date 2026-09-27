@@ -31,9 +31,8 @@ function makeBudget(overrides: Record<string, string> = {}) {
 
 function runner(budget: ReturnType<typeof makeBudget>, replies: (sample: PipelineCase) => Partial<Record<Step, Reply>>) {
   const upstream: string[] = [];
-  const run = async (sample: PipelineCase, observe: Emit) => {
+  const run = async (sample: PipelineCase, observe: Emit, calls: ModelCall[]) => {
     const mock = nebiusMock(replies(sample));
-    const calls: ModelCall[] = [];
     const recording = recordingFetcher(budget.fetcher(async (input, init) => { upstream.push(String(JSON.parse(String(init?.body)).model)); return mock.fetcher(input, init); }), calls);
     const saved = process.env.NEBIUS_API_KEY;
     process.env.NEBIUS_API_KEY = "unit-test-key";
@@ -116,6 +115,7 @@ test("grounding failures are scored as errors and later cases still run", async 
   assert.deepEqual(results.map((result) => [result.status, result.error?.code ?? null]), [["error", "grounding"], ["passed", null]]);
   assert.deepEqual(results[0].steps?.map((step) => [step.id, step.status]), [["triage", "done"], ["extraction", "failed"]], "an errored case keeps the steps it reached");
   assert.deepEqual(results[0].usage, { promptTokens: 1800, completionTokens: 800 });
+  assert.equal(results[0].failedOutput?.content, bad, "the rejected extraction output is kept for diagnosis");
   assert.equal(summarizePipelineEvaluation(results).extraction.exactMatchRate, 0.5);
 });
 

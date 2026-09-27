@@ -13,7 +13,7 @@ import { extractionPrompt } from "../extraction-prompt";
 import { chatCompletion, extractionMessages, extractWithNebius, InferenceError, NEBIUS_MAX_OUTPUT_TOKENS, type InferenceTrace, type StreamProgress } from "../nebius";
 import { publicClaimNotes } from "../public-claims/claims";
 import { reconcile, validateExtraction } from "../reconcile";
-import type { Analysis, AnalysisAccount, ByoProposal, Commitment, Narrative, PipelineCheck, ProductFact, ReconciledCommitment, Scenario, Source, StepId, StepSummary, Usage } from "../schema";
+import type { Analysis, AnalysisAccount, ByoProposal, Commitment, Narrative, PipelineCheck, ProductFact, ProviderSignal, ReconciledCommitment, Scenario, Source, StepId, StepSummary, Usage } from "../schema";
 import { RunBudget, utf8Bytes } from "./budget";
 import type { Emit } from "./events";
 import { validateBriefs } from "./guardrails";
@@ -47,9 +47,9 @@ export type PipelineOptions = {
   budget?: RunBudget;
   /**
    * Offline evaluation harness only; never set from a request. Replaces the evidence providers
-   * with one case's sources and curated facts for the sample account, as of `asOf`.
+   * with one case's sources, curated facts and provider signals for the sample account, as of `asOf`.
    */
-  evaluationEvidence?: { sources: Source[]; facts: ProductFact[]; asOf: string };
+  evaluationEvidence?: { sources: Source[]; facts: ProductFact[]; signals?: ProviderSignal[]; asOf: string };
 };
 
 export type PipelineOutcome = { kind: "analysis"; analysis: Analysis } | { kind: "proposal"; proposal: ByoProposal };
@@ -123,7 +123,7 @@ export async function executePipeline(options: PipelineOptions): Promise<Pipelin
   const byoInputs = byo ? byo.sources.map(normalizeByoSource) : undefined;
 
   let evidence;
-  if (fixed) evidence = { sources: fixed.sources, facts: fixed.facts, signals: [], providers: [{ id: "evaluation-case", label: "Evaluation case", trust: "curated" as const, status: "ok" as const, recorded: false, sourceCount: fixed.sources.length, factCount: fixed.facts.length, signalCount: 0, elapsedMs: 0 }] };
+  if (fixed) evidence = { sources: fixed.sources, facts: fixed.facts, signals: fixed.signals ?? [], providers: [{ id: "evaluation-case", label: "Evaluation case", trust: "curated" as const, status: "ok" as const, recorded: false, sourceCount: fixed.sources.length, factCount: fixed.facts.length, signalCount: fixed.signals?.length ?? 0, elapsedMs: 0 }] };
   else try {
     evidence = await collectEvidence({ accountId: account.id, featureIds: featureIds ?? [], scenario: options.scenario, mode: options.mode, asOf, now, signal: options.signal, env, userEvidence: byoInputs }, providersFor(account.id, options.providers ?? EVIDENCE_PROVIDERS));
   } catch (error) {
