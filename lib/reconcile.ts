@@ -41,6 +41,19 @@ export function withSpeakerLabel(commitment: Commitment, sources: Source[]): Com
 }
 
 /**
+ * When a quote is exact text of a different source than the one named, cite that source instead,
+ * but only if exactly one in-account source contains it. Anything else stays as returned.
+ */
+export function withQuotedSource(commitment: Commitment, sources: Source[], accountId: string): Commitment {
+  const evidence = commitment.evidence.map((item) => {
+    if (sources.some((source) => source.id === item.sourceId && source.accountId === accountId && source.text.includes(item.quote))) return item;
+    const holders = sources.filter((source) => source.accountId === accountId && source.text.includes(item.quote));
+    return holders.length === 1 ? { ...item, sourceId: holders[0].id } : item;
+  });
+  return evidence.every((item, index) => item === commitment.evidence[index]) ? commitment : { ...commitment, evidence };
+}
+
+/**
  * Model extraction, judged commitment by commitment. The envelope must be exact. A commitment that
  * repeats a feature or ID, names an unknown feature, cites text that is not exactly in an
  * in-account source, or whose owner or date is not in its quotes is dropped and reported; the
@@ -52,7 +65,7 @@ export function groundCommitments(input: unknown, sources: Source[], accountId: 
   const dropped: string[] = [];
   for (const raw of proposed) {
     if (commitments.some((kept) => kept.id === raw.id || kept.featureId === raw.featureId)) { dropped.push(`${raw.featureId.slice(0, 40)} appeared more than once`); continue; }
-    const commitment = withSpeakerLabel(raw, sources);
+    const commitment = withSpeakerLabel(withQuotedSource(raw, sources, accountId), sources);
     try { validateExtraction({ commitments: [commitment] }, sources, accountId, featureIds); commitments.push(commitment); } catch (error) {
       dropped.push(`${commitment.featureId.slice(0, 40)}: ${error instanceof Error ? error.message.replace(/\.$/, "").toLowerCase() : "failed validation"}`);
     }

@@ -5,9 +5,9 @@ import { ACCOUNT, createScenario, FEATURE_IDS, referenceCommitments } from "../l
 import { extractWithNebius } from "../lib/nebius.ts";
 import { runPipeline } from "../lib/pipeline/run.ts";
 import { allSourcesRouting, routeSources } from "../lib/pipeline/triage.ts";
-import { groundCommitments, validateExtraction, withSpeakerLabel } from "../lib/reconcile.ts";
+import { groundCommitments, validateExtraction, withQuotedSource, withSpeakerLabel } from "../lib/reconcile.ts";
 import { nebiusMock } from "./helpers/nebius-mock.ts";
-import { RECORDED_UNLABELLED_EXTRACTION } from "./helpers/recorded-extraction.ts";
+import { RECORDED_MISATTRIBUTED_EXTRACTION, RECORDED_UNLABELLED_EXTRACTION } from "./helpers/recorded-extraction.ts";
 
 const { sources } = createScenario("crashing");
 const recorded = JSON.parse(RECORDED_UNLABELLED_EXTRACTION);
@@ -85,4 +85,17 @@ test("runtime and public-claim sources never reach extraction, even on triage fa
     assert.deepEqual(routing.directToRules.map((source) => source.id).filter((id) => provider.includes(id)), provider);
   }
   assert.equal(allSourcesRouting(createScenario("blocked").sources).extraction.length, 6);
+});
+
+test("an exact quote cited to the wrong source is re-attributed only when exactly one in-account source holds it", () => {
+  const { commitments, dropped } = groundCommitments(JSON.parse(RECORDED_MISATTRIBUTED_EXTRACTION), sources, ACCOUNT.id, FEATURE_IDS);
+  assert.deepEqual(dropped, []);
+  assert.deepEqual(normalized(commitments), normalized(referenceCommitments));
+  assert.equal(commitments.find((commitment) => commitment.featureId === "saml")?.evidence[0].sourceId, "SRC-06");
+  const shared = "account=northstar; feature=";
+  assert.ok(sources.filter((source) => source.text.includes(shared)).length > 1);
+  const ambiguous = { ...referenceCommitments[0], evidence: [...referenceCommitments[0].evidence, { sourceId: "SRC-99", quote: shared }] };
+  assert.equal(withQuotedSource(ambiguous, sources, ACCOUNT.id).evidence[1].sourceId, "SRC-99", "ambiguous or absent text is never re-attributed");
+  const otherAccount = sources.map((source) => source.id === "SRC-06" ? { ...source, accountId: "southwind" } : source);
+  assert.equal(withQuotedSource(JSON.parse(RECORDED_MISATTRIBUTED_EXTRACTION).commitments[5], otherAccount, ACCOUNT.id).evidence[0].sourceId, "SRC-04", "never moves a quote to another account's source");
 });
