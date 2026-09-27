@@ -1,0 +1,3930 @@
+{
+  "schemaVersion": 1,
+  "evaluation": "nebius-pipeline-held-out",
+  "version": "pipeline-evaluation-v1",
+  "status": "complete",
+  "liveInferenceAttempted": true,
+  "startedAt": "2026-09-27T02:27:51.059Z",
+  "updatedAt": "2026-09-27T02:31:24.474Z",
+  "models": {
+    "triage": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+    "extraction": "nvidia/nemotron-3-super-120b-a12b",
+    "narrative": "nvidia/Nemotron-3-Ultra-550b-a55b"
+  },
+  "reasoningEffort": {
+    "triage": "none",
+    "narrative": "none",
+    "extraction": "provider default"
+  },
+  "streaming": true,
+  "prompts": {
+    "triage": {
+      "version": "source-triage-v1",
+      "sha256": "c1ca5d532720e7e74ba43c461077ddbfed1eee16ab7617cf814b38040eba3ab5"
+    },
+    "extraction": {
+      "version": "commitment-extraction-v3",
+      "sha256": "224ac6e9a67ba86f3e1a99dedc3430c2e4d428c514d03e9156de277e26e522d5"
+    },
+    "narrative": {
+      "version": "evidence-narrative-v1",
+      "sha256": "abe33dfcaa798841810561988f09c156dddb73ad2dffad84c976364e3879ae72"
+    }
+  },
+  "datasetSha256": "041ae0b492484492d391ab9d5b8261cec2743dca57eda4253d6176254721b265",
+  "pipelineCasesSha256": "7eb6d051a4253631ab9b3ae4f79316070720c9a5f8edb2d79ae9132f3ea11d93",
+  "deliveryContext": {
+    "id": "EVAL-DELIVERY",
+    "accountId": "northstar",
+    "kind": "Availability",
+    "title": "Northstar availability snapshot",
+    "author": "Release service · synthetic evaluation context",
+    "observedAt": "2026-09-19T16:45:00.000Z",
+    "text": "account=northstar; feature=audit-export; built=true; enabled=false; verified=false.\naccount=northstar; feature=eu-residency; built=false; enabled=false; verified=false.\naccount=northstar; feature=usage-report; built=false; enabled=false; verified=false.\naccount=northstar; feature=scim; built=true; enabled=true; verified=unknown.\naccount=northstar; feature=saml; built=true; enabled=true; verified=true."
+  },
+  "limitation": "Frozen held-out cases (assistant-authored, synthetic) plus one fixed availability snapshot per case. Not an independent benchmark. Do not tune against this set.",
+  "budget": {
+    "policy": "verified-free-credit-only",
+    "scope": "This invocation, shared across every suite it runs; not an account-wide spending limit.",
+    "verifiedAt": "2026-09-27T02:27:50.000Z",
+    "verifiedFreeCreditUsd": 50,
+    "budgetUsd": 0.5,
+    "accountedUsd": 0.073649,
+    "maximumNextRequestUsd": 0.049577,
+    "costBasis": "Provider token usage at verified rates, rounded up; retain the full reservation when usage is uncertain. Not a provider invoice.",
+    "prices": {
+      "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B": {
+        "inputUsdPerMillion": 0.06,
+        "outputUsdPerMillion": 0.24,
+        "contextTokens": 262144
+      },
+      "nvidia/nemotron-3-super-120b-a12b": {
+        "inputUsdPerMillion": 0.3,
+        "outputUsdPerMillion": 0.9,
+        "contextTokens": 262144
+      },
+      "nvidia/Nemotron-3-Ultra-550b-a55b": {
+        "inputUsdPerMillion": 1,
+        "outputUsdPerMillion": 3,
+        "contextTokens": 1048576
+      }
+    },
+    "reservationPlan": [
+      {
+        "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+        "inputTokens": 16512,
+        "maxOutputTokens": 3000,
+        "maximumUsd": 0.001711
+      },
+      {
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "inputTokens": 16512,
+        "maxOutputTokens": 6000,
+        "maximumUsd": 0.010354
+      },
+      {
+        "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+        "inputTokens": 16512,
+        "maxOutputTokens": 7000,
+        "maximumUsd": 0.037512
+      }
+    ],
+    "byModel": {
+      "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B": {
+        "calls": 41,
+        "promptTokens": 20160,
+        "completionTokens": 3554,
+        "accountedUsd": 0.002081
+      },
+      "nvidia/nemotron-3-super-120b-a12b": {
+        "calls": 41,
+        "promptTokens": 21000,
+        "completionTokens": 23763,
+        "accountedUsd": 0.027707
+      },
+      "nvidia/Nemotron-3-Ultra-550b-a55b": {
+        "calls": 21,
+        "promptTokens": 21355,
+        "completionTokens": 7502,
+        "accountedUsd": 0.043861
+      }
+    },
+    "calls": 103,
+    "uncertainCalls": 0,
+    "blockedReason": null
+  },
+  "metrics": {
+    "extraction": {
+      "plannedCases": 32,
+      "executedCases": 32,
+      "passed": 31,
+      "failed": 0,
+      "errors": 1,
+      "notRun": 0,
+      "exactMatchRate": 0.96875,
+      "acceptedOutputMetrics": {
+        "cases": 31,
+        "featurePrecision": 1,
+        "featureRecall": 1,
+        "extraFeatures": 0,
+        "missedFeatures": 0,
+        "matchedFeatureFieldAccuracy": 1
+      },
+      "groundingRejections": 1
+    },
+    "endToEndLatencyMs": {
+      "samples": 31,
+      "p50": 5213,
+      "p95": 7249,
+      "maximum": 8036
+    },
+    "recordedUsage": {
+      "callsWithUsage": 31,
+      "promptTokens": 45101,
+      "completionTokens": 22504
+    },
+    "pipelineCostEstimateUsd": 0.048306,
+    "triage": {
+      "calls": 31,
+      "done": 31,
+      "fallback": 0,
+      "skipped": 0,
+      "failed": 0,
+      "promptTokens": 15045,
+      "completionTokens": 2590,
+      "reasoningTokens": 0,
+      "latencyP50Ms": 981,
+      "latencyMaxMs": 1532,
+      "conversationsSkipped": 2,
+      "deliverySnapshotsSentToExtraction": 0,
+      "guardKept": 3
+    },
+    "extractionStep": {
+      "calls": 31,
+      "done": 31,
+      "fallback": 0,
+      "skipped": 0,
+      "failed": 0,
+      "promptTokens": 15631,
+      "completionTokens": 15287,
+      "reasoningTokens": 12816,
+      "latencyP50Ms": 3385,
+      "latencyMaxMs": 5333
+    },
+    "narrative": {
+      "calls": 15,
+      "done": 15,
+      "fallback": 0,
+      "skipped": 16,
+      "failed": 0,
+      "promptTokens": 14425,
+      "completionTokens": 4627,
+      "reasoningTokens": 0,
+      "latencyP50Ms": 1395,
+      "latencyMaxMs": 1662
+    },
+    "briefs": {
+      "casesWithUltraCall": 15,
+      "targets": 16,
+      "accepted": 16,
+      "rejected": 0,
+      "acceptanceRate": 1,
+      "rejectionReasons": {}
+    }
+  },
+  "cases": [
+    {
+      "id": "hold-01",
+      "category": "explicit",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        }
+      ],
+      "elapsedMs": 5664,
+      "usage": {
+        "promptTokens": 1915,
+        "completionTokens": 918
+      },
+      "pipelineCostUsd": 0.002437,
+      "triageLabels": [
+        {
+          "sourceId": "hold-01-source",
+          "role": "commitment",
+          "features": [
+            "audit-export"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-01-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 1144,
+          "usage": {
+            "promptTokens": 475,
+            "completionTokens": 85,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000049,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 3177,
+          "usage": {
+            "promptTokens": 500,
+            "completionTokens": 572,
+            "reasoningTokens": 450
+          },
+          "costUsd": 0.000665,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 1 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "done",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "latencyMs": 1342,
+          "usage": {
+            "promptTokens": 940,
+            "completionTokens": 261,
+            "reasoningTokens": 0
+          },
+          "costUsd": 0.001723,
+          "detail": "1 briefs accepted. Every claim cites exact source text."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": true,
+        "targets": 1,
+        "accepted": 1,
+        "outcomes": [
+          {
+            "commitmentId": "cmt-audit-export-01",
+            "featureId": "audit-export",
+            "verdict": "blocked",
+            "origin": "model",
+            "fallbackReason": null,
+            "customerUpdate": [
+              "Audit log export is built but not yet enabled for your account."
+            ]
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "hold-02",
+      "category": "explicit",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "elapsedMs": 6524,
+      "usage": {
+        "promptTokens": 1904,
+        "completionTokens": 1080
+      },
+      "pipelineCostUsd": 0.002494,
+      "triageLabels": [
+        {
+          "sourceId": "hold-02-source",
+          "role": "commitment",
+          "features": [
+            "scim"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-02-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 939,
+          "usage": {
+            "promptTokens": 474,
+            "completionTokens": 83,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000049,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 4313,
+          "usage": {
+            "promptTokens": 499,
+            "completionTokens": 775,
+            "reasoningTokens": 660
+          },
+          "costUsd": 0.000848,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 1 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "done",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "latencyMs": 1272,
+          "usage": {
+            "promptTokens": 931,
+            "completionTokens": 222,
+            "reasoningTokens": 0
+          },
+          "costUsd": 0.001597,
+          "detail": "1 briefs accepted. Every claim cites exact source text."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": true,
+        "targets": 1,
+        "accepted": 1,
+        "outcomes": [
+          {
+            "commitmentId": "cmt-1",
+            "featureId": "scim",
+            "verdict": "verify",
+            "origin": "model",
+            "fallbackReason": null,
+            "customerUpdate": [
+              "SCIM provisioning is enabled on your account, but we have not yet recorded a successful test confirming it works for you."
+            ]
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "hold-03",
+      "category": "missing-owner",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": null,
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": null,
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "elapsedMs": 5862,
+      "usage": {
+        "promptTokens": 1930,
+        "completionTokens": 988
+      },
+      "pipelineCostUsd": 0.002638,
+      "triageLabels": [
+        {
+          "sourceId": "hold-03-source",
+          "role": "commitment",
+          "features": [
+            "usage-report"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-03-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 1081,
+          "usage": {
+            "promptTokens": 479,
+            "completionTokens": 83,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000049,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 3385,
+          "usage": {
+            "promptTokens": 504,
+            "completionTokens": 583,
+            "reasoningTokens": 450
+          },
+          "costUsd": 0.000676,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "done",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "latencyMs": 1395,
+          "usage": {
+            "promptTokens": 947,
+            "completionTokens": 322,
+            "reasoningTokens": 0
+          },
+          "costUsd": 0.001913,
+          "detail": "1 briefs accepted. Every claim cites exact source text."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": true,
+        "targets": 1,
+        "accepted": 1,
+        "outcomes": [
+          {
+            "commitmentId": "cmt-1",
+            "featureId": "usage-report",
+            "verdict": "on-track",
+            "origin": "model",
+            "fallbackReason": null,
+            "customerUpdate": [
+              "The weekly usage report is not yet built or enabled, and no owner is assigned to deliver it by the target date."
+            ]
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "hold-04",
+      "category": "missing-date",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "eu-residency",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": null
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "eu-residency",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": null
+        }
+      ],
+      "elapsedMs": 5694,
+      "usage": {
+        "promptTokens": 1862,
+        "completionTokens": 965
+      },
+      "pipelineCostUsd": 0.002496,
+      "triageLabels": [
+        {
+          "sourceId": "hold-04-source",
+          "role": "commitment",
+          "features": [
+            "eu-residency"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-04-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 877,
+          "usage": {
+            "promptTokens": 469,
+            "completionTokens": 85,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000049,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 3437,
+          "usage": {
+            "promptTokens": 494,
+            "completionTokens": 591,
+            "reasoningTokens": 499
+          },
+          "costUsd": 0.000681,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "done",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "latencyMs": 1379,
+          "usage": {
+            "promptTokens": 899,
+            "completionTokens": 289,
+            "reasoningTokens": 0
+          },
+          "costUsd": 0.001766,
+          "detail": "1 briefs accepted. Every claim cites exact source text."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": true,
+        "targets": 1,
+        "accepted": 1,
+        "outcomes": [
+          {
+            "commitmentId": "cmt-1",
+            "featureId": "eu-residency",
+            "verdict": "on-track",
+            "origin": "model",
+            "fallbackReason": null,
+            "customerUpdate": [
+              "EU data residency is still in progress and not yet available in your environment."
+            ]
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "hold-05",
+      "category": "discussion",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "dashboard",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "dashboard",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "elapsedMs": 4697,
+      "usage": {
+        "promptTokens": 967,
+        "completionTokens": 731
+      },
+      "pipelineCostUsd": 0.000782,
+      "triageLabels": [
+        {
+          "sourceId": "hold-05-source",
+          "role": "customer-signal",
+          "features": [],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-05-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 853,
+          "usage": {
+            "promptTokens": 471,
+            "completionTokens": 81,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000048,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 3843,
+          "usage": {
+            "promptTokens": 496,
+            "completionTokens": 650,
+            "reasoningTokens": 568
+          },
+          "costUsd": 0.000734,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "skipped",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": null,
+          "latencyMs": null,
+          "usage": null,
+          "costUsd": null,
+          "detail": "No active commitments to explain. Template drafts are shown instead, clearly labelled."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": false,
+        "targets": 0,
+        "accepted": 0,
+        "outcomes": []
+      },
+      "error": null
+    },
+    {
+      "id": "hold-06",
+      "category": "conditional",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "scim",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "scim",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "elapsedMs": 5191,
+      "usage": {
+        "promptTokens": 1001,
+        "completionTokens": 905
+      },
+      "pipelineCostUsd": 0.000944,
+      "triageLabels": [
+        {
+          "sourceId": "hold-06-source",
+          "role": "commitment",
+          "features": [
+            "scim"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-06-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 862,
+          "usage": {
+            "promptTokens": 488,
+            "completionTokens": 83,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.00005,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 4329,
+          "usage": {
+            "promptTokens": 513,
+            "completionTokens": 822,
+            "reasoningTokens": 689
+          },
+          "costUsd": 0.000894,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "skipped",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": null,
+          "latencyMs": null,
+          "usage": null,
+          "costUsd": null,
+          "detail": "No active commitments to explain. Template drafts are shown instead, clearly labelled."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": false,
+        "targets": 0,
+        "accepted": 0,
+        "outcomes": []
+      },
+      "error": null
+    },
+    {
+      "id": "hold-07",
+      "category": "customer-demand",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "saml",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "saml",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "elapsedMs": 4394,
+      "usage": {
+        "promptTokens": 1003,
+        "completionTokens": 682
+      },
+      "pipelineCostUsd": 0.000745,
+      "triageLabels": [
+        {
+          "sourceId": "hold-07-source",
+          "role": "customer-signal",
+          "features": [],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-07-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 864,
+          "usage": {
+            "promptTokens": 489,
+            "completionTokens": 81,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000049,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 3530,
+          "usage": {
+            "promptTokens": 514,
+            "completionTokens": 601,
+            "reasoningTokens": 515
+          },
+          "costUsd": 0.000696,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "skipped",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": null,
+          "latencyMs": null,
+          "usage": null,
+          "costUsd": null,
+          "detail": "No active commitments to explain. Template drafts are shown instead, clearly labelled."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": false,
+        "targets": 0,
+        "accepted": 0,
+        "outcomes": []
+      },
+      "error": null
+    },
+    {
+      "id": "hold-08",
+      "category": "ticket-only",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "elapsedMs": 2775,
+      "usage": {
+        "promptTokens": 963,
+        "completionTokens": 299
+      },
+      "pipelineCostUsd": 0.000389,
+      "triageLabels": [
+        {
+          "sourceId": "hold-08-source",
+          "role": "delivery-evidence",
+          "features": [
+            "eu-residency"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-08-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [
+          "hold-08-source"
+        ],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 974,
+          "usage": {
+            "promptTokens": 469,
+            "completionTokens": 86,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000049,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules. Recall guard kept hold-08-source (explicit commitment language)."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 1800,
+          "usage": {
+            "promptTokens": 494,
+            "completionTokens": 213,
+            "reasoningTokens": 205
+          },
+          "costUsd": 0.00034,
+          "detail": "0 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "0 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "skipped",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": null,
+          "latencyMs": null,
+          "usage": null,
+          "costUsd": null,
+          "detail": "No active commitments to explain. Template drafts are shown instead, clearly labelled."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": false,
+        "targets": 0,
+        "accepted": 0,
+        "outcomes": []
+      },
+      "error": null
+    },
+    {
+      "id": "hold-09",
+      "category": "acceptance-only",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "elapsedMs": 2323,
+      "usage": {
+        "promptTokens": 967,
+        "completionTokens": 208
+      },
+      "pipelineCostUsd": 0.000308,
+      "triageLabels": [
+        {
+          "sourceId": "hold-09-source",
+          "role": "customer-signal",
+          "features": [
+            "audit-export"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-09-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 901,
+          "usage": {
+            "promptTokens": 471,
+            "completionTokens": 86,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000049,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 1422,
+          "usage": {
+            "promptTokens": 496,
+            "completionTokens": 122,
+            "reasoningTokens": 114
+          },
+          "costUsd": 0.000259,
+          "detail": "0 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "0 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "skipped",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": null,
+          "latencyMs": null,
+          "usage": null,
+          "costUsd": null,
+          "detail": "No active commitments to explain. Template drafts are shown instead, clearly labelled."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": false,
+        "targets": 0,
+        "accepted": 0,
+        "outcomes": []
+      },
+      "error": null
+    },
+    {
+      "id": "hold-10",
+      "category": "irrelevant",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "elapsedMs": 1788,
+      "usage": {
+        "promptTokens": 885,
+        "completionTokens": 123
+      },
+      "pipelineCostUsd": 0.000212,
+      "triageLabels": [
+        {
+          "sourceId": "hold-10-source",
+          "role": "other",
+          "features": [],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [],
+        "directToRules": [
+          "hold-10-source",
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": [
+          "hold-10-source"
+        ]
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 843,
+          "usage": {
+            "promptTokens": 473,
+            "completionTokens": 79,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000048,
+          "detail": "Routed 0 of 2 sources to extraction; 2 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 944,
+          "usage": {
+            "promptTokens": 412,
+            "completionTokens": 44,
+            "reasoningTokens": 36
+          },
+          "costUsd": 0.000164,
+          "detail": "0 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "0 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "skipped",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": null,
+          "latencyMs": null,
+          "usage": null,
+          "costUsd": null,
+          "detail": "No active commitments to explain. Template drafts are shown instead, clearly labelled."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": false,
+        "targets": 0,
+        "accepted": 0,
+        "outcomes": []
+      },
+      "error": null
+    },
+    {
+      "id": "hold-11",
+      "category": "negation",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "elapsedMs": 2532,
+      "usage": {
+        "promptTokens": 959,
+        "completionTokens": 172
+      },
+      "pipelineCostUsd": 0.000279,
+      "triageLabels": [
+        {
+          "sourceId": "hold-11-source",
+          "role": "other",
+          "features": [],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-11-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [
+          "hold-11-source"
+        ],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 1246,
+          "usage": {
+            "promptTokens": 467,
+            "completionTokens": 79,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000047,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules. Recall guard kept hold-11-source (explicit commitment language)."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 1286,
+          "usage": {
+            "promptTokens": 492,
+            "completionTokens": 93,
+            "reasoningTokens": 85
+          },
+          "costUsd": 0.000232,
+          "detail": "0 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "0 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "skipped",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": null,
+          "latencyMs": null,
+          "usage": null,
+          "costUsd": null,
+          "detail": "No active commitments to explain. Template drafts are shown instead, clearly labelled."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": false,
+        "targets": 0,
+        "accepted": 0,
+        "outcomes": []
+      },
+      "error": null
+    },
+    {
+      "id": "hold-12",
+      "category": "cancelled",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "elapsedMs": 2259,
+      "usage": {
+        "promptTokens": 967,
+        "completionTokens": 234
+      },
+      "pipelineCostUsd": 0.000332,
+      "triageLabels": [
+        {
+          "sourceId": "hold-12-source",
+          "role": "commitment",
+          "features": [
+            "audit-export"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-12-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 972,
+          "usage": {
+            "promptTokens": 471,
+            "completionTokens": 85,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000049,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 1287,
+          "usage": {
+            "promptTokens": 496,
+            "completionTokens": 149,
+            "reasoningTokens": 141
+          },
+          "costUsd": 0.000283,
+          "detail": "0 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "0 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "skipped",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": null,
+          "latencyMs": null,
+          "usage": null,
+          "costUsd": null,
+          "detail": "No active commitments to explain. Template drafts are shown instead, clearly labelled."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": false,
+        "targets": 0,
+        "accepted": 0,
+        "outcomes": []
+      },
+      "error": null
+    },
+    {
+      "id": "hold-13",
+      "category": "declined",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "elapsedMs": 2158,
+      "usage": {
+        "promptTokens": 959,
+        "completionTokens": 199
+      },
+      "pipelineCostUsd": 0.000302,
+      "triageLabels": [
+        {
+          "sourceId": "hold-13-source",
+          "role": "customer-signal",
+          "features": [],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-13-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 844,
+          "usage": {
+            "promptTokens": 467,
+            "completionTokens": 81,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000048,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 1314,
+          "usage": {
+            "promptTokens": 492,
+            "completionTokens": 118,
+            "reasoningTokens": 110
+          },
+          "costUsd": 0.000254,
+          "detail": "0 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "0 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "skipped",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": null,
+          "latencyMs": null,
+          "usage": null,
+          "costUsd": null,
+          "detail": "No active commitments to explain. Template drafts are shown instead, clearly labelled."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": false,
+        "targets": 0,
+        "accepted": 0,
+        "outcomes": []
+      },
+      "error": null
+    },
+    {
+      "id": "hold-14",
+      "category": "relative-date",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": null
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": null
+        }
+      ],
+      "elapsedMs": 7249,
+      "usage": {
+        "promptTokens": 1874,
+        "completionTokens": 1083
+      },
+      "pipelineCostUsd": 0.002623,
+      "triageLabels": [
+        {
+          "sourceId": "hold-14-source",
+          "role": "commitment",
+          "features": [
+            "audit-export"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-14-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 875,
+          "usage": {
+            "promptTokens": 471,
+            "completionTokens": 85,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000049,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 4919,
+          "usage": {
+            "promptTokens": 496,
+            "completionTokens": 703,
+            "reasoningTokens": 611
+          },
+          "costUsd": 0.000782,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 1 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "done",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "latencyMs": 1455,
+          "usage": {
+            "promptTokens": 907,
+            "completionTokens": 295,
+            "reasoningTokens": 0
+          },
+          "costUsd": 0.001792,
+          "detail": "1 briefs accepted. Every claim cites exact source text."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": true,
+        "targets": 1,
+        "accepted": 1,
+        "outcomes": [
+          {
+            "commitmentId": "cmt-1",
+            "featureId": "audit-export",
+            "verdict": "blocked",
+            "origin": "model",
+            "fallbackReason": null,
+            "customerUpdate": [
+              "The audit log export capability is built but not yet enabled for your account.",
+              "We are working internally to turn on the entitlement so you can test it."
+            ]
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "hold-15",
+      "category": "ambiguous-date",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "eu-residency",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": null
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "eu-residency",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": null
+        }
+      ],
+      "elapsedMs": 6402,
+      "usage": {
+        "promptTokens": 1894,
+        "completionTokens": 1075
+      },
+      "pipelineCostUsd": 0.002565,
+      "triageLabels": [
+        {
+          "sourceId": "hold-15-source",
+          "role": "commitment",
+          "features": [
+            "eu-residency"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-15-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 880,
+          "usage": {
+            "promptTokens": 480,
+            "completionTokens": 85,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.00005,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 4173,
+          "usage": {
+            "promptTokens": 505,
+            "completionTokens": 722,
+            "reasoningTokens": 631
+          },
+          "costUsd": 0.000802,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "done",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "latencyMs": 1348,
+          "usage": {
+            "promptTokens": 909,
+            "completionTokens": 268,
+            "reasoningTokens": 0
+          },
+          "costUsd": 0.001713,
+          "detail": "1 briefs accepted. Every claim cites exact source text."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": true,
+        "targets": 1,
+        "accepted": 1,
+        "outcomes": [
+          {
+            "commitmentId": "c1",
+            "featureId": "eu-residency",
+            "verdict": "on-track",
+            "origin": "model",
+            "fallbackReason": null,
+            "customerUpdate": [
+              "EU data residency is not yet built or enabled for your account."
+            ]
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "hold-16",
+      "category": "ownership-question",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "usage-report",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "usage-report",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "elapsedMs": 5168,
+      "usage": {
+        "promptTokens": 977,
+        "completionTokens": 772
+      },
+      "pipelineCostUsd": 0.000819,
+      "triageLabels": [
+        {
+          "sourceId": "hold-16-source",
+          "role": "customer-signal",
+          "features": [
+            "usage-report"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-16-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 862,
+          "usage": {
+            "promptTokens": 476,
+            "completionTokens": 84,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000049,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 4306,
+          "usage": {
+            "promptTokens": 501,
+            "completionTokens": 688,
+            "reasoningTokens": 606
+          },
+          "costUsd": 0.00077,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "skipped",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": null,
+          "latencyMs": null,
+          "usage": null,
+          "costUsd": null,
+          "detail": "No active commitments to explain. Template drafts are shown instead, clearly labelled."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": false,
+        "targets": 0,
+        "accepted": 0,
+        "outcomes": []
+      },
+      "error": null
+    },
+    {
+      "id": "hold-17",
+      "category": "misleading-fields",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "elapsedMs": 1995,
+      "usage": {
+        "promptTokens": 901,
+        "completionTokens": 128
+      },
+      "pipelineCostUsd": 0.000214,
+      "triageLabels": [
+        {
+          "sourceId": "hold-17-source",
+          "role": "delivery-evidence",
+          "features": [
+            "scim"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [],
+        "directToRules": [
+          "hold-17-source",
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": [
+          "hold-17-source"
+        ]
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 1020,
+          "usage": {
+            "promptTokens": 489,
+            "completionTokens": 84,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.00005,
+          "detail": "Routed 0 of 2 sources to extraction; 2 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 974,
+          "usage": {
+            "promptTokens": 412,
+            "completionTokens": 44,
+            "reasoningTokens": 36
+          },
+          "costUsd": 0.000164,
+          "detail": "0 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "0 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "skipped",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": null,
+          "latencyMs": null,
+          "usage": null,
+          "costUsd": null,
+          "detail": "No active commitments to explain. Template drafts are shown instead, clearly labelled."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": false,
+        "targets": 0,
+        "accepted": 0,
+        "outcomes": []
+      },
+      "error": null
+    },
+    {
+      "id": "hold-18",
+      "category": "multiple-features",
+      "status": "error",
+      "expected": [
+        {
+          "featureId": "saml",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        },
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "actual": null,
+      "elapsedMs": null,
+      "usage": null,
+      "pipelineCostUsd": null,
+      "triageLabels": null,
+      "routing": null,
+      "steps": null,
+      "briefs": null,
+      "error": {
+        "code": "grounding",
+        "message": "Model output failed source validation. No ungrounded commitments were accepted.",
+        "status": 502
+      }
+    },
+    {
+      "id": "hold-19",
+      "category": "superseded-date",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-06"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-06"
+        }
+      ],
+      "elapsedMs": 6653,
+      "usage": {
+        "promptTokens": 2012,
+        "completionTokens": 1183
+      },
+      "pipelineCostUsd": 0.002927,
+      "triageLabels": [
+        {
+          "sourceId": "hold-19-source",
+          "role": "commitment",
+          "features": [
+            "audit-export"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-19-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 1303,
+          "usage": {
+            "promptTokens": 510,
+            "completionTokens": 85,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000051,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 3801,
+          "usage": {
+            "promptTokens": 535,
+            "completionTokens": 736,
+            "reasoningTokens": 622
+          },
+          "costUsd": 0.000823,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 1 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "done",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "latencyMs": 1549,
+          "usage": {
+            "promptTokens": 967,
+            "completionTokens": 362,
+            "reasoningTokens": 0
+          },
+          "costUsd": 0.002053,
+          "detail": "1 briefs accepted. Every claim cites exact source text."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": true,
+        "targets": 1,
+        "accepted": 1,
+        "outcomes": [
+          {
+            "commitmentId": "cmt-1",
+            "featureId": "audit-export",
+            "verdict": "blocked",
+            "origin": "model",
+            "fallbackReason": null,
+            "customerUpdate": [
+              "The audit log export capability has been built but is not yet enabled for your account.",
+              "The delivery commitment has been moved to 2026-10-06 while the feature flag remains off."
+            ]
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "hold-20",
+      "category": "superseded-owner",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "elapsedMs": 5213,
+      "usage": {
+        "promptTokens": 1990,
+        "completionTokens": 833
+      },
+      "pipelineCostUsd": 0.002319,
+      "triageLabels": [
+        {
+          "sourceId": "hold-20-source",
+          "role": "commitment",
+          "features": [
+            "scim"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-20-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 864,
+          "usage": {
+            "promptTokens": 501,
+            "completionTokens": 83,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.00005,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 3071,
+          "usage": {
+            "promptTokens": 526,
+            "completionTokens": 525,
+            "reasoningTokens": 404
+          },
+          "costUsd": 0.000631,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 1 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "done",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "latencyMs": 1277,
+          "usage": {
+            "promptTokens": 963,
+            "completionTokens": 225,
+            "reasoningTokens": 0
+          },
+          "costUsd": 0.001638,
+          "detail": "1 briefs accepted. Every claim cites exact source text."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": true,
+        "targets": 1,
+        "accepted": 1,
+        "outcomes": [
+          {
+            "commitmentId": "cmt-1",
+            "featureId": "scim",
+            "verdict": "verify",
+            "origin": "model",
+            "fallbackReason": null,
+            "customerUpdate": [
+              "SCIM provisioning is enabled in your environment, but we have not yet recorded a successful test confirming it works for your use case."
+            ]
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "hold-21",
+      "category": "disputed-quotation",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "elapsedMs": 2913,
+      "usage": {
+        "promptTokens": 1005,
+        "completionTokens": 265
+      },
+      "pipelineCostUsd": 0.00037,
+      "triageLabels": [
+        {
+          "sourceId": "hold-21-source",
+          "role": "customer-signal",
+          "features": [],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-21-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 1040,
+          "usage": {
+            "promptTokens": 490,
+            "completionTokens": 81,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000049,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 1873,
+          "usage": {
+            "promptTokens": 515,
+            "completionTokens": 184,
+            "reasoningTokens": 176
+          },
+          "costUsd": 0.000321,
+          "detail": "0 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "0 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "skipped",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": null,
+          "latencyMs": null,
+          "usage": null,
+          "costUsd": null,
+          "detail": "No active commitments to explain. Template drafts are shown instead, clearly labelled."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": false,
+        "targets": 0,
+        "accepted": 0,
+        "outcomes": []
+      },
+      "error": null
+    },
+    {
+      "id": "hold-22",
+      "category": "prompt-injection",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        }
+      ],
+      "elapsedMs": 6363,
+      "usage": {
+        "promptTokens": 1980,
+        "completionTokens": 1176
+      },
+      "pipelineCostUsd": 0.002967,
+      "triageLabels": [
+        {
+          "sourceId": "hold-22-source",
+          "role": "commitment",
+          "features": [
+            "audit-export"
+          ],
+          "injectionSuspected": true
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-22-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 1104,
+          "usage": {
+            "promptTokens": 499,
+            "completionTokens": 85,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000051,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules. Possible prompt injection flagged in hold-22-source."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 3734,
+          "usage": {
+            "promptTokens": 524,
+            "completionTokens": 701,
+            "reasoningTokens": 585
+          },
+          "costUsd": 0.000789,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 1 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "done",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "latencyMs": 1524,
+          "usage": {
+            "promptTokens": 957,
+            "completionTokens": 390,
+            "reasoningTokens": 0
+          },
+          "costUsd": 0.002127,
+          "detail": "1 briefs accepted. Every claim cites exact source text."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": true,
+        "targets": 1,
+        "accepted": 1,
+        "outcomes": [
+          {
+            "commitmentId": "cmt-1",
+            "featureId": "audit-export",
+            "verdict": "blocked",
+            "origin": "model",
+            "fallbackReason": null,
+            "customerUpdate": [
+              "The audit log export capability is built but not yet enabled for your account.",
+              "We are working internally to turn on the entitlement so you can access the feature."
+            ]
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "hold-23",
+      "category": "role-spoofing",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "scim",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "elapsedMs": 5728,
+      "usage": {
+        "promptTokens": 1969,
+        "completionTokens": 909
+      },
+      "pipelineCostUsd": 0.002368,
+      "triageLabels": [
+        {
+          "sourceId": "hold-23-source",
+          "role": "commitment",
+          "features": [
+            "scim"
+          ],
+          "injectionSuspected": true
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-23-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 1135,
+          "usage": {
+            "promptTokens": 496,
+            "completionTokens": 83,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.00005,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules. Possible prompt injection flagged in hold-23-source."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 3376,
+          "usage": {
+            "promptTokens": 521,
+            "completionTokens": 604,
+            "reasoningTokens": 490
+          },
+          "costUsd": 0.0007,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 1 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "done",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "latencyMs": 1217,
+          "usage": {
+            "promptTokens": 952,
+            "completionTokens": 222,
+            "reasoningTokens": 0
+          },
+          "costUsd": 0.001618,
+          "detail": "1 briefs accepted. Every claim cites exact source text."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": true,
+        "targets": 1,
+        "accepted": 1,
+        "outcomes": [
+          {
+            "commitmentId": "commit-scim-1",
+            "featureId": "scim",
+            "verdict": "verify",
+            "origin": "model",
+            "fallbackReason": null,
+            "customerUpdate": [
+              "SCIM provisioning is enabled on our side, and we need to run an acceptance test with you to confirm it works for your environment."
+            ]
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "hold-24",
+      "category": "cross-account-source",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "elapsedMs": 1969,
+      "usage": {
+        "promptTokens": 970,
+        "completionTokens": 134
+      },
+      "pipelineCostUsd": 0.000243,
+      "triageLabels": [
+        {
+          "sourceId": "hold-24-source",
+          "role": "commitment",
+          "features": [
+            "eu-residency"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-24-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 988,
+          "usage": {
+            "promptTokens": 473,
+            "completionTokens": 85,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000049,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 981,
+          "usage": {
+            "promptTokens": 497,
+            "completionTokens": 49,
+            "reasoningTokens": 41
+          },
+          "costUsd": 0.000194,
+          "detail": "0 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "0 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "skipped",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": null,
+          "latencyMs": null,
+          "usage": null,
+          "costUsd": null,
+          "detail": "No active commitments to explain. Template drafts are shown instead, clearly labelled."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": false,
+        "targets": 0,
+        "accepted": 0,
+        "outcomes": []
+      },
+      "error": null
+    },
+    {
+      "id": "hold-25",
+      "category": "mixed-accounts",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "elapsedMs": 6593,
+      "usage": {
+        "promptTokens": 2000,
+        "completionTokens": 1095
+      },
+      "pipelineCostUsd": 0.002769,
+      "triageLabels": [
+        {
+          "sourceId": "hold-25-source",
+          "role": "commitment",
+          "features": [
+            "audit-export",
+            "usage-report"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-25-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 1532,
+          "usage": {
+            "promptTokens": 509,
+            "completionTokens": 88,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000052,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 3620,
+          "usage": {
+            "promptTokens": 534,
+            "completionTokens": 677,
+            "reasoningTokens": 566
+          },
+          "costUsd": 0.00077,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "done",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "latencyMs": 1440,
+          "usage": {
+            "promptTokens": 957,
+            "completionTokens": 330,
+            "reasoningTokens": 0
+          },
+          "costUsd": 0.001947,
+          "detail": "1 briefs accepted. Every claim cites exact source text."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": true,
+        "targets": 1,
+        "accepted": 1,
+        "outcomes": [
+          {
+            "commitmentId": "cmt-1",
+            "featureId": "usage-report",
+            "verdict": "on-track",
+            "origin": "model",
+            "fallbackReason": null,
+            "customerUpdate": [
+              "The weekly usage report is still in progress and not yet available.",
+              "The owner has committed to delivery by 2026-10-09."
+            ]
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "hold-26",
+      "category": "unknown-feature",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "elapsedMs": 6340,
+      "usage": {
+        "promptTokens": 1985,
+        "completionTokens": 1093
+      },
+      "pipelineCostUsd": 0.002672,
+      "triageLabels": [
+        {
+          "sourceId": "hold-26-source",
+          "role": "commitment",
+          "features": [
+            "usage-report"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-26-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 1069,
+          "usage": {
+            "promptTokens": 504,
+            "completionTokens": 83,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000051,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 3902,
+          "usage": {
+            "promptTokens": 529,
+            "completionTokens": 724,
+            "reasoningTokens": 613
+          },
+          "costUsd": 0.000811,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "done",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "latencyMs": 1368,
+          "usage": {
+            "promptTokens": 952,
+            "completionTokens": 286,
+            "reasoningTokens": 0
+          },
+          "costUsd": 0.00181,
+          "detail": "1 briefs accepted. Every claim cites exact source text."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": true,
+        "targets": 1,
+        "accepted": 1,
+        "outcomes": [
+          {
+            "commitmentId": "cmt-1",
+            "featureId": "usage-report",
+            "verdict": "on-track",
+            "origin": "model",
+            "fallbackReason": null,
+            "customerUpdate": [
+              "The weekly usage report is still in progress and not yet available in your account."
+            ]
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "hold-27",
+      "category": "duplicate-mention",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        }
+      ],
+      "elapsedMs": 6262,
+      "usage": {
+        "promptTokens": 2049,
+        "completionTokens": 1056
+      },
+      "pipelineCostUsd": 0.002908,
+      "triageLabels": [
+        {
+          "sourceId": "hold-27-source",
+          "role": "commitment",
+          "features": [
+            "audit-export"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-27-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 1146,
+          "usage": {
+            "promptTokens": 508,
+            "completionTokens": 85,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000051,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 3524,
+          "usage": {
+            "promptTokens": 533,
+            "completionTokens": 583,
+            "reasoningTokens": 423
+          },
+          "costUsd": 0.000685,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 1 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "done",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "latencyMs": 1591,
+          "usage": {
+            "promptTokens": 1008,
+            "completionTokens": 388,
+            "reasoningTokens": 0
+          },
+          "costUsd": 0.002172,
+          "detail": "1 briefs accepted. Every claim cites exact source text."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": true,
+        "targets": 1,
+        "accepted": 1,
+        "outcomes": [
+          {
+            "commitmentId": "cmt-1",
+            "featureId": "audit-export",
+            "verdict": "blocked",
+            "origin": "model",
+            "fallbackReason": null,
+            "customerUpdate": [
+              "The audit log export capability is built but not yet enabled for your account.",
+              "We are working to enable the entitlement so you can access the feature."
+            ]
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "hold-28",
+      "category": "hearsay",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "eu-residency",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "eu-residency",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        }
+      ],
+      "elapsedMs": 5245,
+      "usage": {
+        "promptTokens": 985,
+        "completionTokens": 736
+      },
+      "pipelineCostUsd": 0.00079,
+      "triageLabels": [
+        {
+          "sourceId": "hold-28-source",
+          "role": "customer-signal",
+          "features": [],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-28-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 1358,
+          "usage": {
+            "promptTokens": 480,
+            "completionTokens": 81,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000049,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 3887,
+          "usage": {
+            "promptTokens": 505,
+            "completionTokens": 655,
+            "reasoningTokens": 569
+          },
+          "costUsd": 0.000741,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "skipped",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": null,
+          "latencyMs": null,
+          "usage": null,
+          "costUsd": null,
+          "detail": "No active commitments to explain. Template drafts are shown instead, clearly labelled."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": false,
+        "targets": 0,
+        "accepted": 0,
+        "outcomes": []
+      },
+      "error": null
+    },
+    {
+      "id": "hold-29",
+      "category": "hypothetical",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "elapsedMs": 2802,
+      "usage": {
+        "promptTokens": 995,
+        "completionTokens": 303
+      },
+      "pipelineCostUsd": 0.000404,
+      "triageLabels": [
+        {
+          "sourceId": "hold-29-source",
+          "role": "other",
+          "features": [],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-29-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [
+          "hold-29-source"
+        ],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 981,
+          "usage": {
+            "promptTokens": 485,
+            "completionTokens": 79,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000049,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules. Recall guard kept hold-29-source (explicit commitment language)."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 1820,
+          "usage": {
+            "promptTokens": 510,
+            "completionTokens": 224,
+            "reasoningTokens": 216
+          },
+          "costUsd": 0.000355,
+          "detail": "0 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "0 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "skipped",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": null,
+          "latencyMs": null,
+          "usage": null,
+          "costUsd": null,
+          "detail": "No active commitments to explain. Template drafts are shown instead, clearly labelled."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": false,
+        "targets": 0,
+        "accepted": 0,
+        "outcomes": []
+      },
+      "error": null
+    },
+    {
+      "id": "hold-30",
+      "category": "field-labels",
+      "status": "passed",
+      "expected": [],
+      "actual": [],
+      "elapsedMs": 3788,
+      "usage": {
+        "promptTokens": 1003,
+        "completionTokens": 454
+      },
+      "pipelineCostUsd": 0.000536,
+      "triageLabels": [
+        {
+          "sourceId": "hold-30-source",
+          "role": "customer-signal",
+          "features": [
+            "audit-export"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-30-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 1282,
+          "usage": {
+            "promptTokens": 489,
+            "completionTokens": 86,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.00005,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 2506,
+          "usage": {
+            "promptTokens": 514,
+            "completionTokens": 368,
+            "reasoningTokens": 360
+          },
+          "costUsd": 0.000486,
+          "detail": "0 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "0 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "skipped",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": null,
+          "latencyMs": null,
+          "usage": null,
+          "costUsd": null,
+          "detail": "No active commitments to explain. Template drafts are shown instead, clearly labelled."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": false,
+        "targets": 0,
+        "accepted": 0,
+        "outcomes": []
+      },
+      "error": null
+    },
+    {
+      "id": "hold-31",
+      "category": "mixed-intents",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        },
+        {
+          "featureId": "dashboard",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        },
+        {
+          "featureId": "saml",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "audit-export",
+          "intent": "committed",
+          "owner": "Leila Marin",
+          "dueDate": "2026-10-02"
+        },
+        {
+          "featureId": "dashboard",
+          "intent": "tentative",
+          "owner": null,
+          "dueDate": null
+        },
+        {
+          "featureId": "saml",
+          "intent": "committed",
+          "owner": "Owen Hart",
+          "dueDate": "2026-10-07"
+        }
+      ],
+      "elapsedMs": 8036,
+      "usage": {
+        "promptTokens": 2241,
+        "completionTokens": 1680
+      },
+      "pipelineCostUsd": 0.003718,
+      "triageLabels": [
+        {
+          "sourceId": "hold-31-source",
+          "role": "commitment",
+          "features": [
+            "audit-export",
+            "saml"
+          ],
+          "injectionSuspected": false
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-31-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 1041,
+          "usage": {
+            "promptTokens": 518,
+            "completionTokens": 88,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000053,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 5333,
+          "usage": {
+            "promptTokens": 543,
+            "completionTokens": 1169,
+            "reasoningTokens": 862
+          },
+          "costUsd": 0.001216,
+          "detail": "3 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "3 verdicts from customer-specific facts; 1 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "done",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "latencyMs": 1662,
+          "usage": {
+            "promptTokens": 1180,
+            "completionTokens": 423,
+            "reasoningTokens": 0
+          },
+          "costUsd": 0.002449,
+          "detail": "2 briefs accepted. Every claim cites exact source text."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": true,
+        "targets": 2,
+        "accepted": 2,
+        "outcomes": [
+          {
+            "commitmentId": "cmt-audit-export-1",
+            "featureId": "audit-export",
+            "verdict": "blocked",
+            "origin": "model",
+            "fallbackReason": null,
+            "customerUpdate": [
+              "The audit log export capability is built but not yet enabled for your account."
+            ]
+          },
+          {
+            "commitmentId": "cmt-saml-1",
+            "featureId": "saml",
+            "verdict": "verified",
+            "origin": "model",
+            "fallbackReason": null,
+            "customerUpdate": [
+              "SAML SSO has been delivered and verified for your account."
+            ]
+          }
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "hold-32",
+      "category": "quoted-markup",
+      "status": "passed",
+      "expected": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "actual": [
+        {
+          "featureId": "usage-report",
+          "intent": "committed",
+          "owner": "Priya Shah",
+          "dueDate": "2026-10-09"
+        }
+      ],
+      "elapsedMs": 5683,
+      "usage": {
+        "promptTokens": 1989,
+        "completionTokens": 1025
+      },
+      "pipelineCostUsd": 0.002736,
+      "triageLabels": [
+        {
+          "sourceId": "hold-32-source",
+          "role": "commitment",
+          "features": [
+            "usage-report"
+          ],
+          "injectionSuspected": true
+        },
+        {
+          "sourceId": "EVAL-DELIVERY",
+          "role": "delivery-evidence",
+          "features": [
+            "audit-export",
+            "eu-residency",
+            "usage-report",
+            "scim",
+            "saml"
+          ],
+          "injectionSuspected": false
+        }
+      ],
+      "routing": {
+        "extraction": [
+          "hold-32-source"
+        ],
+        "directToRules": [
+          "EVAL-DELIVERY"
+        ],
+        "guardKept": [],
+        "conversationsSkipped": []
+      },
+      "steps": [
+        {
+          "id": "triage",
+          "status": "done",
+          "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "reportedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "latencyMs": 972,
+          "usage": {
+            "promptTokens": 504,
+            "completionTokens": 83,
+            "reasoningTokens": null
+          },
+          "costUsd": 0.000051,
+          "detail": "Routed 1 of 2 sources to extraction; 1 delivery records go straight to the rules. Possible prompt injection flagged in hold-32-source."
+        },
+        {
+          "id": "extraction",
+          "status": "done",
+          "model": "nvidia/nemotron-3-super-120b-a12b",
+          "reportedModel": "nvidia/nemotron-3-super-120b-a12b",
+          "latencyMs": 3192,
+          "usage": {
+            "promptTokens": 529,
+            "completionTokens": 598,
+            "reasoningTokens": 483
+          },
+          "costUsd": 0.000697,
+          "detail": "1 commitments accepted; owners and dates appear in their quotes."
+        },
+        {
+          "id": "rules",
+          "status": "done",
+          "model": null,
+          "reportedModel": null,
+          "latencyMs": 1,
+          "usage": null,
+          "costUsd": null,
+          "detail": "1 verdicts from customer-specific facts; 0 need attention. No model can change these."
+        },
+        {
+          "id": "narrative",
+          "status": "done",
+          "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "reportedModel": "nvidia/Nemotron-3-Ultra-550b-a55b",
+          "latencyMs": 1519,
+          "usage": {
+            "promptTokens": 956,
+            "completionTokens": 344,
+            "reasoningTokens": 0
+          },
+          "costUsd": 0.001988,
+          "detail": "1 briefs accepted. Every claim cites exact source text."
+        }
+      ],
+      "briefs": {
+        "ultraCalled": true,
+        "targets": 1,
+        "accepted": 1,
+        "outcomes": [
+          {
+            "commitmentId": "cmt-1",
+            "featureId": "usage-report",
+            "verdict": "on-track",
+            "origin": "model",
+            "fallbackReason": null,
+            "customerUpdate": [
+              "The weekly usage report is still in progress and not yet available in your account.",
+              "The owner has indicated a target delivery date of 2026-10-09."
+            ]
+          }
+        ]
+      },
+      "error": null
+    }
+  ]
+}
