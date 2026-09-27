@@ -1,6 +1,6 @@
-import { writeFile, mkdir } from "node:fs/promises";
 import { ACCOUNT, AS_OF, createScenario, referenceCommitments } from "../lib/fixtures.ts";
 import { reconcile } from "../lib/reconcile.ts";
+import { writeReferenceReport } from "../lib/evaluation-reports.ts";
 
 if (process.argv.includes("--live")) throw new Error("Use npm run eval:live for recorded development and held-out model evaluation.");
 const cases: { id: string; passed: boolean; expected: unknown; actual: unknown }[] = [];
@@ -13,7 +13,7 @@ for (const scenario of ["blocked", "enabled", "stale"] as const) {
   }
 }
 const report = { generatedAt: new Date().toISOString(), evaluation: "deterministic-reconciliation-fixtures", liveInferenceTested: false, limitation: "This measures rule correctness on synthetic fixtures, not model extraction quality.", passed: cases.filter((sample) => sample.passed).length, total: cases.length, providers: [], cases };
-await mkdir("docs/evaluation", { recursive: true });
-await writeFile("docs/evaluation/reference-report.json", `${JSON.stringify(report, null, 2)}\n`);
+const written = await writeReferenceReport(report);
 console.log(`${report.evaluation}: ${report.passed}/${report.total} cases passed. ${report.limitation}`);
+console.log(written.committedUpdated ? `Results changed: updated ${written.committedPath}. Review and commit it.` : `Results match ${written.committedPath}; left unchanged. This run: ${written.scratchPath}`);
 if (report.passed !== report.total) process.exitCode = 1;

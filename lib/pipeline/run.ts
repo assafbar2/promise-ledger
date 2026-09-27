@@ -43,6 +43,11 @@ export type PipelineOptions = {
   /** Verified by the service before a live decide step; carries the extraction's steps and cost. */
   continuation?: ContinuationPayload | null;
   now?: string;
+  /**
+   * Offline evaluation harness only; never set from a request. Replaces the evidence providers
+   * with one case's sources and curated facts for the sample account, as of `asOf`.
+   */
+  evaluationEvidence?: { sources: Source[]; facts: ProductFact[]; asOf: string };
 };
 
 export type PipelineOutcome = { kind: "analysis"; analysis: Analysis } | { kind: "proposal"; proposal: ByoProposal };
@@ -104,12 +109,15 @@ export async function executePipeline(options: PipelineOptions): Promise<Pipelin
   if (pack && !pack.scenarios.includes(options.scenario)) throw new PipelineError(`${pack.name} does not have that demo scenario.`, 400, "scenario");
   const now = options.now ?? new Date().toISOString();
   const account: AnalysisAccount = pack ? { id: pack.id, name: pack.name, kind: "sample" } : { id: BYO_ACCOUNT, name: workspaceName(byo!.workspace), kind: "byo" };
-  const asOf = pack ? pack.asOf : now;
+  const fixed = options.evaluationEvidence ?? null;
+  if (fixed && byo) throw new PipelineError("Evaluation evidence applies to sample accounts only.", 400, "evaluation");
+  const asOf = fixed ? fixed.asOf : pack ? pack.asOf : now;
   const featureIds = pack ? pack.featureIds : null;
   const byoInputs = byo ? byo.sources.map(normalizeByoSource) : undefined;
 
   let evidence;
-  try {
+  if (fixed) evidence = { sources: fixed.sources, facts: fixed.facts, signals: [], providers: [{ id: "evaluation-case", label: "Evaluation case", trust: "curated" as const, status: "ok" as const, recorded: false, sourceCount: fixed.sources.length, factCount: fixed.facts.length, signalCount: 0, elapsedMs: 0 }] };
+  else try {
     evidence = await collectEvidence({ accountId: account.id, featureIds: featureIds ?? [], scenario: options.scenario, mode: options.mode, asOf, now, signal: options.signal, env, userEvidence: byoInputs }, providersFor(account.id, options.providers ?? EVIDENCE_PROVIDERS));
   } catch (error) {
     throw new PipelineError(`Evidence could not be collected${error instanceof EvidenceError ? `: ${error.message}` : "."} No results were accepted.`, byo ? 400 : 502, "evidence", live && !byo ? "reference" : undefined);
