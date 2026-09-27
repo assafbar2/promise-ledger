@@ -2,7 +2,7 @@
 
 **Promises made. Truth checked.** What you promised, what shipped, and what your customer can actually use.
 
-[**Try it live →**](https://promise-ledger-chi.vercel.app/app) · [Landing page](https://promise-ledger-chi.vercel.app) · [How it works](#how-it-works) · [Run locally](#run-locally)
+[**Try it live →**](https://promise-ledger-chi.vercel.app/app) · [Demo video (2:44)](https://youtu.be/-dXNL30C5yE) · [Landing page](https://promise-ledger-chi.vercel.app) · [How it works](#how-it-works) · [Run locally](#run-locally)
 
 <p align="center"><img src="docs/media/agent-view.gif" alt="The live agent view replaying Northstar's evidence check: Triage, Extract, Decide and Explain complete, quotes stream in with exact-match checks, and Audit log export lands on Delivery gap." width="100%" /></p>
 
