@@ -32,7 +32,7 @@ function EvidenceCard() {
   return (
     <figure className="lp-card" aria-label="Example evidence brief for Northstar's audit log export">
       <div className="lp-card-top"><span>PL-101 <span aria-hidden="true">/</span> EVIDENCE BRIEF</span><span className="lp-badge gap"><span aria-hidden="true" />Delivery gap</span></div>
-      <h3>Audit log export</h3>
+      <p className="lp-card-title">Audit log export</p>
       <p className="lp-card-meta">Northstar · promised by Maya Chen · due Sep 14</p>
       <blockquote className="lp-quote"><Quote size={13} aria-hidden="true" />Maya Chen: I will make audit log export available to Northstar by 2026-09-14.<cite>Meeting · SRC-01</cite></blockquote>
       <ul className="lp-checks" aria-label="Delivery checks">

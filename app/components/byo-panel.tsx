@@ -170,7 +170,7 @@ export function ByoPanel({ draft, onChange, live, liveNote, running, continuatio
             <button className="text-button" onClick={() => { const example = exampleEvidence(); onChange({ ...draft, workspace: example.workspace, sources: example.sources, proposal: null, review: null }); setProblems([]); }}><ClipboardPaste size={12} />Load example evidence (fictional hotel chain)</button>
           </div>
         </div>}
-        {problems.length > 0 && <ul className="byo-problems" role="alert">{problems.map((problem) => <li key={problem}><AlertTriangle size={12} />{problem}</li>)}<li><button onClick={() => setProblems([])} aria-label="Dismiss"><X size={12} /></button></li></ul>}
+        {!locked && problems.length > 0 && <ul className="byo-problems" role="alert">{problems.map((problem) => <li key={problem}><AlertTriangle size={12} />{problem}</li>)}<li><button onClick={() => setProblems([])} aria-label="Dismiss"><X size={12} /></button></li></ul>}
         <div className="byo-meter" aria-live="polite"><span>{sources.length} of {BYO_LIMITS.maxSources} sources</span><span className="meter-bar" aria-hidden="true"><span style={{ width: `${Math.min(100, (usage.totalBytes / BYO_LIMITS.maxTotalBytes) * 100)}%` }} className={overTotal ? "over" : ""} /></span><span className={overTotal ? "over" : ""}>{bytes(usage.totalBytes)} of {bytes(BYO_LIMITS.maxTotalBytes)} bytes</span></div>
         {sources.length > 0 && <ol className="byo-sources">{sources.map((source, index) => {
           const injection = detectInjection(source.text);
@@ -181,7 +181,7 @@ export function ByoPanel({ draft, onChange, live, liveNote, running, continuatio
               <input aria-label={`Title of ${source.id}`} className="grow" value={source.title} maxLength={BYO_LIMITS.maxTitleChars} disabled={locked || running} onChange={(event) => updateSource(source.id, { title: event.target.value })} />
               <label className="byo-observed">Observed<input type="datetime-local" value={toLocalInput(source.observedAt)} disabled={locked || running} onChange={(event) => updateSource(source.id, { observedAt: fromLocalInput(event.target.value, source.observedAt) })} /></label>
               <span className="byo-size">{bytes(usage.perSource[index])} B</span>
-              {!locked && <button className="icon-button" aria-label={`Remove ${source.id}`} onClick={() => onChange({ ...draft, sources: sources.filter((candidate) => candidate.id !== source.id) })} disabled={running}><Trash2 size={13} /></button>}
+              {!locked && <button className="icon-button" aria-label={`Remove ${source.id}`} onClick={() => { onChange({ ...draft, sources: sources.filter((candidate) => candidate.id !== source.id) }); setProblems([]); }} disabled={running}><Trash2 size={13} /></button>}
             </div>
             {injection && <p className="byo-flag"><ShieldCheck size={12} />Addresses an AI system (“{injection}”). It stays evidence, never instructions.</p>}
             <details><summary>Preview text</summary><pre>{source.text}</pre></details>
