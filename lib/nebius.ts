@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ACCOUNT, FEATURE_IDS } from "./fixtures";
-import { validateExtraction } from "./reconcile";
+import { groundCommitments } from "./reconcile";
 import type { Source } from "./schema";
 import { EXTRACTION_PROMPT, extractionPrompt } from "./extraction-prompt";
 
@@ -202,8 +202,8 @@ export async function extractWithNebius(sources: Source[], fetcher: typeof fetch
   const featureIds = options.featureIds ?? FEATURE_IDS;
   const { system, user } = extractionMessages(sources, extractionPrompt(accountId, featureIds));
   const { content, trace } = await chatCompletion({ model, system, user, maxTokens: options.maxTokens ?? NEBIUS_MAX_OUTPUT_TOKENS, timeoutMs: options.timeoutMs ?? 60000, stream: options.stream, signal: options.signal, onProgress: options.onProgress, fetcher });
-  try {
-    const commitments = validateExtraction(JSON.parse(content), sources, accountId, [...featureIds]);
-    return { commitments, model: trace.model, runId: trace.runId as string, usage: trace.usage, trace };
-  } catch { throw new InferenceError("Model output failed source validation. No ungrounded commitments were accepted.", 502, "grounding", trace); }
+  let grounded: ReturnType<typeof groundCommitments>;
+  try { grounded = groundCommitments(JSON.parse(content), sources, accountId, [...featureIds]); } catch { grounded = { commitments: [], dropped: ["the output did not match the extraction format"] }; }
+  if (grounded.commitments.length === 0 && grounded.dropped.length > 0) throw new InferenceError("Model output failed source validation. No ungrounded commitments were accepted.", 502, "grounding", trace);
+  return { commitments: grounded.commitments, dropped: grounded.dropped, model: trace.model, runId: trace.runId as string, usage: trace.usage, trace };
 }

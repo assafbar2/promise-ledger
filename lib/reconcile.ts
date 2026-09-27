@@ -26,6 +26,40 @@ export function validateExtraction(input: unknown, sources: Source[], accountId:
   return commitments;
 }
 
+/**
+ * When a quote omits its speaker label, cite the label too: "Maya Chen: I will …" instead of
+ * "I will …", if and only if the source has exactly `${owner}: ` right before the quote. The
+ * quote stays exact source text and the owner-in-quote rule still applies unchanged.
+ */
+export function withSpeakerLabel(commitment: Commitment, sources: Source[]): Commitment {
+  const owner = commitment.owner;
+  if (!owner || commitment.evidence.some((evidence) => evidence.quote.includes(owner))) return commitment;
+  const index = commitment.evidence.findIndex((evidence) => sources.some((source) => source.id === evidence.sourceId && source.text.includes(`${owner}: ${evidence.quote}`)));
+  if (index < 0) return commitment;
+  const evidence = commitment.evidence.map((item, position) => position === index ? { ...item, quote: `${owner}: ${item.quote}` } : item);
+  return { ...commitment, evidence };
+}
+
+/**
+ * Model extraction, judged commitment by commitment. The envelope must be exact. A commitment that
+ * repeats a feature or ID, names an unknown feature, cites text that is not exactly in an
+ * in-account source, or whose owner or date is not in its quotes is dropped and reported; the
+ * rest are kept. Nothing ungrounded is accepted.
+ */
+export function groundCommitments(input: unknown, sources: Source[], accountId: string, featureIds: string[] | null): { commitments: Commitment[]; dropped: string[] } {
+  const { commitments: proposed } = extractionSchema.parse(input);
+  const commitments: Commitment[] = [];
+  const dropped: string[] = [];
+  for (const raw of proposed) {
+    if (commitments.some((kept) => kept.id === raw.id || kept.featureId === raw.featureId)) { dropped.push(`${raw.featureId.slice(0, 40)} appeared more than once`); continue; }
+    const commitment = withSpeakerLabel(raw, sources);
+    try { validateExtraction({ commitments: [commitment] }, sources, accountId, featureIds); commitments.push(commitment); } catch (error) {
+      dropped.push(`${commitment.featureId.slice(0, 40)}: ${error instanceof Error ? error.message.replace(/\.$/, "").toLowerCase() : "failed validation"}`);
+    }
+  }
+  return { commitments, dropped };
+}
+
 export function reconcile(commitment: Commitment, facts: ProductFact[], accountId: string, asOf: string, runtime?: { signals: readonly ProviderSignal[]; sources: readonly Source[] }, accountName = "Northstar"): ReconciledCommitment {
   const fact = facts.find((candidate) => candidate.featureId === commitment.featureId && candidate.accountId === accountId) ?? null;
   const base = { ...commitment, fact };

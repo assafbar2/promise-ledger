@@ -48,6 +48,9 @@ const COMMITMENT_LANGUAGE = /\b(?:i|we)\s+(?:will|'ll|shall|commit(?:ted)?|promi
 
 export type Routing = { extraction: Source[]; directToRules: Source[]; guardKept: string[] };
 
+/** Provider evidence (runtime errors, public claims) is never a customer promise, whatever triage says. */
+const NEVER_EXTRACTED: readonly Source["kind"][] = ["Runtime", "PublicClaim"];
+
 /**
  * Delivery evidence and unrelated sources skip model extraction (the rules engine reads curated
  * facts instead). Triage can only narrow what extraction reads; the recall guard keeps any source
@@ -58,6 +61,7 @@ export function routeSources(sources: Source[], labels: TriageLabel[], keepDeliv
   const directToRules: Source[] = [];
   const guardKept: string[] = [];
   for (const source of sources) {
+    if (NEVER_EXTRACTED.includes(source.kind)) { directToRules.push(source); continue; }
     const role = labels.find((label) => label.sourceId === source.id)?.role ?? "commitment";
     const skip = (role === "delivery-evidence" && !keepDeliveryEvidence) || role === "other";
     if (!skip) extraction.push(source);
@@ -67,8 +71,9 @@ export function routeSources(sources: Source[], labels: TriageLabel[], keepDeliv
   return { extraction, directToRules, guardKept };
 }
 
+/** Triage fallback: every source goes to extraction except provider evidence. */
 export function allSourcesRouting(sources: Source[]): Routing {
-  return { extraction: [...sources], directToRules: [], guardKept: [] };
+  return { extraction: sources.filter((source) => !NEVER_EXTRACTED.includes(source.kind)), directToRules: sources.filter((source) => NEVER_EXTRACTED.includes(source.kind)), guardKept: [] };
 }
 
 const REFERENCE_ROLE: Record<Source["kind"], TriageRole> = {
