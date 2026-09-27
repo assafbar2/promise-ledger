@@ -83,15 +83,50 @@ export function claimViolation(claim: Claim, section: Section, commitment: Recon
 export type BriefDecision = { commitmentId: string; brief: Brief | null; reason: string | null; citations: number };
 
 /**
+ * Source text as the narrative model sees it: double quotes become apostrophes, one character for
+ * one, so every offset still maps to the original. Copying a quote such as `title="…"` into a JSON
+ * string otherwise needs escapes, and one missed escape under JSON mode derails the whole output
+ * (seen live on September 27 with the Sentry runtime source).
+ */
+export function citableText(text: string) {
+  return text.replaceAll('"', "'");
+}
+
+/** The exact source excerpt a citation refers to, whether the model copied it verbatim or in citable form. */
+export function resolveQuote(source: Source, quote: string): string | null {
+  if (source.text.includes(quote)) return quote;
+  const index = citableText(source.text).indexOf(quote);
+  return index >= 0 ? source.text.slice(index, index + quote.length) : null;
+}
+
+/** Brief-shaped objects nested anywhere in the output, in document order, for salvage after a structural slip. */
+function nestedBriefs(input: unknown, topLevel: readonly unknown[]) {
+  const found: unknown[] = [];
+  const queue: { value: unknown; depth: number }[] = [{ value: input, depth: 0 }];
+  for (let visited = 0; queue.length > 0 && visited < 5000; visited++) {
+    const { value, depth } = queue.shift()!;
+    if (!value || typeof value !== "object" || depth > 12) continue;
+    if (!Array.isArray(value) && typeof (value as { commitmentId?: unknown }).commitmentId === "string" && !topLevel.includes(value)) found.push(value);
+    for (const child of Array.isArray(value) ? value : Object.values(value)) queue.push({ value: child, depth: depth + 1 });
+  }
+  return found;
+}
+
+/**
  * Validates model-written briefs against the deterministic results. The model cannot change a
  * verdict (the output has no verdict field, and delivery or access claims that contradict it are
  * rejected); every claim must cite exact quotes from the evidence supplied for that commitment;
  * new dates, timeframes and promises are rejected. A failing brief falls back to the template.
  */
 export function validateBriefs(input: unknown, commitments: ReconciledCommitment[], allowedSources: Map<string, Source[]>, accountName = "Northstar"): BriefDecision[] {
-  const { briefs } = narrativeOutputSchema.parse(input);
+  const top = narrativeOutputSchema.safeParse(input);
+  const topLevel = top.success ? top.data.briefs : [];
+  // Each brief is judged on its own: one malformed brief never costs the others, even when the
+  // model's slip nested them inside it. Top-level briefs win over nested copies.
+  const nested = nestedBriefs(input, topLevel);
+  if (!top.success && nested.length === 0) throw top.error;
   const decisions = new Map<string, BriefDecision>();
-  for (const raw of briefs) {
+  for (const raw of [...topLevel, ...nested]) {
     const commitmentId = typeof raw === "object" && raw !== null && "commitmentId" in raw && typeof raw.commitmentId === "string" ? raw.commitmentId : null;
     const commitment = commitments.find((candidate) => candidate.id === commitmentId);
     if (!commitmentId || !commitment || decisions.has(commitmentId)) continue;
@@ -105,8 +140,9 @@ export function validateBriefs(input: unknown, commitments: ReconciledCommitment
       for (const claim of parsed.data[section]) {
         for (const citation of claim.citations) {
           const source = sources.find((candidate) => candidate.id === citation.sourceId);
-          if (source?.text.includes(citation.quote)) { citations++; continue; }
-          const actual = sources.find((candidate) => candidate.text.includes(citation.quote));
+          const exact = source ? resolveQuote(source, citation.quote) : null;
+          if (exact) { citation.quote = exact; citations++; continue; }
+          const actual = sources.find((candidate) => resolveQuote(candidate, citation.quote));
           const named = citation.sourceId.slice(0, 40);
           reason ??= actual ? `attributes a quote to ${named} that actually comes from ${actual.id}`
             : source ? `cites a quote that is not exact text from ${named}`

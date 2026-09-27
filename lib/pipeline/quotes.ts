@@ -1,4 +1,5 @@
 import type { Evidence, Source } from "../schema";
+import { resolveQuote } from "./guardrails";
 
 const STRING = String.raw`"((?:[^"\\]|\\.)*)"`;
 const SOURCE_FIRST = new RegExp(String.raw`\{\s*"sourceId"\s*:\s*${STRING}\s*,\s*"quote"\s*:\s*${STRING}\s*\}`, "g");
@@ -25,7 +26,7 @@ export function createQuoteScanner(sources: Source[], accountId: string) {
       if (seen.has(key)) return;
       seen.add(key);
       const source = sources.find((candidate) => candidate.id === sourceId && candidate.accountId === accountId);
-      found.push({ sourceId, quote, matched: Boolean(source && quote.length >= 12 && source.text.includes(quote)) });
+      found.push({ sourceId, quote, matched: Boolean(source && quote.length >= 12 && resolveQuote(source, quote)) });
     };
     for (const match of content.matchAll(SOURCE_FIRST)) visit(decode(match[1]), decode(match[2]));
     for (const match of content.matchAll(QUOTE_FIRST)) visit(decode(match[2]), decode(match[1]));

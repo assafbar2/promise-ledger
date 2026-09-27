@@ -23,7 +23,14 @@ A visible **three-model NVIDIA Nemotron pipeline**, served by **Nebius Token Fac
 
 Every model-written claim must cite exact source text, and server-side guardrails reject new dates, new promises and verdict changes. The live agent view streams each step's model, latency, tokens, estimated cost and cited quotes as they happen. Nebius Token Factory supplies the inference API, so there is no GPU server to operate; every call runs server-side and the key never reaches the browser.
 
-Measured on synthetic data in September 2026: full live runs took 16–20 seconds at an estimated $0.008–$0.010 each against a $0.05 per-run ceiling ([pipeline check](docs/evaluation/PIPELINE-LIVE-2026-09-26.md)), the Super extraction step alone scored 7/8 development and 32/32 frozen held-out exact matches on September 19 ([evaluation](docs/evaluation/LIVE-RESULTS-2026-09-19.md)), and on September 27 the full Nano → Super → rules → Ultra pipeline scored 9/9 development and 31/32 held-out exact matches, with 26/26 Ultra briefs passing the guardrails ([pipeline evaluation](docs/evaluation/PIPELINE-EVAL-2026-09-27.md)). Those are a smoke test and small assistant-authored evaluations, not a real-world accuracy claim.
+**Full-pipeline evaluation, September 27, 2026** ([report](docs/evaluation/PIPELINE-EVAL-2026-09-27.md)), Nano → Super → rules → Ultra on synthetic, assistant-authored cases:
+
+| | Extraction exact match | Ultra briefs accepted by the guardrails |
+| --- | ---: | ---: |
+| Development (8 examples + Northstar demo pack) | 9/9 | 10/10 |
+| Frozen held-out | 31/32 (one grounding rejection) | 16/16 |
+
+These are small evaluations, not a real-world accuracy claim. Brief acceptance means the drafts passed the automated checks, not a human review. Full live runs take 16–20 seconds at an estimated $0.008–$0.010 each against a $0.05 per-run ceiling ([pipeline check](docs/evaluation/PIPELINE-LIVE-2026-09-26.md)). History: on September 19 the Super extraction step alone scored 7/8 development and 32/32 held-out ([evaluation](docs/evaluation/LIVE-RESULTS-2026-09-19.md)). The crashing-scenario brief fallback seen in production on September 27 is diagnosed and fixed in [crashing briefs](docs/evaluation/CRASHING-BRIEFS-2026-09-27.md).
 
 ## Try it
 
@@ -134,7 +141,7 @@ npm run eval:pipeline
 
 - **Hosted:** [promise-ledger-chi.vercel.app](https://promise-ledger-chi.vercel.app) on Vercel, with the live three-model pipeline open to everyone under rate limits, the Tavily public-claim check, Sentry runtime evidence in the crashing scenario, bring-your-own evidence and four sample accounts. See [deployment and access](docs/DEPLOYMENT.md).
 - **Source:** public at [`assafbar2/promise-ledger`](https://github.com/assafbar2/promise-ledger), MIT licensed.
-- **Checks:** 261 unit and service tests, the Worker production tests and the Vercel production tests pass, with type checking, lint and both builds.
+- **Checks:** 267 unit and service tests, the Worker production tests and the Vercel production tests pass, with type checking, lint and both builds.
 - **Open:** the demo video and final Devpost submission; see [current status](docs/STATUS.md) and the [hackathon checklist](docs/HACKATHON.md). By owner decision on September 26 the existing Nebius key is not rotated; the accepted risk is recorded in [security](SECURITY.md).
 
 ## Documentation

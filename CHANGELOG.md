@@ -8,7 +8,8 @@
 - The evaluation budget guard takes verified per-model prices (`NEBIUS_EVAL_PRICES`), a per-case reservation plan, and a guarded `fetch` that reconciles JSON and streamed usage.
 - Extraction prompt `commitment-extraction-v3`: a tentative idea that shares a source with firm commitments is kept as its own tentative record. Tuned on development inputs only.
 - `npm run eval` no longer rewrites `docs/evaluation/reference-report.json` on a clean checkout. `eval:live` and `eval:pipeline` write blocked and partial runs to the ignored `outputs/evaluation/runs/`, and only a complete run updates `*-latest.json`.
-- Known issue: `NEBIUS_STREAM=false` makes Nano triage fall back to all sources, because Token Factory returns its non-streamed answer in `message.reasoning`.
+- Fixed: `NEBIUS_STREAM=false` made Nano triage fall back to all sources, because Token Factory returns its non-streamed answer in `message.reasoning`. That field is now used when reasoning is off.
+- Fixed: the crashing scenario's Ultra briefs could all fall back. The Sentry source's double quotes reach Ultra as apostrophes, and citations are mapped back to the exact text. Each brief is validated on its own, including briefs a model slip nested inside another. The development pipeline set adds `dev-northstar-crashing`. See [crashing briefs](docs/evaluation/CRASHING-BRIEFS-2026-09-27.md).
 
 
 ### Bring-your-own evidence, sample accounts, workspaces and tour

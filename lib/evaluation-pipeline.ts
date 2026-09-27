@@ -6,7 +6,9 @@ import type { Emit } from "./pipeline/events";
 import { parseModelJson } from "./pipeline/json";
 import { PipelineError } from "./pipeline/run";
 import { allSourcesRouting, routeSources, validateTriage, type Routing, type TriageLabel } from "./pipeline/triage";
-import type { Analysis, ProductFact, Source, StepId, StepSummary } from "./schema";
+import { providersFor } from "./evidence/providers";
+import { collectEvidence } from "./evidence/registry";
+import type { Analysis, ProductFact, ProviderSignal, Source, StepId, StepSummary } from "./schema";
 
 export const PIPELINE_EVALUATION_VERSION = "pipeline-evaluation-v1";
 export const DELIVERY_SOURCE_ID = "EVAL-DELIVERY";
@@ -34,7 +36,7 @@ export function deliveryContext(asOf: string): { source: Source; facts: ProductF
   return { source, facts };
 }
 
-export type PipelineCase = ExtractionCase & { evidence: { sources: Source[]; facts: ProductFact[]; asOf: string } };
+export type PipelineCase = ExtractionCase & { evidence: { sources: Source[]; facts: ProductFact[]; signals?: ProviderSignal[]; asOf: string } };
 
 /** The case's own sources, unchanged, plus the fixed availability snapshot. Expected labels are the case's. */
 export function pipelineCase(sample: ExtractionCase, asOf: string): PipelineCase {
@@ -47,6 +49,16 @@ export function northstarPackCase(): PipelineCase {
   const { sources, facts } = createScenario("blocked");
   const expected: ExpectedCommitment[] = referenceCommitments.map(({ featureId, intent, owner, dueDate }) => ({ featureId, intent, owner, dueDate }));
   return { id: "dev-northstar-pack", category: "sample-pack", sources, expected, evidence: { sources, facts, asOf: AS_OF } };
+}
+
+/**
+ * The Northstar "crashing" scenario with the recorded Sentry issue and the recorded public-claim
+ * page, exactly as reference mode collects them. Development data: it gives Ultra a runtime source.
+ */
+export async function northstarCrashingCase(): Promise<PipelineCase> {
+  const { sources, facts, signals } = await collectEvidence({ accountId: ACCOUNT.id, featureIds: FEATURE_IDS, scenario: "crashing", mode: "reference", asOf: AS_OF, now: new Date().toISOString(), env: {} }, providersFor(ACCOUNT.id));
+  const expected: ExpectedCommitment[] = referenceCommitments.map(({ featureId, intent, owner, dueDate }) => ({ featureId, intent, owner, dueDate }));
+  return { id: "dev-northstar-crashing", category: "sample-pack-runtime", sources, expected, evidence: { sources, facts, signals, asOf: AS_OF } };
 }
 
 export type ModelCall = { model: string; content: string | null };
@@ -74,8 +86,11 @@ export function recordingFetcher(base: typeof fetch, calls: ModelCall[]): typeof
   };
 }
 export type PipelineRunOutput = { analysis: Analysis; calls: ModelCall[] };
-/** `observe` receives pipeline events so a case that throws still reports the steps (and usage) it reached. */
-export type PipelineCaseRunner = (sample: PipelineCase, observe: Emit) => Promise<PipelineRunOutput>;
+/**
+ * `observe` receives pipeline events and `calls` should collect each model call, so a case that
+ * throws still reports the steps, usage and last model output it reached.
+ */
+export type PipelineCaseRunner = (sample: PipelineCase, observe: Emit, calls: ModelCall[]) => Promise<PipelineRunOutput>;
 
 type StepRecord = Pick<StepSummary, "id" | "status" | "model" | "reportedModel" | "latencyMs" | "usage" | "costUsd" | "detail">;
 const stepRecord = ({ id, status, model, reportedModel, latencyMs, usage, costUsd, detail }: StepSummary): StepRecord => ({ id, status, model, reportedModel, latencyMs, usage, costUsd, detail });
@@ -96,8 +111,10 @@ export type PipelineCaseResult = {
   routing: Pick<Routing, "guardKept"> & { extraction: string[]; directToRules: string[]; conversationsSkipped: string[] } | null;
   steps: StepRecord[] | null;
   /** Committed items the rules handed to Ultra; `ultraCalled` is false when the step was skipped. */
-  briefs: { ultraCalled: boolean; targets: number; accepted: number; outcomes: BriefOutcome[] } | null;
+  briefs: { ultraCalled: boolean; targets: number; accepted: number; outcomes: BriefOutcome[]; rawOutput?: string | null } | null;
   error: { code: string; message: string; status: number | null } | null;
+  /** On errors only: the last model call's returned text (synthetic data), for diagnosis. */
+  failedOutput?: { model: string; content: string | null } | null;
 };
 
 export function unrunPipelineResults(cases: PipelineCase[], reason: string): PipelineCaseResult[] {
@@ -117,6 +134,13 @@ function triageRouting(sample: PipelineCase, analysis: Analysis, calls: ModelCal
   }
 }
 
+/** Ultra's returned text, kept only when a brief was rejected so failures can be diagnosed; synthetic data only. */
+function narrativeOutput(analysis: Analysis, calls: ModelCall[]) {
+  const model = analysis.pipeline.steps.find((step) => step.id === "narrative")?.model;
+  const content = model ? calls.find((call) => call.model === model)?.content ?? null : null;
+  return content === null ? null : content.slice(0, 20000);
+}
+
 export function scorePipelineCase(sample: PipelineCase, { analysis, calls }: PipelineRunOutput): PipelineCaseResult {
   const expected = normalizedCommitments(sample.expected);
   const actual = normalizedCommitments(analysis.commitments);
@@ -125,6 +149,7 @@ export function scorePipelineCase(sample: PipelineCase, { analysis, calls }: Pip
   const targets = analysis.commitments.filter((commitment) => commitment.intent === "committed");
   const outcomes = targets.map((commitment): BriefOutcome => ({ commitmentId: commitment.id, featureId: commitment.featureId, verdict: commitment.verdict, origin: commitment.narrative?.origin ?? "template", fallbackReason: commitment.narrative?.fallbackReason ?? null, customerUpdate: commitment.narrative?.customerUpdate.map((claim) => claim.text) ?? [] }));
   const { labels, routing } = triageRouting(sample, analysis, calls);
+  const accepted = outcomes.filter((outcome) => outcome.origin === "model").length;
   return {
     id: sample.id,
     category: sample.category,
@@ -137,7 +162,7 @@ export function scorePipelineCase(sample: PipelineCase, { analysis, calls }: Pip
     triageLabels: labels,
     routing: { extraction: routing.extraction.map((source) => source.id), directToRules: routing.directToRules.map((source) => source.id), guardKept: routing.guardKept, conversationsSkipped: routing.directToRules.filter((source) => CONVERSATIONS.includes(source.kind)).map((source) => source.id) },
     steps,
-    briefs: { ultraCalled: narrative?.status === "done" || narrative?.status === "fallback", targets: targets.length, accepted: outcomes.filter((outcome) => outcome.origin === "model").length, outcomes },
+    briefs: { ultraCalled: narrative?.status === "done" || narrative?.status === "fallback", targets: targets.length, accepted, outcomes, ...(accepted < targets.length ? { rawOutput: narrativeOutput(analysis, calls) } : {}) },
     error: null,
   };
 }
@@ -156,14 +181,16 @@ export async function runPipelineEvaluation(cases: PipelineCase[], runner: Pipel
       return results;
     }
     const reached = new Map<StepId, StepSummary>();
+    const calls: ModelCall[] = [];
     try {
-      results[index] = scorePipelineCase(sample, await runner(sample, (event) => { if (event.type === "step") reached.set(event.step.id, event.step); }));
+      results[index] = scorePipelineCase(sample, await runner(sample, (event) => { if (event.type === "step") reached.set(event.step.id, event.step); }, calls));
     } catch (error) {
       const known = error instanceof PipelineError || error instanceof InferenceError;
       const code = known ? error.code : "unexpected";
       const steps = [...reached.values()].map(stepRecord);
       const usage = steps.reduce<PipelineCaseResult["usage"]>((total, step) => step.usage ? { promptTokens: (total?.promptTokens ?? 0) + step.usage.promptTokens, completionTokens: (total?.completionTokens ?? 0) + step.usage.completionTokens } : total, null);
-      results[index] = { ...results[index], status: "error", steps: steps.length ? steps : null, usage, error: { code, message: known ? error.message : "Unexpected evaluation error; raw details withheld.", status: known ? error.status : null } };
+      const last = calls.at(-1);
+      results[index] = { ...results[index], status: "error", steps: steps.length ? steps : null, usage, failedOutput: last ? { model: last.model, content: last.content?.slice(0, 20000) ?? null } : null, error: { code, message: known ? error.message : "Unexpected evaluation error; raw details withheld.", status: known ? error.status : null } };
       if (FATAL.includes(code)) {
         for (let pending = index + 1; pending < results.length; pending++) results[pending] = { ...results[pending], error: { code: "not_run", message: "Stopped after a provider/configuration failure; no automatic retry.", status: null } };
         await checkpoint(results);

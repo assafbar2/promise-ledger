@@ -1,7 +1,7 @@
 import { configuration, NEBIUS_MAX_OUTPUT_TOKENS } from "../lib/nebius.ts";
 import { EXTRACTION_PROMPT, EXTRACTION_PROMPT_VERSION } from "../lib/extraction-prompt.ts";
 import { createEvaluationBudget, type PlannedRequest } from "../lib/evaluation-budget.ts";
-import { deliveryContext, HELD_OUT_AS_OF, northstarPackCase, PIPELINE_EVALUATION_VERSION, pipelineCase, recordingFetcher, runPipelineEvaluation, summarizePipelineEvaluation, unrunPipelineResults, type ModelCall, type PipelineCase, type PipelineCaseResult } from "../lib/evaluation-pipeline.ts";
+import { deliveryContext, HELD_OUT_AS_OF, northstarCrashingCase, northstarPackCase, PIPELINE_EVALUATION_VERSION, pipelineCase, recordingFetcher, runPipelineEvaluation, summarizePipelineEvaluation, unrunPipelineResults, type ModelCall, type PipelineCase, type PipelineCaseResult } from "../lib/evaluation-pipeline.ts";
 import { liveReportWriter, redact, reportStatus } from "../lib/evaluation-reports.ts";
 import { AS_OF, FEATURE_IDS } from "../lib/fixtures.ts";
 import { CHAT_TEMPLATE_OVERHEAD_TOKENS, NEMOTRON_ID, pipelineModels, STEP_LIMITS, stepReasoningEffort } from "../lib/pipeline/models.ts";
@@ -25,15 +25,21 @@ const plan = [...step(models.triage.model, STEP_LIMITS.triage, STEP_LIMITS.triag
 const budgetConfiguration = createEvaluationBudget(process.env, [...new Set(plan.map((request) => request.model))], Date.now, plan);
 const budget = budgetConfiguration.budget;
 const startedAt = new Date().toISOString();
-const reports = liveReportWriter({ startedAt, prefix: "pipeline-", scratch: process.argv.includes("--scratch") });
+const scratch = process.argv.includes("--scratch");
+const reports = liveReportWriter({ startedAt, prefix: "pipeline-", scratch });
+// Diagnosis only: select cases and repeat them. Never promoted, so committed reports stay one pass per case.
+const only = process.argv.find((argument) => argument.startsWith("--only="))?.slice(7).split(",").filter(Boolean) ?? null;
+const repeat = Number(process.argv.find((argument) => argument.startsWith("--repeat="))?.slice(9) ?? 1);
+if ((only || repeat !== 1) && !scratch) throw new Error("--only and --repeat are for diagnosis and require --scratch.");
+if (!Number.isSafeInteger(repeat) || repeat < 1 || repeat > 10) throw new Error("--repeat must be 1–10.");
+const select = (cases: PipelineCase[]) => Array.from({ length: repeat }, (_, round) => cases.filter((sample) => !only || only.includes(sample.id)).map((sample) => repeat === 1 ? sample : { ...sample, id: `${sample.id}#${round + 1}` })).flat();
 const suites: { name: string; cases: PipelineCase[]; datasetSha256: string; asOf: string }[] = [
-  { name: "development", cases: [...developmentCases.map((sample) => pipelineCase(sample, AS_OF)), northstarPackCase()], datasetSha256: hash(developmentCases), asOf: AS_OF },
-  { name: "held-out", cases: heldOutCases.map((sample) => pipelineCase(sample, HELD_OUT_AS_OF)), datasetSha256: hash(heldOutCases), asOf: HELD_OUT_AS_OF },
-].filter((suite) => selection === "all" || selection === suite.name);
+  { name: "development", cases: select([...developmentCases.map((sample) => pipelineCase(sample, AS_OF)), northstarPackCase(), await northstarCrashingCase()]), datasetSha256: hash(developmentCases), asOf: AS_OF },
+  { name: "held-out", cases: select(heldOutCases.map((sample) => pipelineCase(sample, HELD_OUT_AS_OF))), datasetSha256: hash(heldOutCases), asOf: HELD_OUT_AS_OF },
+].filter((suite) => (selection === "all" || selection === suite.name) && suite.cases.length > 0);
 let blockedReason = !apiKey ? "NEBIUS_API_KEY is missing. No provider inference request was made." : !NEMOTRON_ID.test(extractionModel) ? "A valid NVIDIA Nemotron model ID is required in NEBIUS_MODEL. No provider inference request was made." : budgetConfiguration.reason ?? "";
 
-const runCase = async (sample: PipelineCase, observe: Emit) => {
-  const calls: ModelCall[] = [];
+const runCase = async (sample: PipelineCase, observe: Emit, calls: ModelCall[]) => {
   const analysis = await runPipeline({ mode: "live", scenario: "blocked", account: "northstar", env, emit: observe, fetcher: recordingFetcher(budget!.fetcher(fetch), calls), evaluationEvidence: sample.evidence, now: sample.evidence.asOf });
   return { analysis, calls };
 };
@@ -63,7 +69,7 @@ for (const suite of suites) {
       deliveryContext: deliveryContext(suite.asOf).source,
       limitation: suite.name === "held-out"
         ? "Frozen held-out cases (assistant-authored, synthetic) plus one fixed availability snapshot per case. Not an independent benchmark. Do not tune against this set."
-        : "Development cases (the eight extraction examples plus the app's Northstar demo pack), not held-out evidence. Brief acceptance means Ultra's draft passed the deterministic guardrails, not a human quality review.",
+        : "Development cases (the eight extraction examples plus the app's Northstar demo pack in its blocked and crashing scenarios), not held-out evidence. Brief acceptance means Ultra's draft passed the deterministic guardrails, not a human quality review.",
       budget: budget?.snapshot() ?? { policy: "verified-free-credit-only", blockedReason: budgetConfiguration.reason },
       metrics,
       cases: results,
