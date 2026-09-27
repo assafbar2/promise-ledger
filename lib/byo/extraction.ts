@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FEATURE_SLUG, validateExtraction } from "../reconcile";
+import { FEATURE_SLUG, validateExtraction, withSpeakerLabel } from "../reconcile";
 import { commitmentSchema, evidenceSchema, type Commitment, type ProposedFact, type Source } from "../schema";
 import { BYO_LIMITS } from "./limits";
 import { BYO_ACCOUNT } from "./sources";
@@ -59,7 +59,8 @@ export function validateByoExtraction(input: unknown, sources: Source[]): ByoExt
     if (!parsed.success) { dropped.push("a commitment did not match the expected format"); continue; }
     const commitment = parsed.data;
     if (commitments.some((item) => item.featureId === commitment.featureId || item.id === commitment.id)) { dropped.push(`${commitment.featureId.slice(0, 40)} appeared more than once`); continue; }
-    try { validateExtraction({ commitments: [commitment] }, sources, BYO_ACCOUNT, null); commitments.push(commitment); } catch (error) {
+    const labelled = withSpeakerLabel(commitment, sources);
+    try { validateExtraction({ commitments: [labelled] }, sources, BYO_ACCOUNT, null); commitments.push(labelled); } catch (error) {
       dropped.push(`"${commitment.title.slice(0, 60)}": ${error instanceof Error ? error.message.replace(/\.$/, "").toLowerCase() : "failed validation"}`);
     }
   }

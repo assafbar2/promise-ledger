@@ -113,6 +113,10 @@ export type PipelineCaseResult = {
   /** Committed items the rules handed to Ultra; `ultraCalled` is false when the step was skipped. */
   briefs: { ultraCalled: boolean; targets: number; accepted: number; outcomes: BriefOutcome[]; rawOutput?: string | null } | null;
   error: { code: string; message: string; status: number | null } | null;
+  /** Commitments the grounding check dropped (the rest were kept). */
+  droppedCommitments?: string[];
+  /** Super's returned text when the case did not pass cleanly (mismatch or drops); synthetic data. */
+  extractionOutput?: string | null;
   /** On errors only: the last model call's returned text (synthetic data), for diagnosis. */
   failedOutput?: { model: string; content: string | null } | null;
 };
@@ -150,10 +154,13 @@ export function scorePipelineCase(sample: PipelineCase, { analysis, calls }: Pip
   const outcomes = targets.map((commitment): BriefOutcome => ({ commitmentId: commitment.id, featureId: commitment.featureId, verdict: commitment.verdict, origin: commitment.narrative?.origin ?? "template", fallbackReason: commitment.narrative?.fallbackReason ?? null, customerUpdate: commitment.narrative?.customerUpdate.map((claim) => claim.text) ?? [] }));
   const { labels, routing } = triageRouting(sample, analysis, calls);
   const accepted = outcomes.filter((outcome) => outcome.origin === "model").length;
+  const droppedCommitments = analysis.pipeline.checks.filter((check) => check.stepId === "extraction" && !check.ok && check.label.startsWith("Dropped: ")).map((check) => check.label.slice(9));
+  const passed = JSON.stringify(actual) === JSON.stringify(expected);
+  const extractionModel = analysis.pipeline.steps.find((step) => step.id === "extraction")?.model;
   return {
     id: sample.id,
     category: sample.category,
-    status: JSON.stringify(actual) === JSON.stringify(expected) ? "passed" : "failed",
+    status: passed ? "passed" : "failed",
     expected,
     actual,
     elapsedMs: analysis.elapsedMs,
@@ -163,6 +170,8 @@ export function scorePipelineCase(sample: PipelineCase, { analysis, calls }: Pip
     routing: { extraction: routing.extraction.map((source) => source.id), directToRules: routing.directToRules.map((source) => source.id), guardKept: routing.guardKept, conversationsSkipped: routing.directToRules.filter((source) => CONVERSATIONS.includes(source.kind)).map((source) => source.id) },
     steps,
     briefs: { ultraCalled: narrative?.status === "done" || narrative?.status === "fallback", targets: targets.length, accepted, outcomes, ...(accepted < targets.length ? { rawOutput: narrativeOutput(analysis, calls) } : {}) },
+    droppedCommitments,
+    ...(!passed || droppedCommitments.length ? { extractionOutput: calls.find((call) => call.model === extractionModel)?.content?.slice(0, 20000) ?? null } : {}),
     error: null,
   };
 }
@@ -248,6 +257,7 @@ export function summarizePipelineEvaluation(results: PipelineCaseResult[]) {
     },
     extractionStep: stepTotals(results, "extraction"),
     narrative: stepTotals(results, "narrative"),
+    droppedCommitments: results.reduce((total, result) => total + (result.droppedCommitments?.length ?? 0), 0),
     briefs: { casesWithUltraCall: briefs.length, targets, accepted, rejected: targets - accepted, acceptanceRate: targets ? accepted / targets : null, rejectionReasons: Object.fromEntries(reasons) },
   };
 }

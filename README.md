@@ -141,7 +141,7 @@ npm run eval:pipeline
 
 - **Hosted:** [promise-ledger-chi.vercel.app](https://promise-ledger-chi.vercel.app) on Vercel, with the live three-model pipeline open to everyone under rate limits, the Tavily public-claim check, Sentry runtime evidence in the crashing scenario, bring-your-own evidence and four sample accounts. See [deployment and access](docs/DEPLOYMENT.md).
 - **Source:** public at [`assafbar2/promise-ledger`](https://github.com/assafbar2/promise-ledger), MIT licensed.
-- **Checks:** 267 unit and service tests, the Worker production tests and the Vercel production tests pass, with type checking, lint and both builds.
+- **Checks:** 274 unit and service tests, the Worker production tests and the Vercel production tests pass, with type checking, lint and both builds.
 - **Open:** the demo video and final Devpost submission; see [current status](docs/STATUS.md) and the [hackathon checklist](docs/HACKATHON.md). By owner decision on September 26 the existing Nebius key is not rotated; the accepted risk is recorded in [security](SECURITY.md).
 
 ## Documentation

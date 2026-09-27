@@ -193,6 +193,10 @@ export async function executePipeline(options: PipelineOptions): Promise<Pipelin
   // 1. Triage
   let labels: TriageLabel[] = referenceTriage(sources, featureIds ?? []);
   let routing: Routing = allSourcesRouting(sources);
+  const fallbackRouted = () => {
+    const routed = allSourcesRouting(sources).extraction.length;
+    return routed === sources.length ? `All ${sources.length} sources go to extraction.` : `${routed} of ${sources.length} sources go to extraction; runtime and public-claim evidence goes straight to the rules.`;
+  };
   if (deciding) {
     if (!live) update("triage", { status: "done", latencyMs: 1, detail: "Routing ran in the extract step. No AI call." });
   } else if (!live) {
@@ -209,7 +213,7 @@ export async function executePipeline(options: PipelineOptions): Promise<Pipelin
     const skipReason = !model ? models.triage.disabledReason : bytes > STEP_LIMITS.triage.maxInputBytes ? "The source pack is larger than triage's input cap." : timeoutMs < 3000 ? "Not enough time left in this request." : reservation && !reservation.ok ? `Skipped because ${reservation.reason}.` : null;
     if (skipReason || !model || !reservation?.ok) {
       labels = sources.map((source) => ({ sourceId: source.id, role: "commitment", features: [], injectionSuspected: false }));
-      update("triage", { status: "skipped", detail: `${skipReason ?? "Triage is off."} All ${sources.length} sources go to extraction.` });
+      update("triage", { status: "skipped", detail: `${skipReason ?? "Triage is off."} ${fallbackRouted()}` });
     } else {
       update("triage", { status: "running", reservedUsd: reservation.reservedUsd, detail: `Classifying ${sources.length} sources…` });
       let trace: InferenceTrace | null = null;
@@ -230,7 +234,7 @@ export async function executePipeline(options: PipelineOptions): Promise<Pipelin
         } catch {
           labels = sources.map((source) => ({ sourceId: source.id, role: "commitment", features: [], injectionSuspected: false }));
           routing = allSourcesRouting(sources);
-          update("triage", { ...common, status: "fallback", detail: `Triage output failed validation, so all ${sources.length} sources go to extraction.` });
+          update("triage", { ...common, status: "fallback", detail: `Triage output failed validation. ${fallbackRouted()}` });
           check({ stepId: "triage", ok: false, label: "Triage output rejected; routing fell back to all sources" });
         }
       } catch (error) {
@@ -238,7 +242,7 @@ export async function executePipeline(options: PipelineOptions): Promise<Pipelin
         if (error instanceof InferenceError && (error.code === "http" || error.code === "rate_limit")) budget!.release("triage");
         const cost = budget!.settle("triage", failed?.usage ?? null);
         labels = sources.map((source) => ({ sourceId: source.id, role: "commitment", features: [], injectionSuspected: false }));
-        update("triage", { status: "fallback", reportedModel: failed?.model ?? null, latencyMs: failed?.elapsedMs ?? null, usage: usageOf(failed), costUsd: cost, reservedUsd: cost === null ? null : reservation.reservedUsd, detail: `${callFailure(error, model)}. All ${sources.length} sources go to extraction.` });
+        update("triage", { status: "fallback", reportedModel: failed?.model ?? null, latencyMs: failed?.elapsedMs ?? null, usage: usageOf(failed), costUsd: cost, reservedUsd: cost === null ? null : reservation.reservedUsd, detail: `${callFailure(error, model)}. ${fallbackRouted()}` });
       }
     }
   }
@@ -252,6 +256,7 @@ export async function executePipeline(options: PipelineOptions): Promise<Pipelin
   let facts: ProductFact[] = evidence.facts;
   let proposed: ByoExtraction | null = null;
   let extractionTrace: InferenceTrace | null = null;
+  let droppedCommitments: string[] = [];
   if (deciding) {
     try { commitments = validateExtraction({ commitments: deciding.commitments }, sources, BYO_ACCOUNT, null); } catch {
       throw new PipelineError("A confirmed commitment no longer matches its source text. Extract again.", 400, "byo_commitments");
@@ -301,10 +306,12 @@ export async function executePipeline(options: PipelineOptions): Promise<Pipelin
         const result = await extractWithNebius(routing.extraction, fetcher, { model, stream, accountId: account.id, featureIds: featureIds!, timeoutMs: Math.min(STEP_LIMITS.extraction.timeoutMs, timeLeft() - 3000), signal: options.signal, onProgress: progress("extraction", emitQuotes("extraction", scanExtraction)) });
         extractionTrace = result.trace;
         commitments = result.commitments;
+        droppedCommitments = result.dropped;
         emitQuotes("extraction", scanExtraction)(JSON.stringify({ commitments }));
       }
       const cost = budget!.settle("extraction", extractionTrace.usage);
-      update("extraction", { status: "done", reportedModel: extractionTrace.model, latencyMs: extractionTrace.elapsedMs, usage: usageOf(extractionTrace), runId: extractionTrace.runId, costUsd: cost, detail: proposed ? `${commitments.length} commitments and ${proposed.facts.length} availability facts proposed, each quoting its source.${proposed.dropped.length ? ` ${proposed.dropped.length} ungrounded item${proposed.dropped.length === 1 ? "" : "s"} dropped.` : ""}` : `${commitments.length} commitments accepted; owners and dates appear in their quotes.` });
+      update("extraction", { status: "done", reportedModel: extractionTrace.model, latencyMs: extractionTrace.elapsedMs, usage: usageOf(extractionTrace), runId: extractionTrace.runId, costUsd: cost, detail: proposed ? `${commitments.length} commitments and ${proposed.facts.length} availability facts proposed, each quoting its source.${proposed.dropped.length ? ` ${proposed.dropped.length} ungrounded item${proposed.dropped.length === 1 ? "" : "s"} dropped.` : ""}` : `${commitments.length} commitments accepted; owners and dates appear in their quotes.${droppedCommitments.length ? ` ${droppedCommitments.length} ungrounded commitment${droppedCommitments.length === 1 ? "" : "s"} dropped.` : ""}` });
+      for (const reason of droppedCommitments.slice(0, 6)) check({ stepId: "extraction", ok: false, label: `Dropped: ${reason}` });
     } catch (error) {
       const failed = error instanceof InferenceError ? error.trace : null;
       if (error instanceof InferenceError && (error.code === "http" || error.code === "rate_limit")) budget!.release("extraction");
