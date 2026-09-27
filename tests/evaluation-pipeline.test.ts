@@ -68,6 +68,7 @@ test("the demo pack runs all three models through the guard and scores extractio
   assert.deepEqual(upstream, [MODELS.triage, MODELS.extraction, MODELS.narrative]);
   assert.equal(results[0].status, "passed");
   assert.deepEqual(results[0].routing?.directToRules, ["SRC-02", "SRC-03", "SRC-05"]);
+  assert.equal(summarizePipelineEvaluation(results).triage.conversationsSkipped, 0);
   assert.deepEqual(results[0].briefs && [results[0].briefs.targets, results[0].briefs.accepted], [5, 5]);
   const metrics = summarizePipelineEvaluation(results);
   assert.equal(metrics.extraction.exactMatchRate, 1);
@@ -100,7 +101,7 @@ test("triage that routes a case away shows as a pipeline miss, not a Super miss"
   const results = await runPipelineEvaluation([tentative], run);
   assert.equal(results[0].status, "failed");
   assert.deepEqual(results[0].routing?.directToRules, ["EVAL-01", DELIVERY_SOURCE_ID]);
-  assert.equal(summarizePipelineEvaluation(results).triage.caseSourcesRoutedAway, 1);
+  assert.equal(summarizePipelineEvaluation(results).triage.conversationsSkipped, 1);
   assert.equal(results[0].briefs?.ultraCalled, false);
   assert.deepEqual(upstream, [MODELS.triage, MODELS.extraction]);
 });

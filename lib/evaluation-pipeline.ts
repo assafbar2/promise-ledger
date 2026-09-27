@@ -89,7 +89,8 @@ export type PipelineCaseResult = {
   usage: { promptTokens: number; completionTokens: number } | null;
   pipelineCostUsd: number | null;
   triageLabels: TriageLabel[] | null;
-  routing: Pick<Routing, "guardKept"> & { extraction: string[]; directToRules: string[] } | null;
+  /** `conversationsSkipped`: meeting or support sources triage kept from extraction (a possible recall loss). */
+  routing: Pick<Routing, "guardKept"> & { extraction: string[]; directToRules: string[]; conversationsSkipped: string[] } | null;
   steps: StepRecord[] | null;
   /** Committed items the rules handed to Ultra; `ultraCalled` is false when the step was skipped. */
   briefs: { ultraCalled: boolean; targets: number; accepted: number; outcomes: BriefOutcome[] } | null;
@@ -131,12 +132,14 @@ export function scorePipelineCase(sample: PipelineCase, { analysis, calls }: Pip
     usage: analysis.usage,
     pipelineCostUsd: analysis.pipeline.costUsd,
     triageLabels: labels,
-    routing: { extraction: routing.extraction.map((source) => source.id), directToRules: routing.directToRules.map((source) => source.id), guardKept: routing.guardKept },
+    routing: { extraction: routing.extraction.map((source) => source.id), directToRules: routing.directToRules.map((source) => source.id), guardKept: routing.guardKept, conversationsSkipped: routing.directToRules.filter((source) => CONVERSATIONS.includes(source.kind)).map((source) => source.id) },
     steps,
     briefs: { ultraCalled: narrative?.status === "done" || narrative?.status === "fallback", targets: targets.length, accepted: outcomes.filter((outcome) => outcome.origin === "model").length, outcomes },
     error: null,
   };
 }
+
+const CONVERSATIONS: Source["kind"][] = ["Meeting", "Support", "UserSupplied"];
 
 const FATAL = ["configuration", "transport", "http", "rate_limit", "run_budget", "budget_preflight", "unexpected"];
 
@@ -201,7 +204,7 @@ export function summarizePipelineEvaluation(results: PipelineCaseResult[]) {
     pipelineCostEstimateUsd: Math.round(results.reduce((total, result) => total + (result.pipelineCostUsd ?? 0), 0) * 1_000_000) / 1_000_000,
     triage: {
       ...stepTotals(results, "triage"),
-      caseSourcesRoutedAway: routed.reduce((total, result) => total + result.routing!.directToRules.filter((id) => id !== DELIVERY_SOURCE_ID).length, 0),
+      conversationsSkipped: routed.reduce((total, result) => total + result.routing!.conversationsSkipped.length, 0),
       deliverySnapshotsSentToExtraction: routed.filter((result) => result.routing!.extraction.includes(DELIVERY_SOURCE_ID)).length,
       guardKept: routed.reduce((total, result) => total + result.routing!.guardKept.length, 0),
     },
