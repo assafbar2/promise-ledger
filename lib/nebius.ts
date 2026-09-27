@@ -150,7 +150,7 @@ export async function chatCompletion(request: ChatRequest): Promise<{ content: s
   } catch { throw fail("Nebius could not complete the request. No results were substituted.", 504, "transport"); }
   trace.httpStatus = response.status;
   trace.requestId = response.headers.get("x-request-id");
-  if (!response.ok) throw fail(response.status === 429 ? "Nebius rate limit reached. Try again later." : `Nebius returned HTTP ${response.status}. Check the server-side configuration.`, response.status === 429 ? 429 : 502, response.status === 429 ? "rate_limit" : "http");
+  if (!response.ok) throw fail(response.status === 429 ? "Nebius rate limit reached. Try again later." : `The Nebius inference service is unavailable right now (HTTP ${response.status}). No results were substituted.`, response.status === 429 ? 429 : 502, response.status === 429 ? "rate_limit" : "http");
   let content: string | null;
   let finishReason: string | null;
   let refusal: string | null | undefined;
