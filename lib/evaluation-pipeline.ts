@@ -2,6 +2,7 @@ import type { ExpectedCommitment, ExtractionCase } from "../evals/types";
 import { normalizedCommitments, summarizeEvaluation, type EvaluationResult } from "./evaluation";
 import { ACCOUNT, AS_OF, createScenario, FEATURE_IDS, referenceCommitments } from "./fixtures";
 import { InferenceError } from "./nebius";
+import type { Emit } from "./pipeline/events";
 import { parseModelJson } from "./pipeline/json";
 import { PipelineError } from "./pipeline/run";
 import { allSourcesRouting, routeSources, validateTriage, type Routing, type TriageLabel } from "./pipeline/triage";
@@ -73,9 +74,11 @@ export function recordingFetcher(base: typeof fetch, calls: ModelCall[]): typeof
   };
 }
 export type PipelineRunOutput = { analysis: Analysis; calls: ModelCall[] };
-export type PipelineCaseRunner = (sample: PipelineCase) => Promise<PipelineRunOutput>;
+/** `observe` receives pipeline events so a case that throws still reports the steps (and usage) it reached. */
+export type PipelineCaseRunner = (sample: PipelineCase, observe: Emit) => Promise<PipelineRunOutput>;
 
 type StepRecord = Pick<StepSummary, "id" | "status" | "model" | "reportedModel" | "latencyMs" | "usage" | "costUsd" | "detail">;
+const stepRecord = ({ id, status, model, reportedModel, latencyMs, usage, costUsd, detail }: StepSummary): StepRecord => ({ id, status, model, reportedModel, latencyMs, usage, costUsd, detail });
 
 export type BriefOutcome = { commitmentId: string; featureId: string; verdict: string; origin: "model" | "template"; fallbackReason: string | null; customerUpdate: string[] };
 
@@ -117,7 +120,7 @@ function triageRouting(sample: PipelineCase, analysis: Analysis, calls: ModelCal
 export function scorePipelineCase(sample: PipelineCase, { analysis, calls }: PipelineRunOutput): PipelineCaseResult {
   const expected = normalizedCommitments(sample.expected);
   const actual = normalizedCommitments(analysis.commitments);
-  const steps = analysis.pipeline.steps.map(({ id, status, model, reportedModel, latencyMs, usage, costUsd, detail }) => ({ id, status, model, reportedModel, latencyMs, usage, costUsd, detail }));
+  const steps = analysis.pipeline.steps.map(stepRecord);
   const narrative = steps.find((step) => step.id === "narrative");
   const targets = analysis.commitments.filter((commitment) => commitment.intent === "committed");
   const outcomes = targets.map((commitment): BriefOutcome => ({ commitmentId: commitment.id, featureId: commitment.featureId, verdict: commitment.verdict, origin: commitment.narrative?.origin ?? "template", fallbackReason: commitment.narrative?.fallbackReason ?? null, customerUpdate: commitment.narrative?.customerUpdate.map((claim) => claim.text) ?? [] }));
@@ -152,12 +155,15 @@ export async function runPipelineEvaluation(cases: PipelineCase[], runner: Pipel
       await checkpoint(results);
       return results;
     }
+    const reached = new Map<StepId, StepSummary>();
     try {
-      results[index] = scorePipelineCase(sample, await runner(sample));
+      results[index] = scorePipelineCase(sample, await runner(sample, (event) => { if (event.type === "step") reached.set(event.step.id, event.step); }));
     } catch (error) {
       const known = error instanceof PipelineError || error instanceof InferenceError;
       const code = known ? error.code : "unexpected";
-      results[index] = { ...results[index], status: "error", error: { code, message: known ? error.message : "Unexpected evaluation error; raw details withheld.", status: known ? error.status : null } };
+      const steps = [...reached.values()].map(stepRecord);
+      const usage = steps.reduce<PipelineCaseResult["usage"]>((total, step) => step.usage ? { promptTokens: (total?.promptTokens ?? 0) + step.usage.promptTokens, completionTokens: (total?.completionTokens ?? 0) + step.usage.completionTokens } : total, null);
+      results[index] = { ...results[index], status: "error", steps: steps.length ? steps : null, usage, error: { code, message: known ? error.message : "Unexpected evaluation error; raw details withheld.", status: known ? error.status : null } };
       if (FATAL.includes(code)) {
         for (let pending = index + 1; pending < results.length; pending++) results[pending] = { ...results[pending], error: { code: "not_run", message: "Stopped after a provider/configuration failure; no automatic retry.", status: null } };
         await checkpoint(results);
@@ -189,8 +195,13 @@ function stepTotals(results: PipelineCaseResult[], id: StepId) {
 }
 
 export function summarizePipelineEvaluation(results: PipelineCaseResult[]) {
+  // Latency comes from completed cases only; usage is summed separately so errored cases still count.
   const asExtraction: EvaluationResult[] = results.map((result) => ({ id: result.id, category: result.category, status: result.status, expected: result.expected, actual: result.actual, trace: result.elapsedMs === null ? null : { requestedModel: "pipeline", model: null, runId: null, requestId: null, httpStatus: null, elapsedMs: result.elapsedMs, usage: result.usage }, error: result.error }));
-  const { latencyMs, recordedUsage, ...extraction } = summarizeEvaluation(asExtraction);
+  const summary = summarizeEvaluation(asExtraction);
+  const { latencyMs } = summary;
+  const extraction = { plannedCases: summary.plannedCases, executedCases: summary.executedCases, passed: summary.passed, failed: summary.failed, errors: summary.errors, notRun: summary.notRun, exactMatchRate: summary.exactMatchRate, acceptedOutputMetrics: summary.acceptedOutputMetrics, groundingRejections: summary.groundingRejections };
+  const usage = results.flatMap((result) => result.usage ? [result.usage] : []);
+  const recordedUsage = { casesWithUsage: usage.length, promptTokens: usage.reduce((total, value) => total + value.promptTokens, 0), completionTokens: usage.reduce((total, value) => total + value.completionTokens, 0) };
   const briefs = results.flatMap((result) => result.briefs?.ultraCalled ? [result.briefs] : []);
   const targets = briefs.reduce((total, brief) => total + brief.targets, 0);
   const accepted = briefs.reduce((total, brief) => total + brief.accepted, 0);

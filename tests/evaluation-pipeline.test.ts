@@ -4,6 +4,7 @@ import { developmentCases, datasetHash } from "../evals/suites.ts";
 import { heldOutCases } from "../evals/held-out-cases.ts";
 import { createEvaluationBudget, type PlannedRequest } from "../lib/evaluation-budget.ts";
 import { DELIVERY_SOURCE_ID, deliveryContext, HELD_OUT_AS_OF, northstarPackCase, pipelineCase, recordingFetcher, runPipelineEvaluation, summarizePipelineEvaluation, type ModelCall, type PipelineCase } from "../lib/evaluation-pipeline.ts";
+import type { Emit } from "../lib/pipeline/events.ts";
 import { runPipeline } from "../lib/pipeline/run.ts";
 import { AS_OF } from "../lib/fixtures.ts";
 import { MODELS, nebiusMock, type Reply, type Step } from "./helpers/nebius-mock.ts";
@@ -30,14 +31,14 @@ function makeBudget(overrides: Record<string, string> = {}) {
 
 function runner(budget: ReturnType<typeof makeBudget>, replies: (sample: PipelineCase) => Partial<Record<Step, Reply>>) {
   const upstream: string[] = [];
-  const run = async (sample: PipelineCase) => {
+  const run = async (sample: PipelineCase, observe: Emit) => {
     const mock = nebiusMock(replies(sample));
     const calls: ModelCall[] = [];
     const recording = recordingFetcher(budget.fetcher(async (input, init) => { upstream.push(String(JSON.parse(String(init?.body)).model)); return mock.fetcher(input, init); }), calls);
     const saved = process.env.NEBIUS_API_KEY;
     process.env.NEBIUS_API_KEY = "unit-test-key";
     try {
-      const analysis = await runPipeline({ mode: "live", scenario: "blocked", env: PIPELINE_ENV, fetcher: recording, evaluationEvidence: sample.evidence, now: sample.evidence.asOf });
+      const analysis = await runPipeline({ mode: "live", scenario: "blocked", env: PIPELINE_ENV, emit: observe, fetcher: recording, evaluationEvidence: sample.evidence, now: sample.evidence.asOf });
       return { analysis, calls };
     } finally { if (saved === undefined) delete process.env.NEBIUS_API_KEY; else process.env.NEBIUS_API_KEY = saved; }
   };
@@ -113,6 +114,8 @@ test("grounding failures are scored as errors and later cases still run", async 
   const { run } = runner(budget, (sample) => ({ triage: { content: triageFor(sample) }, extraction: { content: count++ === 0 ? bad : explicitExtraction } }));
   const results = await runPipelineEvaluation([explicit, explicit], run);
   assert.deepEqual(results.map((result) => [result.status, result.error?.code ?? null]), [["error", "grounding"], ["passed", null]]);
+  assert.deepEqual(results[0].steps?.map((step) => [step.id, step.status]), [["triage", "done"], ["extraction", "failed"]], "an errored case keeps the steps it reached");
+  assert.deepEqual(results[0].usage, { promptTokens: 1800, completionTokens: 800 });
   assert.equal(summarizePipelineEvaluation(results).extraction.exactMatchRate, 0.5);
 });
 

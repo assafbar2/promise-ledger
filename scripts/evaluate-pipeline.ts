@@ -6,6 +6,7 @@ import { liveReportWriter, redact, reportStatus } from "../lib/evaluation-report
 import { AS_OF, FEATURE_IDS } from "../lib/fixtures.ts";
 import { CHAT_TEMPLATE_OVERHEAD_TOKENS, NEMOTRON_ID, pipelineModels, STEP_LIMITS, stepReasoningEffort } from "../lib/pipeline/models.ts";
 import { NARRATIVE_PROMPT, NARRATIVE_PROMPT_VERSION } from "../lib/pipeline/narrative.ts";
+import type { Emit } from "../lib/pipeline/events.ts";
 import { runPipeline } from "../lib/pipeline/run.ts";
 import { TRIAGE_PROMPT_VERSION, triagePrompt } from "../lib/pipeline/triage.ts";
 import { datasetHash as hash, developmentCases, frozenHeldOutCases } from "../evals/suites.ts";
@@ -31,9 +32,9 @@ const suites: { name: string; cases: PipelineCase[]; datasetSha256: string; asOf
 ].filter((suite) => selection === "all" || selection === suite.name);
 let blockedReason = !apiKey ? "NEBIUS_API_KEY is missing. No provider inference request was made." : !NEMOTRON_ID.test(extractionModel) ? "A valid NVIDIA Nemotron model ID is required in NEBIUS_MODEL. No provider inference request was made." : budgetConfiguration.reason ?? "";
 
-const runCase = async (sample: PipelineCase) => {
+const runCase = async (sample: PipelineCase, observe: Emit) => {
   const calls: ModelCall[] = [];
-  const analysis = await runPipeline({ mode: "live", scenario: "blocked", account: "northstar", env, fetcher: recordingFetcher(budget!.fetcher(fetch), calls), evaluationEvidence: sample.evidence, now: sample.evidence.asOf });
+  const analysis = await runPipeline({ mode: "live", scenario: "blocked", account: "northstar", env, emit: observe, fetcher: recordingFetcher(budget!.fetcher(fetch), calls), evaluationEvidence: sample.evidence, now: sample.evidence.asOf });
   return { analysis, calls };
 };
 
