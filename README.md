@@ -23,6 +23,15 @@ A visible **three-model NVIDIA Nemotron pipeline**, served by **Nebius Token Fac
 
 Every model-written claim must cite exact source text, and server-side guardrails reject new dates, new promises and verdict changes. The live agent view streams each step's model, latency, tokens, estimated cost and cited quotes as they happen. Nebius Token Factory supplies the inference API, so there is no GPU server to operate; every call runs server-side and the key never reaches the browser.
 
+### Where Token Factory accelerated the workflow
+
+- **Three model sizes behind one API.** Nano, Super and Ultra are all served from the same OpenAI-compatible `chat/completions` endpoint with the same key, so the pipeline sizes each step to the job, as the track suggests: Nano for cheap triage, Super for grounded extraction, Ultra only for the reasoning-heavy explanation. Changing a step's model is one environment variable (`NEBIUS_TRIAGE_MODEL`, `NEBIUS_MODEL`, `NEBIUS_NARRATIVE_MODEL`), with no deployment or GPU work.
+- **Per-call usage makes cost a feature.** Streaming responses end with token usage (`stream_options.include_usage`), so every step in the agent view shows its real tokens and estimated cost, each live run is settled against a durable spend ledger, and the evaluation harness reconciles its budget guard against provider usage.
+- **Cheap enough to measure instead of guess.** The full-pipeline evaluation (203 calls) cost about $0.18, and reproducing and fixing the crashing-scenario extraction failures took 70 calls for about $0.22. Prompts and reasoning settings were tuned from those live runs: for example, `reasoning_effort: "none"` keeps Nano and Ultra inside their timeouts. See [Nebius setup and measurements](docs/NEBIUS.md#multi-model-pipeline--september-26-2026).
+- **JSON output and streaming on all three models** let one adapter (`lib/nebius.ts`) drive every step, with strict validation after each call.
+
+No other Nebius service is used: there is no Nebius AI Cloud compute, Serverless Endpoint or Serverless Job. The web app is hosted on Vercel and calls Token Factory at runtime.
+
 **Full-pipeline evaluation, September 27, 2026** ([report](docs/evaluation/PIPELINE-EVAL-2026-09-27.md)), Nano → Super → rules → Ultra on synthetic, assistant-authored cases:
 
 | | Extraction exact match | Ultra briefs accepted by the guardrails |
@@ -30,11 +39,11 @@ Every model-written claim must cite exact source text, and server-side guardrail
 | Development (8 examples + Northstar demo pack) | 9/9 | 10/10 |
 | Frozen held-out | 31/32 (one grounding rejection) | 16/16 |
 
-These are small evaluations, not a real-world accuracy claim. Brief acceptance means the drafts passed the automated checks, not a human review. Full live runs take 16–20 seconds at an estimated $0.008–$0.010 each against a $0.05 per-run ceiling ([pipeline check](docs/evaluation/PIPELINE-LIVE-2026-09-26.md)). History: on September 19 the Super extraction step alone scored 7/8 development and 32/32 held-out ([evaluation](docs/evaluation/LIVE-RESULTS-2026-09-19.md)). The crashing-scenario brief fallback seen in production on September 27 is diagnosed and fixed in [crashing briefs](docs/evaluation/CRASHING-BRIEFS-2026-09-27.md).
+These are small evaluations, not a real-world accuracy claim. Brief acceptance means the drafts passed the automated checks, not a human review. A full live run takes about 15–25 seconds at an estimated $0.008–$0.010, against a $0.05 per-run ceiling ([pipeline check](docs/evaluation/PIPELINE-LIVE-2026-09-26.md)); the crashing scenario, which also reads Sentry and Tavily, is at the slower end. History: on September 19 the Super extraction step alone scored 7/8 development and 32/32 held-out ([evaluation](docs/evaluation/LIVE-RESULTS-2026-09-19.md)). Two crashing-scenario failures seen in production on September 27 are diagnosed and fixed: Ultra briefs falling back ([crashing briefs](docs/evaluation/CRASHING-BRIEFS-2026-09-27.md)) and Super's extraction failing in about half of runs. After the extraction fix, 16/16 crashing-pack runs completed and 15/16 extracted exactly ([crashing extraction](docs/evaluation/CRASHING-EXTRACTION-2026-09-27.md)).
 
 ## Try it
 
-The hosted app at **[promise-ledger-chi.vercel.app](https://promise-ledger-chi.vercel.app)** runs the live three-model pipeline for anyone, with no sign-up or token. To protect free credits, live runs are rate-limited (5 per connection per hour and a shared daily cap); the reference replay is always available and makes no AI call.
+The hosted app at **[promise-ledger-chi.vercel.app](https://promise-ledger-chi.vercel.app)** runs the live three-model pipeline for anyone, with no sign-up or token. To protect free credits, live runs are rate-limited: 5 per connection per hour and 150 per day across all visitors, under a $40 lifetime spend cap. The current limits and remaining budget are public at [`/api/status`](https://promise-ledger-chi.vercel.app/api/status). The reference replay is always available and makes no AI call.
 
 1. Open **[the app](https://promise-ledger-chi.vercel.app/app)**. A 20-second tour starts on first visit.
 2. Select **Run evidence check** and watch the agent view. Audit log export lands on **Delivery gap**: built, but not enabled for Northstar.
@@ -76,7 +85,7 @@ flowchart LR
 
 - **Models read, rules decide, people send.** No model can set a product fact, change a verdict, invoke tools or send anything. A closed ticket never earns a green badge on its own.
 - **Public claims beside the verdict.** A runtime Tavily Extract call reads the fictional vendor's [public changelog](https://promise-ledger-chi.vercel.app/changelog). When it calls a feature generally available but this customer can't use it, the brief says “Publicly GA ≠ usable by this customer”. See [public-claim check](docs/TAVILY.md).
-- **Runtime errors as evidence.** In Northstar's “Enabled, but crashing” scenario, Sentry errors for this customer and feature after acceptance lower *verified* to *needs verification*; a quiet error feed never proves delivery. See [Sentry runtime evidence](docs/SENTRY.md).
+- **Runtime errors as evidence.** In Northstar's “Enabled, but crashing” scenario, Sentry errors for this customer and feature after acceptance lower *verified* to *needs verification*; a quiet error feed never proves delivery. A daily cron re-seeds the synthetic demo project and the check reads a 72-hour window, so the live event and user counts change from day to day. See [Sentry runtime evidence](docs/SENTRY.md).
 - **Bring your own evidence.** Paste notes, tickets, Slack threads or telemetry lines, or drop `.txt`, `.md`, `.csv` or `.eml` files. Super proposes commitments and availability facts with exact quotes; you confirm or correct each fact before the rules read it. See [architecture](docs/ARCHITECTURE.md#bring-your-own-evidence).
 - **Bounded and honest.** Each live run reserves its worst-case cost before any call. A failed extraction never substitutes a fixture; a failed triage or explain step falls back visibly, with the reason on screen. Reference mode is labelled “Replayed reference trace · no AI calls”.
 
@@ -93,7 +102,7 @@ Details: [architecture and trust boundaries](docs/ARCHITECTURE.md) and [design s
 - Editable customer drafts, explicit local review and export; source library; exportable activity log.
 - Workspaces saved in your browser (localStorage), with export, delete and clear-all from **Accounts**. A five-step, keyboard-accessible first-run tour.
 - Landing page, light and dark themes (following the OS until you choose), responsive layout down to 360 px, visible keyboard focus, and text colours checked against WCAG AA contrast.
-- Open, rate-limited live mode: per-IP hourly and shared daily caps, durable with free Upstash Redis, friendly limit messages with one-click reference fallback, a $0.05 per-run budget, and a durable lifetime spend cap (default $30) that turns live mode off, in favour of the reference replay, once it is reached or can't be verified.
+- Open, rate-limited live mode: per-IP hourly and shared daily caps, durable with free Upstash Redis, friendly limit messages with one-click reference fallback, a $0.05 per-run budget, and a durable lifetime spend cap ($40 on the hosted app, $30 by default) that turns live mode off, in favour of the reference replay, once it is reached or can't be verified.
 
 All four sample accounts and everyone in their evidence packs are fictional. Their snapshot is fixed to September 13, 2026; bring-your-own evidence is checked against today's date. No real CRM, support desk or customer system is connected. Reviews, activity and pasted sources stay in your browser; a live run sends the selected pack or your pasted evidence to Nebius for inference.
 
@@ -116,7 +125,20 @@ Follow [live setup](docs/NEBIUS.md). Provide a real Nebius key and an available 
 
 On Vercel, the owner sets these variables, names only: `NEBIUS_API_KEY` and `NEBIUS_MODEL` (required; `NEBIUS_MODEL` stays the Super extraction model); `KV_REST_API_URL` and `KV_REST_API_TOKEN` (created by the free Upstash integration; required for live mode, because the spend cap fails closed without them); `LIVE_SPEND_CAP_USD` (lifetime cap, default 30) and `LIVE_SPEND_LEDGER` (see [spend cap controls](docs/DEPLOYMENT.md#lifetime-spend-cap--owner-controls)); `DEMO_ACCESS_TOKEN`, `LIVE_RUNS_PER_DAY`, `LIVE_RUNS_PER_IP_PER_HOUR` and `LIVE_TOKEN_RUNS_PER_DAY` (optional); `TAVILY_API_KEY`, `TAVILY_ALLOWED_DOMAINS`, `TAVILY_CLAIM_URLS` and `TAVILY_DAILY_LIMIT` for the [public-claim check](docs/TAVILY.md); and the Sentry variables in [Sentry runtime evidence](docs/SENTRY.md). The pipeline works with its tested defaults. Optional overrides are `NEBIUS_TRIAGE_MODEL`, `NEBIUS_NARRATIVE_MODEL`, `NEBIUS_TRIAGE_REASONING_EFFORT`, `NEBIUS_NARRATIVE_REASONING_EFFORT`, `NEBIUS_STREAM` and `LIVE_RUN_BUDGET_USD`; see [Nebius setup](docs/NEBIUS.md#multi-model-pipeline--september-26-2026). See [owner setup](docs/DEPLOYMENT.md#owner-setup-for-open-live-mode) for the exact steps, including the Vercel WAF rule.
 
-Successful live responses expose real model/run provenance, usage and estimated cost per step. The web interface does not need to be hosted on Nebius: a runtime Token Factory inference call satisfies that part of the event's platform requirement. See the [verified submission checklist](docs/HACKATHON.md).
+Successful live responses expose real model/run provenance, usage and estimated cost per step. The web interface does not need to be hosted on Nebius: a runtime Token Factory inference call satisfies that part of the event's platform requirement. See the [hackathon checklist](docs/HACKATHON.md).
+
+## Services used
+
+| Service | How Promise Ledger uses it | At runtime? |
+| --- | --- | --- |
+| **Nebius Token Factory** | Inference API for the three NVIDIA Nemotron models above | Yes, every live run |
+| **NVIDIA Nemotron 3** Nano, Super, Ultra | Triage, extraction and explanation | Yes |
+| **Tavily** Extract | Reads the fictional vendor's public changelog for the public-claim check; reference mode replays a recorded response | Yes, live runs ([details](docs/TAVILY.md)) |
+| **Sentry** | Read-only issues API on a free demo project with synthetic errors, plus a daily Vercel Cron that re-seeds it | Yes, crashing scenario ([details](docs/SENTRY.md)) |
+| **Upstash Redis** (free) | Durable rate-limit counters, Tavily cache and daily cap, and the lifetime spend ledger, over plain HTTPS | Yes |
+| **Vercel** (Hobby) | Hosting and the daily cron | Yes |
+
+*Promise Ledger is a personal hackathon project. It is not a Sentry product, uses no Sentry customer data, and is not affiliated with or endorsed by Sentry. The Sentry integration reads only a free demo project that contains synthetic errors.*
 
 ## Validate
 
@@ -137,12 +159,12 @@ npm run eval:pipeline
 
 `test:render` builds and checks the Worker output, landing page, workbench and API routes. `test:vercel` does the same for the Vercel output, including the social card and icons. `eval` measures 18 deterministic rule cases, not model quality. It writes its run to the ignored `outputs/` directory and rewrites the committed `docs/evaluation/reference-report.json` only when a result changes, so a clean checkout stays clean. `eval:live` runs Super extraction on eight development examples and a separate frozen 32-case held-out set. `eval:pipeline` runs the whole three-model pipeline on the same sets plus the Northstar demo pack, and scores extraction exact match and Ultra brief acceptance. Both record actual latency, usage, IDs and failures, require a Nebius key, consume API credits and go through the [evaluation budget guard](docs/COST_POLICY.md#local-evaluation-guard). The held-out cases are assistant-authored synthetic examples, not an independent external benchmark. Without credentials, or when the guard blocks, the runner writes a blocked report to `outputs/evaluation/runs/` and never a fabricated score. Only a complete run updates the committed `*-latest.json` reports.
 
-## Status — September 26, 2026
+## Status — September 27, 2026
 
-- **Hosted:** [promise-ledger-chi.vercel.app](https://promise-ledger-chi.vercel.app) on Vercel, with the live three-model pipeline open to everyone under rate limits, the Tavily public-claim check, Sentry runtime evidence in the crashing scenario, bring-your-own evidence and four sample accounts. See [deployment and access](docs/DEPLOYMENT.md).
+- **Hosted:** [promise-ledger-chi.vercel.app](https://promise-ledger-chi.vercel.app) on Vercel, with the live three-model pipeline open to everyone under rate limits, the Tavily public-claim check, Sentry runtime evidence in the crashing scenario, bring-your-own evidence and four sample accounts. An anonymous live run of the crashing scenario on September 27 completed all three Nemotron steps with no fallback, 6/6 exact quotes and 5/5 briefs accepted, in 22.7 seconds for an estimated $0.0095. See [deployment and access](docs/DEPLOYMENT.md).
 - **Source:** public at [`assafbar2/promise-ledger`](https://github.com/assafbar2/promise-ledger), MIT licensed.
-- **Checks:** 274 unit and service tests, the Worker production tests and the Vercel production tests pass, with type checking, lint and both builds.
-- **Open:** the demo video and final Devpost submission; see [current status](docs/STATUS.md) and the [hackathon checklist](docs/HACKATHON.md). By owner decision on September 26 the existing Nebius key is not rotated; the accepted risk is recorded in [security](SECURITY.md).
+- **Checks:** from a clean clone, `npm ci` then `npm run check` passes 274 unit and service tests and 4 Worker production tests with type checking and lint, and `npm run test:vercel` passes 9 Vercel production tests.
+- **Open:** the Devpost submission and keeping live access funded through judging; see [current status](docs/STATUS.md) and the [hackathon checklist](docs/HACKATHON.md). By owner decision on September 26 the existing Nebius key is not rotated; the accepted risk is recorded in [security](SECURITY.md).
 
 ## Documentation
 
@@ -159,7 +181,7 @@ npm run eval:pipeline
 - [Security boundaries](SECURITY.md)
 - [Current status](docs/STATUS.md)
 
-React, TypeScript, Zod and Lucide sit on the Sites/Vinext structure. Local and Worker builds are preserved; the Vercel build uses the Nitro adapter. The landing page is `app/page.tsx`, the workbench is `app/app/page.tsx` with components in `app/components/`, evidence logic is in `lib/`, tests in `tests/`, and model development examples in `evals/`. No database is provisioned.
+React, TypeScript, Zod and Lucide sit on the Sites/Vinext structure. Local and Worker builds are preserved; the Vercel build uses the Nitro adapter. The landing page is `app/page.tsx`, the workbench is `app/app/page.tsx` with components in `app/components/`, evidence logic is in `lib/`, tests in `tests/`, and model development examples in `evals/`. There is no database; the only server-side storage is the free Upstash Redis store for counters, the Tavily cache and the spend ledger.
 
 ## License
 
