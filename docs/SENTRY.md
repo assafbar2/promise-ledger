@@ -6,7 +6,7 @@ Sentry is the fourth evidence family, after conversations, engineering records a
 
 In `reconcile()`, after the stale-evidence and "delivery gap" checks and before "verified delivered":
 
-> If the feature is built **and** enabled for the customer, and a Sentry issue tagged `customer:<account>` and `feature:<feature>` is unresolved, has a matching event within 72 hours of the fetch, and was last seen **after** the availability/acceptance snapshot, the verdict is **needs verification**. The reason reads, for example: "Enabled for Northstar, but failing at runtime (14 events, 3 users)."
+> If the feature is built **and** enabled for the customer, and a Sentry issue tagged `customer:<account>` and `feature:<feature>` is unresolved, has a matching event within 72 hours of the fetch, and was last seen **after** the availability/acceptance snapshot, the verdict is **needs verification**. The reason reads, for example: "Enabled for Northstar, but failing at runtime (14 events, 3 users)." That example is from a recorded run. Live counts change as the daily cron adds events inside the 72-hour window; a September 27 live run read 28 events.
 
 - A disabled or unbuilt feature keeps its verdict. Errors never soften "delivery gap".
 - No matching issue means the rule does not apply. Every other rule decides as before.
@@ -66,7 +66,7 @@ The names deliberately avoid `SENTRY_AUTH_TOKEN` and `SENTRY_DSN`, which Sentry 
 
 ## Seeding the demo project
 
-The free Developer-plan project `promise-ledger-demo` holds synthetic issues only. There is one headline issue, Northstar audit export (14 events, 3 users), and three decoys: Globex audit export, Initech SAML, and a Northstar feature outside the ledger.
+The free Developer-plan project `promise-ledger-demo` holds synthetic issues only. There is one headline issue, Northstar audit export (14 events and 3 users in the recorded reference response; the live count varies), and three decoys: Globex audit export, Initech SAML, and a Northstar feature outside the ledger.
 
 ```bash
 npm run seed:sentry                 # sends only scenarios not seen in 24 h
@@ -88,7 +88,7 @@ npm run sentry:check                # what the provider sees right now
 - a failed Sentry read returns 502 and sends nothing;
 - anything seen in the last 20 hours is skipped.
 
-At most 32 events a day is about 1,000 a month of the free 5,000. Two missed days still leave issues inside the 72-hour window, which covers the October recording and December judging. Daily sends also keep the data inside Sentry's 30-day retention.
+At most 32 events a day is about 1,000 a month of the free 5,000. Two missed days still leave issues inside the 72-hour window, which covers the October recording and December judging. Daily sends also keep the data inside Sentry's 30-day retention. Verified September 27, 2026: the cron re-seeded all four issues at 06:36 UTC, and a live run that afternoon read the headline issue with `lastSeen=2026-09-27T06:36:12Z`.
 
 ## Cost
 
