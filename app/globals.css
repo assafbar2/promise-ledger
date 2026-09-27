@@ -133,3 +133,16 @@
 .theme-toggle:hover{background:var(--surface-3);color:var(--text)}
 @media(max-width:680px){.topbar .breadcrumb,.topbar>div:first-child>svg{display:none}.demo-pill{white-space:nowrap}.theme-toggle{width:30px;height:30px}}
 .sidebar :focus-visible,.lp-band :focus-visible{outline-color:#8fcfa9}
+.changelog{max-width:42rem;margin:0 auto;padding:48px 24px;color:var(--text);line-height:1.6}
+.changelog h1{font-size:24px;font-weight:600;letter-spacing:-.4px;white-space:normal}
+.changelog-intro{margin-top:12px;font-size:14px;color:var(--text-2)}
+.changelog section{margin-top:32px;padding-top:24px;border-top:1px solid var(--line-strong)}
+.changelog h2{font-size:18px;font-weight:550}
+.changelog-date{font-size:12px;color:var(--text-3)}
+.changelog-claim{margin-top:8px}
+.not-found{max-width:36rem;min-height:100vh;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:48px 24px}
+.not-found h1{white-space:normal}
+.not-found>p:not(.eyebrow){font-size:15px;line-height:1.7;color:var(--text-2)}
+.not-found .eyebrow{margin:0}
+.not-found-mark{width:40px;height:44px;display:grid;place-items:center;border-radius:10px;background:var(--accent-bg-2);color:var(--accent-text)}
+.not-found-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
