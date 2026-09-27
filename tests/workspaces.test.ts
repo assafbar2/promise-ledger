@@ -30,6 +30,9 @@ test("workspaces round-trip through browser storage, and malformed entries are i
   raw.workspaces.push({ id: "evil:<script>", kind: "sample" }, { ...byo, id: "byo:ok2", scenario: "nope" });
   storage.setItem(STORAGE_KEY, JSON.stringify(raw));
   assert.deepEqual(loadStore(storage)?.workspaces.map((workspace) => workspace.id), [sampleWorkspaceId("northstar"), byo.id]);
+  const crashing = upsertWorkspace(store, { ...sample("northstar", "2026-09-26T09:00:00Z"), scenario: "crashing" });
+  saveStore(storage, crashing);
+  assert.equal(loadStore(storage)?.workspaces.find((workspace) => workspace.id === sampleWorkspaceId("northstar"))?.scenario, "crashing", "every demo scenario survives a reload");
   storage.setItem(STORAGE_KEY, "{not json");
   assert.equal(loadStore(storage), null);
   storage.setItem(STORAGE_KEY, JSON.stringify({ version: 2, activeId: "x", workspaces: [] }));

@@ -1,6 +1,6 @@
 import type { ByoReview } from "./byo/review";
 import type { ByoSourceInput } from "./byo/schema";
-import type { Analysis, ByoProposal, Scenario } from "./schema";
+import { requestSchema, type Analysis, type ByoProposal, type Scenario } from "./schema";
 
 export type Review = { commitmentId: string; text: string; approved: boolean; runId: string };
 export type AuditEvent = { id: number; title: string; detail: string };
@@ -44,7 +44,7 @@ function validWorkspace(value: unknown): value is SavedWorkspace {
   if (!isObject(value)) return false;
   const { id, kind, accountId, name, scenario, reviews, events, byo, analysis } = value;
   return typeof id === "string" && /^(sample|byo):[a-z0-9-]{1,40}$/.test(id) && (kind === "sample" || kind === "byo") && typeof accountId === "string" && typeof name === "string"
-    && (scenario === "blocked" || scenario === "enabled" || scenario === "stale") && Array.isArray(reviews) && Array.isArray(events)
+    && requestSchema.shape.scenario.safeParse(scenario).success && Array.isArray(reviews) && Array.isArray(events)
     && (analysis === null || (isObject(analysis) && Array.isArray(analysis.commitments) && Array.isArray(analysis.sources) && isObject(analysis.account)))
     && (byo === null || (isObject(byo) && Array.isArray(byo.sources) && typeof byo.workspace === "string"));
 }
