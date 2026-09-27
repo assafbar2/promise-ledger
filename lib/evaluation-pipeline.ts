@@ -49,6 +49,29 @@ export function northstarPackCase(): PipelineCase {
 }
 
 export type ModelCall = { model: string; content: string | null };
+
+/** Assistant content from a JSON completion or a server-sent event stream; null if there is none. */
+export function completionContent(text: string): string | null {
+  if (!/^\s*data:/m.test(text)) return (JSON.parse(text) as { choices?: { message?: { content?: string | null } }[] }).choices?.[0]?.message?.content ?? null;
+  let content = "";
+  for (const line of text.split(/\r?\n/)) {
+    const data = line.startsWith("data:") ? line.slice(5).trim() : "";
+    if (!data || data === "[DONE]") continue;
+    for (const choice of (JSON.parse(data) as { choices?: { delta?: { content?: string | null } }[] }).choices ?? []) content += choice.delta?.content ?? "";
+  }
+  return content || null;
+}
+
+/** Records each call's model and returned content for routing analysis; the response passes through unchanged. */
+export function recordingFetcher(base: typeof fetch, calls: ModelCall[]): typeof fetch {
+  return async (input, init) => {
+    const response = await base(input, init);
+    let content: string | null = null;
+    if (response.ok) { try { content = completionContent(await response.clone().text()); } catch { content = null; } }
+    calls.push({ model: String(JSON.parse(String(init?.body)).model), content });
+    return response;
+  };
+}
 export type PipelineRunOutput = { analysis: Analysis; calls: ModelCall[] };
 export type PipelineCaseRunner = (sample: PipelineCase) => Promise<PipelineRunOutput>;
 

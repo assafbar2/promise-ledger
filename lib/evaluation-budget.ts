@@ -120,19 +120,21 @@ class EvaluationBudget {
   /**
    * Guards every chat completion that goes through this fetch, whichever code path makes it. Each
    * request reserves its UTF-8 input bound (capped at the verified context) plus its own
-   * `max_tokens`, then settles from the JSON response's reported model and usage. Streaming
-   * requests are refused because their usage cannot be reconciled here.
+   * `max_tokens`, then settles from the reported model and usage: the JSON body, or for streams the
+   * final usage chunk (read in full before the caller sees the response). Streams must request
+   * `stream_options.include_usage`.
    */
   fetcher(base: typeof fetch = fetch): typeof fetch {
     return async (input, init) => {
-      let body: { model?: unknown; max_tokens?: unknown; stream?: unknown; messages?: { content?: unknown }[] };
+      let body: { model?: unknown; max_tokens?: unknown; stream?: unknown; stream_options?: { include_usage?: unknown }; messages?: { content?: unknown }[] };
       try { body = JSON.parse(String(init?.body ?? "")); } catch { throw new InferenceError("The evaluation guard could not read the request.", 503, "budget_preflight"); }
       const requestedModel = typeof body.model === "string" ? body.model : "";
       const price = this.price(requestedModel);
       const outputTokens = Number(body.max_tokens);
       if (!price) throw new InferenceError("No verified price for the requested model.", 503, "budget_preflight");
       if (!Number.isSafeInteger(outputTokens) || outputTokens <= 0) throw new InferenceError("Every guarded request needs a positive max_tokens.", 503, "budget_preflight");
-      if (body.stream === true) throw new InferenceError("Streaming usage cannot be reconciled by the evaluation guard.", 503, "budget_preflight");
+      const stream = body.stream === true;
+      if (stream && body.stream_options?.include_usage !== true) throw new InferenceError("Streaming requests must include usage so the evaluation guard can reconcile them.", 503, "budget_preflight");
       const encoder = new TextEncoder();
       const inputBytes = (body.messages ?? []).reduce((total, message) => total + encoder.encode(String(message.content ?? "")).length, 0);
       const inputTokens = Math.min(price.contextTokens, inputBytes + CHAT_TEMPLATE_OVERHEAD_TOKENS);
@@ -145,10 +147,7 @@ class EvaluationBudget {
         const response = await base(input, init);
         let trace: Settlement["trace"] = null;
         if (response.ok) {
-          try {
-            const parsed = await response.clone().json() as { model?: unknown; usage?: { prompt_tokens?: unknown; completion_tokens?: unknown } };
-            trace = { model: typeof parsed.model === "string" ? parsed.model : null, usage: parsed.usage ? { promptTokens: Number(parsed.usage.prompt_tokens), completionTokens: Number(parsed.usage.completion_tokens) } : null };
-          } catch { trace = null; }
+          try { trace = stream ? streamedUsage(await response.clone().text()) : responseUsage(await response.clone().json()); } catch { trace = null; }
         }
         this.settle({ ...settlement, trace });
         return response;
@@ -184,6 +183,27 @@ class EvaluationBudget {
 }
 
 export type { EvaluationBudget };
+
+type ReportedChunk = { model?: unknown; usage?: { prompt_tokens?: unknown; completion_tokens?: unknown } | null };
+
+function responseUsage(parsed: ReportedChunk): Pick<InferenceTrace, "model" | "usage"> {
+  return { model: typeof parsed.model === "string" ? parsed.model : null, usage: parsed.usage ? { promptTokens: Number(parsed.usage.prompt_tokens), completionTokens: Number(parsed.usage.completion_tokens) } : null };
+}
+
+/** The first reported model and the last usage object in a server-sent event stream. */
+function streamedUsage(text: string): Pick<InferenceTrace, "model" | "usage"> {
+  let model: string | null = null;
+  let usage: InferenceTrace["usage"] = null;
+  for (const line of text.split(/\r?\n/)) {
+    if (!line.startsWith("data:")) continue;
+    const data = line.slice(5).trim();
+    if (!data || data === "[DONE]") continue;
+    const chunk = responseUsage(JSON.parse(data));
+    model ??= chunk.model;
+    if (chunk.usage) usage = chunk.usage;
+  }
+  return { model, usage };
+}
 
 function verifiedPrices(environment: Record<string, string | undefined>): Map<string, VerifiedPrice> | string {
   const raw = environment.NEBIUS_EVAL_PRICES?.trim();

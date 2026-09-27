@@ -1,7 +1,7 @@
 import { configuration, NEBIUS_MAX_OUTPUT_TOKENS } from "../lib/nebius.ts";
 import { EXTRACTION_PROMPT, EXTRACTION_PROMPT_VERSION } from "../lib/extraction-prompt.ts";
 import { createEvaluationBudget, type PlannedRequest } from "../lib/evaluation-budget.ts";
-import { deliveryContext, HELD_OUT_AS_OF, northstarPackCase, PIPELINE_EVALUATION_VERSION, pipelineCase, runPipelineEvaluation, summarizePipelineEvaluation, unrunPipelineResults, type ModelCall, type PipelineCase, type PipelineCaseResult } from "../lib/evaluation-pipeline.ts";
+import { deliveryContext, HELD_OUT_AS_OF, northstarPackCase, PIPELINE_EVALUATION_VERSION, pipelineCase, recordingFetcher, runPipelineEvaluation, summarizePipelineEvaluation, unrunPipelineResults, type ModelCall, type PipelineCase, type PipelineCaseResult } from "../lib/evaluation-pipeline.ts";
 import { liveReportWriter, redact, reportStatus } from "../lib/evaluation-reports.ts";
 import { AS_OF, FEATURE_IDS } from "../lib/fixtures.ts";
 import { CHAT_TEMPLATE_OVERHEAD_TOKENS, NEMOTRON_ID, pipelineModels, STEP_LIMITS, stepReasoningEffort } from "../lib/pipeline/models.ts";
@@ -11,12 +11,13 @@ import { TRIAGE_PROMPT_VERSION, triagePrompt } from "../lib/pipeline/triage.ts";
 import { datasetHash as hash, developmentCases, frozenHeldOutCases } from "../evals/suites.ts";
 
 // Full live pipeline per case: Nano triage, Super extraction, deterministic rules, Ultra briefs.
-// Sequential, non-streaming, no retries; every call goes through the credit-only evaluation guard.
+// Sequential, streaming, no retries; every call goes through the credit-only evaluation guard.
 const selection = process.argv.find((argument) => argument.startsWith("--suite="))?.split("=")[1] ?? "all";
 if (!["all", "development", "held-out"].includes(selection)) throw new Error("Choose --suite=all, --suite=development, or --suite=held-out.");
 const heldOutCases = await frozenHeldOutCases();
 const { apiKey, model: extractionModel, accessToken } = configuration();
-const env = { ...process.env, NEBIUS_STREAM: "false" };
+// Streams like the app: non-streaming Nano (reasoning "none") returns its answer in `reasoning` with null content.
+const env = { ...process.env, NEBIUS_STREAM: "true" };
 const models = pipelineModels(env);
 const step = (model: string | null, limit: { maxInputBytes: number }, maxOutputTokens: number): PlannedRequest[] => model ? [{ model, inputTokens: limit.maxInputBytes + CHAT_TEMPLATE_OVERHEAD_TOKENS, maxOutputTokens }] : [];
 const plan = [...step(models.triage.model, STEP_LIMITS.triage, STEP_LIMITS.triage.maxOutputTokens), ...step(extractionModel || null, STEP_LIMITS.extraction, NEBIUS_MAX_OUTPUT_TOKENS), ...step(models.narrative.model, STEP_LIMITS.narrative, STEP_LIMITS.narrative.maxOutputTokens)];
@@ -31,16 +32,8 @@ const suites: { name: string; cases: PipelineCase[]; datasetSha256: string; asOf
 let blockedReason = !apiKey ? "NEBIUS_API_KEY is missing. No provider inference request was made." : !NEMOTRON_ID.test(extractionModel) ? "A valid NVIDIA Nemotron model ID is required in NEBIUS_MODEL. No provider inference request was made." : budgetConfiguration.reason ?? "";
 
 const runCase = async (sample: PipelineCase) => {
-  const guarded = budget!.fetcher(fetch);
   const calls: ModelCall[] = [];
-  const recording: typeof fetch = async (input, init) => {
-    const response = await guarded(input, init);
-    let content: string | null = null;
-    try { content = ((await response.clone().json()) as { choices?: { message?: { content?: string | null } }[] }).choices?.[0]?.message?.content ?? null; } catch { content = null; }
-    calls.push({ model: String(JSON.parse(String(init?.body)).model), content });
-    return response;
-  };
-  const analysis = await runPipeline({ mode: "live", scenario: "blocked", account: "northstar", env, fetcher: recording, evaluationEvidence: sample.evidence, now: sample.evidence.asOf });
+  const analysis = await runPipeline({ mode: "live", scenario: "blocked", account: "northstar", env, fetcher: recordingFetcher(budget!.fetcher(fetch), calls), evaluationEvidence: sample.evidence, now: sample.evidence.asOf });
   return { analysis, calls };
 };
 
@@ -58,7 +51,7 @@ for (const suite of suites) {
       updatedAt: new Date().toISOString(),
       models: { triage: models.triage.model, extraction: extractionModel || null, narrative: models.narrative.model },
       reasoningEffort: { ...stepReasoningEffort(env), extraction: "provider default" },
-      streaming: false,
+      streaming: true,
       prompts: {
         triage: { version: TRIAGE_PROMPT_VERSION, sha256: hash(triagePrompt(FEATURE_IDS)) },
         extraction: { version: EXTRACTION_PROMPT_VERSION, sha256: hash(EXTRACTION_PROMPT) },

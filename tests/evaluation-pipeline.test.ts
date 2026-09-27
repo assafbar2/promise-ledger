@@ -3,7 +3,7 @@ import test from "node:test";
 import { developmentCases, datasetHash } from "../evals/suites.ts";
 import { heldOutCases } from "../evals/held-out-cases.ts";
 import { createEvaluationBudget, type PlannedRequest } from "../lib/evaluation-budget.ts";
-import { DELIVERY_SOURCE_ID, deliveryContext, HELD_OUT_AS_OF, northstarPackCase, pipelineCase, runPipelineEvaluation, summarizePipelineEvaluation, type PipelineCase } from "../lib/evaluation-pipeline.ts";
+import { DELIVERY_SOURCE_ID, deliveryContext, HELD_OUT_AS_OF, northstarPackCase, pipelineCase, recordingFetcher, runPipelineEvaluation, summarizePipelineEvaluation, type ModelCall, type PipelineCase } from "../lib/evaluation-pipeline.ts";
 import { runPipeline } from "../lib/pipeline/run.ts";
 import { AS_OF } from "../lib/fixtures.ts";
 import { MODELS, nebiusMock, type Reply, type Step } from "./helpers/nebius-mock.ts";
@@ -20,7 +20,7 @@ const PLAN: PlannedRequest[] = [
   { model: MODELS.extraction, inputTokens: 16512, maxOutputTokens: 6000 },
   { model: MODELS.narrative, inputTokens: 16512, maxOutputTokens: 7000 },
 ];
-const PIPELINE_ENV = { NEBIUS_MODEL: MODELS.extraction, NEBIUS_STREAM: "false" };
+const PIPELINE_ENV = { NEBIUS_MODEL: MODELS.extraction };
 
 function makeBudget(overrides: Record<string, string> = {}) {
   const result = createEvaluationBudget({ ...GUARD_ENV, ...overrides }, Object.keys(PRICES), () => timestamp, PLAN);
@@ -32,13 +32,8 @@ function runner(budget: ReturnType<typeof makeBudget>, replies: (sample: Pipelin
   const upstream: string[] = [];
   const run = async (sample: PipelineCase) => {
     const mock = nebiusMock(replies(sample));
-    const calls: { model: string; content: string | null }[] = [];
-    const guarded = budget.fetcher(async (input, init) => { upstream.push(String(JSON.parse(String(init?.body)).model)); return mock.fetcher(input, init); });
-    const recording: typeof fetch = async (input, init) => {
-      const response = await guarded(input, init);
-      calls.push({ model: String(JSON.parse(String(init?.body)).model), content: ((await response.clone().json()) as { choices?: { message?: { content?: string } }[] }).choices?.[0]?.message?.content ?? null });
-      return response;
-    };
+    const calls: ModelCall[] = [];
+    const recording = recordingFetcher(budget.fetcher(async (input, init) => { upstream.push(String(JSON.parse(String(init?.body)).model)); return mock.fetcher(input, init); }), calls);
     const saved = process.env.NEBIUS_API_KEY;
     process.env.NEBIUS_API_KEY = "unit-test-key";
     try {
@@ -133,13 +128,13 @@ test("missing provider usage stops the guard; the rest of the suite is not run a
   assert.equal(metrics.briefs.acceptanceRate, null);
 });
 
-test("the guard refuses unpriced models, streaming and unaffordable cases before any provider call", async () => {
+test("the guard refuses unpriced models, usage-less streams and unaffordable cases before any provider call", async () => {
   const budget = makeBudget();
   let calls = 0;
   const guarded = budget.fetcher(async () => { calls++; return new Response("{}"); });
   const request = (body: Record<string, unknown>) => guarded("https://api.tokenfactory.nebius.com/v1/chat/completions", { method: "POST", body: JSON.stringify(body) });
   await assert.rejects(request({ model: "nvidia/unpriced-Nemotron", max_tokens: 10, messages: [] }), /No verified price/);
-  await assert.rejects(request({ model: MODELS.triage, max_tokens: 10, stream: true, messages: [] }), /Streaming/);
+  await assert.rejects(request({ model: MODELS.triage, max_tokens: 10, stream: true, messages: [] }), /Streaming requests must include usage/);
   await assert.rejects(request({ model: MODELS.triage, messages: [] }), /max_tokens/);
   assert.equal(calls, 0);
   const tight = createEvaluationBudget({ ...GUARD_ENV, NEBIUS_EVAL_BUDGET_USD: "0.04" }, Object.keys(PRICES), () => timestamp, PLAN);
@@ -159,4 +154,23 @@ test("a guarded request reserves its UTF-8 input bound and settles to reported u
   const over = makeBudget();
   await over.fetcher(async () => Response.json({ id: "x", model: MODELS.triage, choices: [], usage: { prompt_tokens: 2000, completion_tokens: 1 } }))("https://api.tokenfactory.nebius.com/v1/chat/completions", { method: "POST", body: JSON.stringify({ model: MODELS.triage, max_tokens: 10, messages: [{ role: "user", content: "short" }] }) });
   assert.match(over.blockReason() ?? "", /token bounds/);
+});
+
+test("streamed completions settle from the final usage chunk before the caller reads them", async () => {
+  const budget = makeBudget();
+  const chunks = [
+    { id: "s", model: MODELS.triage, choices: [{ delta: { content: '{"sources":' }, finish_reason: null }] },
+    { id: "s", model: MODELS.triage, choices: [{ delta: { content: "[]}" }, finish_reason: "stop" }] },
+    { id: "s", model: MODELS.triage, choices: [], usage: { prompt_tokens: 400, completion_tokens: 80 } },
+  ];
+  const body = `${chunks.map((chunk) => `data: ${JSON.stringify(chunk)}\n\n`).join("")}data: [DONE]\n\n`;
+  const calls: ModelCall[] = [];
+  const guarded = recordingFetcher(budget.fetcher(async () => new Response(body, { headers: { "Content-Type": "text/event-stream" } })), calls);
+  const response = await guarded("https://api.tokenfactory.nebius.com/v1/chat/completions", { method: "POST", body: JSON.stringify({ model: MODELS.triage, max_tokens: 3000, stream: true, stream_options: { include_usage: true }, messages: [{ role: "user", content: "hello" }] }) });
+  assert.equal(budget.snapshot().accountedUsd, Math.ceil(400 * 0.06 + 80 * 0.24) / 1_000_000);
+  assert.equal(await response.text(), body);
+  assert.deepEqual(calls, [{ model: MODELS.triage, content: '{"sources":[]}' }]);
+  const missing = makeBudget();
+  await missing.fetcher(async () => new Response(`data: ${JSON.stringify(chunks[0])}\n\ndata: [DONE]\n\n`, { headers: { "Content-Type": "text/event-stream" } }))("https://api.tokenfactory.nebius.com/v1/chat/completions", { method: "POST", body: JSON.stringify({ model: MODELS.triage, max_tokens: 3000, stream: true, stream_options: { include_usage: true }, messages: [] }) });
+  assert.match(missing.blockReason() ?? "", /reconciled/);
 });
