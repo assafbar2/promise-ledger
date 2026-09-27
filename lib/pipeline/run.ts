@@ -43,6 +43,8 @@ export type PipelineOptions = {
   /** Verified by the service before a live decide step; carries the extraction's steps and cost. */
   continuation?: ContinuationPayload | null;
   now?: string;
+  /** Live mode only; lets the caller read what was spent even when the run throws. */
+  budget?: RunBudget;
 };
 
 export type PipelineOutcome = { kind: "analysis"; analysis: Analysis } | { kind: "proposal"; proposal: ByoProposal };
@@ -84,6 +86,11 @@ function confirmedFacts(byo: Extract<ByoRequest, { phase: "decide" }>, sources: 
   });
 }
 
+/** A live bring-your-own decide step spends only what its extraction left of the one per-run budget. */
+export function liveRunLimitUsd(env: Env, prior: ContinuationPayload | null | undefined) {
+  return Math.max(0, runBudgetUsd(env) - (prior?.costUsd ?? 0));
+}
+
 export async function executePipeline(options: PipelineOptions): Promise<PipelineOutcome> {
   const env = options.env ?? process.env;
   const emit: Emit = options.emit ?? (() => {});
@@ -117,7 +124,7 @@ export async function executePipeline(options: PipelineOptions): Promise<Pipelin
   const { sources } = evidence;
   const models = pipelineModels(env);
   const budgetUsd = live ? runBudgetUsd(env) : null;
-  const budget = live ? new RunBudget(Math.max(0, runBudgetUsd(env) - (prior?.costUsd ?? 0))) : null;
+  const budget = live ? options.budget ?? new RunBudget(liveRunLimitUsd(env, prior)) : null;
   const checks: PipelineCheck[] = [...(prior?.checks ?? [])];
   const extractionEngine = byo && !live ? (deciding?.extractor === "nemotron" ? "confirmed" : "pattern") : "fixture";
   const steps: Record<StepId, StepSummary> = live

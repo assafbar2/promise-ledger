@@ -27,7 +27,7 @@ import { clearStore, exportPayload, loadStore, newByoWorkspace, removeWorkspace,
 import "@/app/components/workspace.css";
 
 type View = "ledger" | "review" | "sources" | "activity" | "accounts" | "byo";
-type LiveAccess = { open: boolean; perIpPerHour: number; perDay: number; durableLimits: boolean; ownerToken: boolean; models: PlannedModels };
+type LiveAccess = { open: boolean; perIpPerHour: number; perDay: number; durableLimits: boolean; ownerToken: boolean; spendOk: boolean; models: PlannedModels };
 
 function parseLiveAccess(status: unknown): LiveAccess | null {
   if (typeof status !== "object" || status === null || !("liveConfigured" in status) || status.liveConfigured !== true || !("liveAccess" in status)) return null;
@@ -37,7 +37,8 @@ function parseLiveAccess(status: unknown): LiveAccess | null {
   const pipeline = "pipeline" in status && typeof status.pipeline === "object" && status.pipeline !== null ? status.pipeline as Record<string, unknown> : {};
   const modelId = (entry: unknown) => typeof entry === "object" && entry !== null && "id" in entry && typeof entry.id === "string" ? entry.id : null;
   const extraction = modelId(pipeline.extraction) ?? ("model" in status && typeof status.model === "string" ? status.model : null);
-  return { open: value.open === true, perIpPerHour: typeof value.perIpPerHour === "number" ? value.perIpPerHour : 0, perDay: typeof value.perDay === "number" ? value.perDay : 0, durableLimits: value.durableLimits === true, ownerToken: value.ownerToken === true, models: { triage: modelId(pipeline.triage), extraction, narrative: modelId(pipeline.narrative) } };
+  const spendOk = "spend" in status && typeof status.spend === "object" && status.spend !== null && (status.spend as Record<string, unknown>).available === true;
+  return { open: value.open === true, perIpPerHour: typeof value.perIpPerHour === "number" ? value.perIpPerHour : 0, perDay: typeof value.perDay === "number" ? value.perDay : 0, durableLimits: value.durableLimits === true, ownerToken: value.ownerToken === true, spendOk, models: { triage: modelId(pipeline.triage), extraction, narrative: modelId(pipeline.narrative) } };
 }
 
 const SOURCE_KIND_LABEL: Record<SourceKind, string> = { Meeting: "Meeting", Support: "Support", Engineering: "Engineering", Availability: "Availability", PublicClaim: "Public claim", Runtime: "Runtime errors", UserSupplied: "User supplied" };
@@ -116,7 +117,7 @@ export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [liveAccess, setLiveAccess] = useState<LiveAccess | null>(null);
   const liveConfigured = liveAccess !== null;
-  const liveSelectable = liveConfigured && (liveAccess.open || liveAccess.ownerToken);
+  const liveSelectable = liveConfigured && liveAccess.spendOk && (liveAccess.open || liveAccess.ownerToken);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [trace, setTrace] = useState<TraceState | null>(null);
   const [traceExpanded, setTraceExpanded] = useState(true);
@@ -140,7 +141,7 @@ export default function Home() {
     fetch("/api/status", { signal: controller.signal }).then((response) => response.json()).then((status) => {
       const access = parseLiveAccess(status);
       setLiveAccess(access);
-      if (access?.open) setMode("live");
+      if (access?.open && access.spendOk) setMode("live");
     }).catch(() => {});
     return () => controller.abort();
   }, []);
@@ -303,6 +304,10 @@ export default function Home() {
       const result: unknown = await response.json().catch(() => null);
       const details = typeof result === "object" && result !== null ? result as Record<string, unknown> : {};
       setOfferReference(runMode === "live" && (details.fallback === "reference" || response.status === 429));
+      if (typeof details.code === "string" && details.code.startsWith("live_spend_")) {
+        setLiveAccess((previous) => previous && { ...previous, spendOk: false });
+        setMode("reference");
+      }
       throw new Error(typeof details.error === "string" ? details.error : response.status === 429 ? "Too many requests from your connection right now. Wait a minute and try again." : "The evidence check failed.");
     }
     setTraceExpanded(true);
@@ -451,7 +456,7 @@ export default function Home() {
           <section className="page-heading"><div><div className="eyebrow"><span />THE CUSTOMER REALITY CHECK</div><h1>{titleA}<br className="mobile-break" /> <span>{titleB}</span></h1><p>{subtitle}</p></div>{view !== "byo" && <button className="button primary run-button" onClick={() => runAnalysis()} disabled={running} data-tour="run">{byoActive ? <ClipboardPaste size={16} /> : <Sparkles size={16} className={running ? "spinning" : ""} />}{running ? "Checking evidence…" : byoActive ? "Review your evidence" : "Run evidence check"}</button>}</section>
 
           {view !== "accounts" && <section className="demo-toolbar" aria-label="Analysis controls">{pack ? <div><FlaskConical size={15} /><strong>Demo scenario</strong><select aria-label="Demo scenario" value={scenario} onChange={(event) => setScenario(event.target.value as Scenario)} disabled={running}>{pack.scenarios.map((option) => <option key={option} value={option}>{SCENARIO_LABEL[option]}</option>)}</select></div> : <div><ClipboardPaste size={15} /><strong>Your evidence</strong><span className="toolbar-note">{byoDraft?.sources.length ?? 0} sources · checked against today’s date · never sent to a customer</span></div>}<button className="text-button" onClick={() => setSettingsOpen(!settingsOpen)}>{mode === "live" ? "Engine: live Nemotron · rate-limited" : "Reference mode · no AI call"}<Settings2 size={13} /></button></section>}
-          {settingsOpen && <section className="settings-panel" aria-label="Demo settings"><div><h3>Choose your evidence engine</h3><p>Live mode runs a multi-model NVIDIA Nemotron pipeline on Nebius: Nano triages sources, Super extracts commitments, deterministic rules decide, then Ultra explains and drafts. Reference mode replays the same steps with hand-labelled fixtures and template drafts, with no AI call.</p></div><label>Engine<select value={mode} onChange={(event) => setMode(event.target.value as "reference" | "live")} disabled={running}><option value="live" disabled={!liveSelectable}>Nebius + NVIDIA Nemotron{!liveConfigured ? " · not configured" : !liveSelectable ? " · paused" : ""}</option><option value="reference">Reference fixture · no external call</option></select></label>{mode === "live" && liveAccess?.ownerToken && <details className="owner-token"><summary>Owner access token (optional)</summary><label>Token for higher limits<input type="password" autoComplete="off" value={accessToken} onChange={(event) => setAccessToken(event.target.value)} placeholder="Leave empty for open live mode" /></label></details>}<p className="settings-footnote">{liveAccess?.open ? `Live runs are open to everyone, no token needed. To protect free credits they are limited to ${liveAccess.perIpPerHour} per hour per connection and ${liveAccess.perDay} per day overall; a full pipeline, including a bring-your-own extraction and its confirmation, counts as one run. Only the selected sample pack, or the evidence you add, is sent to Nebius. Reference mode is always available.` : liveConfigured ? "Open live runs are paused by the project owner. Reference mode is always available." : "Live inference is not configured on this server. Reference mode is always available."}</p></section>}
+          {settingsOpen && <section className="settings-panel" aria-label="Demo settings"><div><h3>Choose your evidence engine</h3><p>Live mode runs a multi-model NVIDIA Nemotron pipeline on Nebius: Nano triages sources, Super extracts commitments, deterministic rules decide, then Ultra explains and drafts. Reference mode replays the same steps with hand-labelled fixtures and template drafts, with no AI call.</p></div><label>Engine<select value={mode} onChange={(event) => setMode(event.target.value as "reference" | "live")} disabled={running}><option value="live" disabled={!liveSelectable}>Nebius + NVIDIA Nemotron{!liveConfigured ? " · not configured" : !liveSelectable ? " · paused" : ""}</option><option value="reference">Reference fixture · no external call</option></select></label>{mode === "live" && liveAccess?.ownerToken && <details className="owner-token"><summary>Owner access token (optional)</summary><label>Token for higher limits<input type="password" autoComplete="off" value={accessToken} onChange={(event) => setAccessToken(event.target.value)} placeholder="Leave empty for open live mode" /></label></details>}<p className="settings-footnote">{liveAccess && !liveAccess.spendOk ? "Live runs are off: this demo has used its free-credit allowance, or its total AI spend can't be verified right now. The reference replay runs the same evidence checks with no AI call." : liveAccess?.open ? `Live runs are open to everyone, no token needed. To protect free credits they are limited to ${liveAccess.perIpPerHour} per hour per connection and ${liveAccess.perDay} per day overall; a full pipeline, including a bring-your-own extraction and its confirmation, counts as one run. Only the selected sample pack, or the evidence you add, is sent to Nebius. Reference mode is always available.` : liveConfigured ? "Open live runs are paused by the project owner. Reference mode is always available." : "Live inference is not configured on this server. Reference mode is always available."}</p></section>}
           {pack && view !== "accounts" && scenario !== analysis.scenario && <div className="inline-notice"><CircleAlert size={15} />Scenario changed. Run the evidence check to refresh results.</div>}
           {error && <div className="error-message" role="alert"><CircleAlert size={17} /><span>{error} Previous results are retained.</span>{offerReference && <button className="error-action" onClick={runReferenceInstead} disabled={running}>{byoActive && byoDraft?.proposal ? "Re-run the rules without AI" : "Run reference check"}</button>}<button aria-label="Dismiss error" onClick={() => { setError(""); setOfferReference(false); }}><X size={15} /></button></div>}
           {notice && <div className="inline-notice" role="status"><Check size={15} /><span>{notice}</span><button aria-label="Dismiss notification" onClick={() => setNotice("")}><X size={14} /></button></div>}
