@@ -1,5 +1,7 @@
 # Promise Ledger — final video script
 
+> **Superseded, September 27, 2026:** the final video (2:44) follows a later revision of this script that shows the three-model agent view. This September 20 version is kept for history. Event counts shown for the error-monitoring scenario come from one recorded run; live counts vary from day to day.
+
 **Creative lock: September 20, 2026. Target: 2:45; hard ceiling: under 3:00 including credits.**
 
 **The story:** a customer-success manager is one update away from calling something delivered. Promise Ledger catches the gap, explains it, and helps them send the truth instead.

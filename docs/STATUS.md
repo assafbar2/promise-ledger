@@ -1,5 +1,19 @@
 # Promise Ledger — handoff
 
+## Current state — September 27, 2026
+
+- **Source:** public at [`assafbar2/promise-ledger`](https://github.com/assafbar2/promise-ledger), MIT licensed; GitHub detects the license in the About section. PRs #1 to #14 are merged to `main`.
+- **Hosted:** https://promise-ledger-chi.vercel.app (landing) and `/app` (workbench), no login or token. `/api/status` reports `liveConfigured: true`, open live access at 5 runs per connection per hour and 150 per day with durable Upstash counters, the three Nemotron models, and a durable $40 lifetime spend cap (ledger `1`, about $0.15 spent).
+- **Live check, September 27, 20:12 UTC:** one anonymous live run of Northstar's crashing scenario. Nano, Super and Ultra all completed with no fallback: 8/8 sources classified, 6/6 exact quotes, 5/5 Ultra briefs accepted, 22.7 s end to end, estimated $0.0095, and the spend ledger rose by exactly that amount. Sentry returned the live headline issue (last seen 06:36:12 UTC, after the daily re-seed) and Tavily made a live Extract call.
+- **Also checked:** `/changelog`, the 1200×630 social card at `/og.png`, the themed 404 page, favicon; README and docs links; no key patterns in the public git history (66 commits, including PR head refs) or the production JavaScript.
+- **Clean clone:** `npm ci`, `npm run check` (274 unit and service tests, 4 Worker tests, type checking, lint) and `npm run test:vercel` (9 tests) pass and leave the tree clean; `npm run dev` serves the reference workflow with no credentials.
+- **Evaluation:** full pipeline on September 27, 9/9 development and 31/32 held-out exact matches, 26/26 briefs accepted ([report](evaluation/PIPELINE-EVAL-2026-09-27.md)); crashing-scenario fixes in [briefs](evaluation/CRASHING-BRIEFS-2026-09-27.md) and [extraction](evaluation/CRASHING-EXTRACTION-2026-09-27.md).
+- **Open:** Devpost submission (description, public YouTube video, feedback, track); Firefox and Safari QA; keeping live access funded through December 15, 2026, noon Pacific, after the Token Factory trial ends around October 18. The Nebius key is not rotated by owner decision; see [security](../SECURITY.md).
+
+## History
+
+The entries below are kept as they were written. Statements about a private repository, reference-only hosting or unmerged branches describe their dates, not the current state.
+
 ## Update — September 26, 2026: multi-model agent pipeline (branch `cursor/nemotron-agent-pipeline-a002`, [PR #2](https://github.com/assafbar2/promise-ledger/pull/2), draft)
 
 - Live mode is a visible pipeline: Nano triage, then Super extraction, then deterministic rules, then Ultra narrative. The live agent view streams each step, and reference mode replays it with a label. See [architecture](ARCHITECTURE.md).

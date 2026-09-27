@@ -4,9 +4,9 @@
 
 - Project: **promise-ledger**, in the owner's existing **Hobby** workspace, verified September 20, 2026.
 - Assigned production domain: **https://promise-ledger-chi.vercel.app**. Vercel assigned the suffix; the project and product names remain Promise Ledger.
-- Repository: `assafbar2/promise-ledger`, **private**; its `main` branch is connected to this project.
-- Publication state: **production deployment succeeded September 20, 2026**. Anonymous HTTP verification passed at 22:59 UTC (3:59 p.m. Pacific): homepage, six static assets, status, all three reference scenarios, live-disabled failure, and cross-origin rejection. See the [saved smoke report](DEPLOYMENT-SMOKE-2026-09-20.json).
-- No plan upgrade, paid add-on, database, storage service, custom-domain purchase, or change to other projects is part of this release.
+- Repository: `assafbar2/promise-ledger`, **public** and MIT licensed; its `main` branch is connected to this project.
+- Publication state: first production deployment September 20, 2026 ([saved smoke report](DEPLOYMENT-SMOKE-2026-09-20.json)); open live mode since September 26. Latest anonymous check, September 27: `/api/status` healthy and one live crashing-scenario run completed all three Nemotron steps (see [status](STATUS.md#current-state--september-27-2026)).
+- No plan upgrade, paid add-on or custom-domain purchase. The only added service is the free Upstash Redis store.
 
 Share **https://promise-ledger-chi.vercel.app**, which was tested without cookies and does not require a Vercel login. The generated team/branch deployment aliases redirect to Vercel authentication; do not use those as the demo link. Existing preview protection was preserved.
 
@@ -14,19 +14,19 @@ Since September 26, `/` is the landing page and the workbench is at **https://pr
 
 ## Hosted functionality
 
-The September 20 production release is a **reference-only synthetic demo**: no Nebius key is configured on Vercel, and `/api/status` reports `liveConfigured: false`. Run evidence checks, switch among three scenarios, inspect original sources, prepare/edit/approve drafts, and export. Refreshing clears session state. Nothing sends to a customer.
+Production runs **open, rate-limited live mode**: anyone can run the three-model Nemotron pipeline with no token, and the labelled reference replay is always one click away. Owner decisions, September 26, 2026: judges must be able to run live Nemotron **without a token**, protected by rate limits, and the existing Nebius key is **not rotated**. Nothing sends to a customer, and workspaces are stored only in the visitor's browser.
 
-From this change onward the code supports **open, rate-limited live mode**. Owner decisions, September 26, 2026: judges must be able to run live Nemotron **without a token**, protected by rate limits, and the existing Nebius key is **not rotated**. Live mode becomes the default engine as soon as the owner sets the Vercel variables below and redeploys. Until then the hosted app stays reference-only. Do not present it as hosted live AI before `/api/status` reports `liveConfigured: true` and a real live run has been checked.
+Hosted values on September 27, 2026, as reported by `/api/status`: 5 live runs per connection per hour, 150 per UTC day, durable limits, and a $40 lifetime spend cap on ledger `1`. These differ from some code defaults in the table below. If `/api/status` ever reports `liveConfigured: false` or `spend.available: false`, the hosted app is reference-only until fixed; don't present it as live AI then.
 
 ## Open live mode — limits
 
-| Layer | What it limits | Default | Needs owner setup | Strength |
+| Layer | What it limits | Code default | Needs owner setup | Strength |
 | --- | --- | --- | --- | --- |
 | App per-IP limit | Anonymous live runs per connection per clock hour. IPv6 counted per /64. | 5 | No | Durable with Upstash; per instance without it |
-| App daily cap | All anonymous live runs per UTC day | 30 | No | Durable with Upstash; per instance without it |
+| App daily cap | All anonymous live runs per UTC day | 30 (hosted: 150) | No | Durable with Upstash; per instance without it |
 | Owner token | Optional `DEMO_ACCESS_TOKEN` bypass: skips the per-IP limit and uses its own daily cap | 40 per day | Optional | Same store as above |
 | Upstash Redis (free) | Shares the two counters and the spend ledger across all Vercel instances and regions | Off | **Required for live mode** | Durable. Fails closed: if missing or unreachable, live returns 503 |
-| Lifetime spend cap | Cumulative estimated Nebius spend of all live runs, public and owner-token | $30 (`LIVE_SPEND_CAP_USD`) | Set to verified credit − margin | Durable in Upstash only; no in-memory fallback |
+| Lifetime spend cap | Cumulative estimated Nebius spend of all live runs, public and owner-token | $30 (`LIVE_SPEND_CAP_USD`; hosted: $40) | Set to verified credit − margin | Durable in Upstash only; no in-memory fallback |
 | Vercel WAF rate-limit rule | All `POST` requests to `/api/analyze` and `/api/pipeline` per IP, stopped at the edge before the function runs | Off | Recommended | Durable per region, enforced by the platform |
 | Nebius **Stop usage after trial** | Cash spend during the trial | Active since September 19 | Recheck | $0 guarantee only until the trial ends: promo credits then need paid usage, which has no hard stop |
 
@@ -88,10 +88,10 @@ The Vercel branch bundles Tailwind's CSS dependency in the RSC/SSR environments:
 
 `vercel.json` specifies the dedicated build command and no Next.js framework preset. `.vercelignore` excludes every local environment file, dependencies, previous outputs, and scratch work. CLI linking can append a Vercel OIDC token to ignored `.env.local`; preserve permissions 0600. No local environment file may be uploaded.
 
-Before publication, run tests, a full dependency audit, source/bundle secret scans, and an upload preview. After publication, test the production URL without Vercel cookies, reference API results, static assets, and `/api/status`. Once live variables are set, also check one live run and one limited response. Keep GitHub private until the owner separately authorizes public source.
+Before publication, run tests, a full dependency audit, source/bundle secret scans, and an upload preview. After publication, test the production URL without Vercel cookies, reference API results, static assets, and `/api/status`. Once live variables are set, also check one live run and one limited response. The repository is public, so scan the full git history as well as the working tree before every release.
 
 ## Recording and submission boundary
 
-The [recording script](DEMO-SCRIPT.md) contains 300 spoken words, targeting 2:45 with pauses. Live footage and narration will be captured and synchronized separately; no video is recorded or uploaded by this deployment work.
+The final video (2:44) was produced separately from this deployment work; the [recording script](DEMO-SCRIPT.md) in this repository is its September 20 predecessor.
 
-The final entry needs real NVIDIA-on-Nebius use as well as working test access. A video alone is insufficient. Judges must not need the owner's Vercel login. Free live access must last through December 15, 2026, at noon Pacific; current trial credits do not establish that future availability.
+The final entry needs real NVIDIA-on-Nebius use as well as working test access. A video alone is insufficient. Judges must not need the owner's Vercel login. Free live access must last through December 15, 2026, at noon Pacific; the Token Factory trial ends around October 18, so current credits alone do not establish that availability.
