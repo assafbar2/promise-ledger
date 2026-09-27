@@ -1,6 +1,6 @@
 # Hackathon strategy and checklist
 
-Rechecked September 20, 2026 by opening the official rules and event overview, including the submission, testing-access and judging sections. This is not a memory-only checklist.
+Rechecked September 27, 2026 by opening the official rules and event overview, including the submission, testing-access and judging sections; no requirement changed since the September 20 check. This is not a memory-only checklist.
 
 **Nebius × NVIDIA Global AI Hackathon · Best Apps and Agents**
 
@@ -22,6 +22,7 @@ Deadline: **October 30, 2026, 10:00 a.m. PDT / 17:00 UTC**.
 | Technology feedback | Provide feedback on the Nebius and NVIDIA tools/models/services actually used. Do not invent experience with services we did not use. |
 | Conditional disclosures | If a project predates the submission period, explain its significant in-period changes. City-award eligibility needs actual attendance at an eligible IRL event. |
 | Language | English materials, or English translations of descriptions, video and testing instructions. |
+| Bonus: Best Use of Tavily | Open to eligible submissions that make a functional, runtime call to the Tavily API. Each project can win one overall or track award plus one bonus award. |
 
 Complete every required field on the Devpost submission form by **October 30, 2026, at 10 a.m. Pacific**. Registration alone is not submission.
 
@@ -33,9 +34,7 @@ Access must be free and unrestricted for organizer/judge evaluation until the ju
 
 ### Hosting choice
 
-Vercel is not specified or required. A hosted browser demo is a convenience recommendation for this project, not an eligibility rule. Our current build uses Sites/Vinext and Cloudflare Worker tooling; moving it to Vercel would require compatibility work, not just changing a URL. A functioning test build is also an allowed route. No hosting provider has been selected or deployed as part of this rules review.
-
-Any chosen route must preserve the $0 cash policy and judge access. Do not assume that a trial lasting through development covers December judging, or that judges should provide their own paid provider account.
+Vercel is not specified or required; a runtime Token Factory call is what satisfies the platform rule. The app is hosted on Vercel at https://promise-ledger-chi.vercel.app with open, rate-limited live mode, so judges need no login, token or provider account. Access must stay free through December 15; the Token Factory trial ends around October 18, so the owner still has to confirm how live inference stays funded after it.
 
 ### Optional, not entry requirements
 
@@ -49,42 +48,42 @@ These are separate from running a working, safe demo and meeting the mandated NV
 
 | Dimension | Demonstration | Evidence still needed |
 | --- | --- | --- |
-| Technological implementation | Extraction, grounded citations and independent availability policy; 40 real NVIDIA-on-Nebius evaluation calls recorded | Working judge-access route and complete live-workflow demonstration |
-| Design | Inspect contradiction, review correction, export | Browser/keyboard/contrast QA |
-| Potential impact | A concrete CSM mistake prevented | A credible, specific problem and demonstrated solution; CSM feedback is optional, with no invented ROI |
-| Quality of idea | Built ≠ enabled ≠ customer-verified | Compare against naive ticket-status summarization |
+| Technological implementation | Three-model Nemotron pipeline on Token Factory with a streaming agent view, guardrails, deterministic rules, Tavily and Sentry evidence; full-pipeline evaluation of 9/9 and 31/32 exact matches | A new, independently authored held-out set before further accuracy claims |
+| Design | Landing page, guided tour, four sample accounts, bring-your-own evidence, dark mode; production QA with axe on September 27 | Firefox and Safari checks |
+| Potential impact | A concrete CSM mistake prevented | CSM feedback is optional; no invented ROI |
+| Quality of idea | Built ≠ enabled ≠ customer-verified; public GA ≠ usable by this customer | — |
 
 ## Registration
 
 **Registered — confirmed by the owner on September 19, 2026.** The owner supplied this Devpost submission-management URL: https://devpost.com/submit-to/30790-nebius-x-nvidia-global-ai-hackathon/manage/submissions
 
-Signed-in Devpost account: `assafbar`. The owner confirmed registration on September 19; the live overview independently displayed registered status on September 20. No registration form was submitted in this review. Nebius Builder Program enrollment remains unconfirmed. Token Factory sign-in, approved zero-data-retention profile setup, owner-completed billing verification, approved dedicated-key creation and first real model evaluation are complete. The 40-case evaluation used an estimated $0.025144 of trial credit with paid rollover disabled; see `evaluation/LIVE-RESULTS-2026-09-19.md`. The separate $25 hackathon credit form remains unsubmitted. Final project submission remains pending.
+Signed-in Devpost account: `assafbar`. The owner confirmed registration on September 19; the live overview independently displayed registered status on September 20. No registration form was submitted in this review. Nebius Builder Program enrollment remains unconfirmed. Token Factory sign-in, approved zero-data-retention profile setup, owner-completed billing verification, approved dedicated-key creation and first real model evaluation are complete. The 40-case evaluation used an estimated $0.025144 of trial credit with paid rollover disabled; see `evaluation/LIVE-RESULTS-2026-09-19.md`. $50 of promotional Token Factory credit was applied on September 27, 2026, and the app's lifetime spend cap is set to $40 below it. Final project submission remains pending.
 
 ## Release checklist
 
-- [x] Project directory and private GitHub repository `assafbar2/promise-ledger` created.
+- [x] GitHub repository `assafbar2/promise-ledger` created, then made public with the owner's approval; MIT license detected in the About section.
 - [x] Initial scope, design, implementation, tests and documentation prepared.
 - [x] Complete Devpost registration (owner-confirmed September 19, 2026).
-- [x] Owner authorized the initial code commit and push to the private repository.
-- [x] Configure Nebius and an available NVIDIA Nemotron model.
+- [x] Configure Nebius and available NVIDIA Nemotron models (Nano, Super, Ultra).
 - [x] Capture successful live inference and actual model/run/usage evidence.
 - [x] Prepare a distinct 32-case synthetic holdout, frozen before the first real model run.
-- [x] Execute all eight development examples and the frozen 32-case holdout; retain the one development mismatch.
-- [ ] Optional: seek independent CSM feedback or a fresh evaluation set; this is not a submission requirement.
-- [ ] Resolve inherited dependency findings before internet exposure.
-- [ ] Complete browser interaction, keyboard, mobile and contrast checks.
-- [ ] Provide a judge-accessible working demo or runnable test-build URL; verify clean-session access or supplied judge credentials through the end of judging.
-- [ ] Record/upload the public video and write honest technology feedback.
-- [ ] Obtain explicit approval to change repository visibility to public.
+- [x] Evaluate extraction (September 19) and the full pipeline (September 27) on the development and frozen held-out sets.
+- [x] Resolve inherited dependency findings before internet exposure (September 20; see the [dependency review](DEPENDENCY-REVIEW-2026-09-20.md)).
+- [x] Hosted judge access with no login: open, rate-limited live mode, verified by an anonymous live run on September 27.
+- [x] README with setup, run instructions, NVIDIA model use, where Token Factory accelerated the workflow, and other services.
+- [x] No secrets in the public git history or production JavaScript (scanned September 27).
+- [x] Browser interaction, keyboard, mobile and contrast checks in Chrome (production QA, September 27).
+- [ ] Firefox and Safari checks.
+- [ ] Keep live access free and working through December 15, 2026, noon Pacific, past the Token Factory trial end around October 18.
+- [ ] Upload the final video to YouTube as Public (under 3:00) and paste the description, testing instructions and technology feedback into Devpost.
 - [ ] Submit and verify Devpost confirmation before the deadline.
+- [ ] Optional: independent CSM feedback or a fresh, independently authored evaluation set; not a submission requirement.
 
 ## Suggested checkpoints (not scheduled)
 
-First live evaluation completed September 19. Next: targeted safety fixes and a complete walkthrough; then a zero-cash judge-access route, source release approval, video and submission text. October 23: proposed feature freeze. October 28: proposed early submission buffer. Lightweight CSM feedback can run if convenient, but is not a prerequisite. Do not build a connector platform before finishing the entry.
+October 15: decide how live inference stays funded after the trial. October 23: proposed feature freeze. October 28: proposed early submission buffer. Do not build a connector platform before finishing the entry.
 
 ## Verification sources
 
-- [Official rules, section 1](https://nebiusglobalaihackathon.devpost.com/rules#1-dates-and-timing): submission and judging dates.
-- [Official rules, section 4](https://nebiusglobalaihackathon.devpost.com/rules#4-how-to-enter): runtime integration, submission artifacts and Testing access.
-- [Official rules, section 6](https://nebiusglobalaihackathon.devpost.com/rules#6-judges-criteria): technology, design, potential impact and idea quality, equally weighted.
+- [Official rules](https://nebiusglobalaihackathon.devpost.com/rules): section 1 for submission and judging dates, section 4 for runtime integration, submission artifacts and testing access, section 6 for the equally weighted criteria (technology, design, potential impact, idea quality), and section 8 for the Tavily bonus.
 - [Event overview, What to Submit](https://nebiusglobalaihackathon.devpost.com/): public YouTube video and audio covering how Nebius/NVIDIA are used.
