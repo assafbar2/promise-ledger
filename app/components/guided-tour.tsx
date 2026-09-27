@@ -7,11 +7,15 @@ export type TourStep = { target: string; title: string; body: string; before?: (
 
 type Rect = { top: number; left: number; width: number; height: number };
 
+/** The first rendered element for a target, so a step can name a desktop and a mobile control. */
+function findTarget(target: string) {
+  return Array.from(document.querySelectorAll<HTMLElement>(`[data-tour="${target}"]`)).find((element) => element.getClientRects().length > 0) ?? null;
+}
+
 function measure(target: string): Rect | null {
-  const element = document.querySelector<HTMLElement>(`[data-tour="${target}"]`);
+  const element = findTarget(target);
   if (!element) return null;
   const box = element.getBoundingClientRect();
-  if (box.width === 0 && box.height === 0) return null;
   return { top: box.top, left: box.left, width: box.width, height: box.height };
 }
 
@@ -22,18 +26,24 @@ function measure(target: string): Rect | null {
 export function GuidedTour({ steps, onClose }: { steps: TourStep[]; onClose: () => void }) {
   const [index, setIndex] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
+  const [cardHeight, setCardHeight] = useState(230);
   const card = useRef<HTMLDivElement>(null);
   const step = steps[index];
   const last = index === steps.length - 1;
 
-  const place = useCallback(() => setRect(measure(step.target)), [step.target]);
+  const place = useCallback(() => {
+    setRect(measure(step.target));
+    if (card.current) setCardHeight(card.current.offsetHeight);
+  }, [step.target]);
 
   useLayoutEffect(() => {
     step.before?.();
     const frame = requestAnimationFrame(() => {
-      document.querySelector<HTMLElement>(`[data-tour="${step.target}"]`)?.scrollIntoView({ block: "center", behavior: "auto" });
+      const element = findTarget(step.target);
+      // "instant" overrides the page's smooth scrolling, so the ring is measured where the target ends up.
+      element?.scrollIntoView({ block: element.offsetHeight > window.innerHeight * 0.6 ? "start" : "center", inline: "nearest", behavior: "instant" });
       place();
-      card.current?.focus();
+      card.current?.focus({ preventScroll: true });
     });
     return () => cancelAnimationFrame(frame);
   }, [place, step]);
@@ -58,10 +68,14 @@ export function GuidedTour({ steps, onClose }: { steps: TourStep[]; onClose: () 
   const viewportWidth = typeof window === "undefined" ? 1200 : window.innerWidth;
   const viewportHeight = typeof window === "undefined" ? 800 : window.innerHeight;
   const cardWidth = Math.min(320, viewportWidth - 24);
-  const below = rect ? rect.top + rect.height + 180 < viewportHeight : true;
-  const cardStyle = rect
-    ? { width: cardWidth, left: Math.max(12, Math.min(rect.left, viewportWidth - cardWidth - 12)), ...(below ? { top: rect.top + rect.height + pad + 10 } : { bottom: viewportHeight - rect.top + pad + 10 }) }
-    : { width: cardWidth, left: (viewportWidth - cardWidth) / 2, top: viewportHeight / 3 };
+  const gap = pad + 10;
+  const maxTop = Math.max(12, viewportHeight - cardHeight - 12);
+  // Below the target, else above it, else pinned inside the viewport over a target too tall for either.
+  const cardTop = !rect ? Math.min(viewportHeight / 3, maxTop)
+    : rect.top + rect.height + gap + cardHeight <= viewportHeight - 12 ? rect.top + rect.height + gap
+      : rect.top - gap - cardHeight >= 12 ? rect.top - gap - cardHeight
+        : maxTop;
+  const cardStyle = { width: cardWidth, top: Math.max(12, Math.min(cardTop, maxTop)), left: rect ? Math.max(12, Math.min(rect.left, viewportWidth - cardWidth - 12)) : (viewportWidth - cardWidth) / 2 };
 
   return (
     <div className="tour-layer" role="presentation">

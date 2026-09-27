@@ -33,7 +33,7 @@
 .lp-card:before{content:"";position:absolute;inset:14px -14px -14px 14px;border:1px dashed var(--line-strong);border-radius:14px;z-index:-1}
 .lp-card-top{display:flex;justify-content:space-between;align-items:center;font-size:11px;letter-spacing:1.2px;font-weight:600;color:var(--text-3)}
 .lp-card-top>span>span{margin:0 5px}
-.lp-card h3{font-size:24px;font-weight:600;letter-spacing:-.6px;margin-top:14px}
+.lp-card .lp-card-title{font-size:24px;font-weight:600;letter-spacing:-.6px;margin-top:14px}
 .lp-card-meta{font-size:13px;color:var(--text-3);margin-top:4px}
 .lp-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:5px;font-size:12px;font-weight:600;letter-spacing:0}
 .lp-badge>span{width:6px;height:6px;border-radius:50%;background:currentColor}
